@@ -18,6 +18,39 @@ footer{max-width:1100px;margin:0 auto;padding:18px 16px 46px;color:var(--sub);fo
 .glist dt{color:var(--sub);font-size:13px;white-space:nowrap;display:flex;align-items:center;gap:5px;padding-top:2px}
 .glist dt .gi{font-size:15px}
 .glist dd{margin:0;font-weight:600}
+
+/* ── 첫 화면 인트로 (마스코트 인사 → 헤더로 올라감) ── */
+#intro{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;
+ align-items:center;justify-content:center;text-align:center;padding:24px;overflow:hidden}
+#intro .ibg{position:absolute;inset:0;background:
+  radial-gradient(120% 90% at 50% 0%, #eaf3ee 0%, var(--bg,#f6f7f8) 60%);
+  transition:opacity .55s ease}
+#intro.go .ibg{opacity:0}
+#intro .intro-mascot{position:relative;width:min(46vw,180px);height:min(46vw,180px);
+ will-change:transform;animation:introPop .6s cubic-bezier(.2,.9,.3,1.3) both, floaty 3s ease-in-out .6s infinite}
+#intro .intro-mascot svg{width:100%;height:100%;display:block;
+ filter:drop-shadow(0 14px 26px rgba(46,94,78,.20))}
+#intro .intro-text{position:relative;margin-top:26px;font-size:clamp(19px,5.4vw,24px);
+ font-weight:800;line-height:1.55;color:var(--ink);letter-spacing:-.3px;
+ animation:introUp .6s ease .15s both;transition:opacity .3s ease}
+#intro .intro-text b{color:var(--acc)}
+#intro .intro-sub{position:relative;margin-top:10px;font-size:14px;color:var(--sub);
+ animation:introUp .6s ease .25s both;transition:opacity .3s ease}
+#intro .intro-btn{position:relative;margin-top:34px;padding:16px 46px;border:none;
+ border-radius:16px;background:var(--acc);color:#fff;font-size:17px;font-weight:800;
+ box-shadow:0 10px 24px rgba(46,94,78,.32);cursor:pointer;
+ animation:introUp .6s ease .35s both;transition:opacity .3s ease,transform .12s ease}
+#intro .intro-btn:active{transform:scale(.96)}
+#intro.go .intro-text,#intro.go .intro-sub,#intro.go .intro-btn{opacity:0;pointer-events:none}
+@keyframes introPop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes introUp{0%{transform:translateY(16px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-11px)}}
+/* 헤더에 자리잡는 마스코트 */
+.mascot-head{width:32px;height:32px;flex:none;display:inline-flex;margin-right:2px}
+.mascot-head svg{width:100%;height:100%;display:block}
+@media (prefers-reduced-motion:reduce){
+ #intro .intro-mascot,#intro .intro-text,#intro .intro-sub,#intro .intro-btn{animation:none}
+}
 </style>
 </head>
 <body>
@@ -153,6 +186,59 @@ function init(){
   calModal(favIss,'봉화군_관심일정');
  }
 
+ /* ── 봉화 마스코트 (사과+잎, 반짝이는 눈) — 인트로와 헤더가 함께 쓴다 ── */
+ const MASCOT=`<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+   <ellipse cx="88" cy="44" rx="15" ry="27" fill="#4E8A5B" transform="rotate(-24 88 44)"/>
+   <ellipse cx="112" cy="44" rx="15" ry="27" fill="#63A972" transform="rotate(24 112 44)"/>
+   <rect x="96" y="34" width="8" height="26" rx="4" fill="#7a5a3a"/>
+   <path d="M100 56c34 0 52 22 60 44 9 25 3 55-20 72-12 9-27 12-40 12s-28-3-40-12C37 155 31 125 40 100c8-22 26-44 60-44Z" fill="#EF5B3C"/>
+   <path d="M100 56c-34 0-52 22-60 44-4 11-5 23-4 34 6-40 34-58 64-58 30 0 58 18 64 58 1-11 0-23-4-34-8-22-26-44-60-44Z" fill="#ff7a5c" opacity=".55"/>
+   <ellipse cx="78" cy="120" rx="12" ry="15" fill="#2b2320"/>
+   <ellipse cx="122" cy="120" rx="12" ry="15" fill="#2b2320"/>
+   <path d="M74 111l3 6 6 3-6 3-3 6-3-6-6-3 6-3z" fill="#fff"/>
+   <path d="M118 111l3 6 6 3-6 3-3 6-3-6-6-3 6-3z" fill="#fff"/>
+   <ellipse cx="63" cy="140" rx="8" ry="5" fill="#ff9a7d" opacity=".7"/>
+   <ellipse cx="137" cy="140" rx="8" ry="5" fill="#ff9a7d" opacity=".7"/>
+   <path d="M87 146q13 12 26 0" stroke="#2b2320" stroke-width="5" fill="none" stroke-linecap="round"/>
+ </svg>`;
+
+ /* ── 첫 화면 인트로: 인사 → [시작하기] → 마스코트가 헤더로 날아가고 본문이 드러남 ── */
+ function setupIntro(){
+  const head=document.querySelector('.bw-head .in')||document.querySelector('.bw-head');
+  if(!head)return;
+  /* 헤더 왼쪽에 마스코트를 미리 심어 둔다(도착 지점) */
+  const hm=document.createElement('span'); hm.className='mascot-head'; hm.innerHTML=MASCOT;
+  head.insertBefore(hm,head.firstChild);
+
+  const intro=document.createElement('div'); intro.id='intro';
+  intro.innerHTML=`<div class="ibg"></div>
+    <div class="intro-mascot">${MASCOT}</div>
+    <div class="intro-text">안녕하세요<br><b>당신의 봉화</b>에서<br>이번 주 소식을 알려드립니다</div>
+    <div class="intro-sub">봉화군 주간 소식 · ${D.weekStart} 기준</div>
+    <button class="intro-btn" id="introGo">시작하기</button>`;
+  document.body.appendChild(intro);
+  document.documentElement.style.overflow='hidden';   /* 인트로 동안 스크롤 잠금 */
+
+  const finish=()=>{ intro.remove(); document.documentElement.style.overflow=''; };
+  document.getElementById('introGo').onclick=()=>{
+   const im=intro.querySelector('.intro-mascot');
+   const src=im.getBoundingClientRect(), dst=hm.getBoundingClientRect();
+   const sc=dst.width/src.width;
+   const tx=(dst.left+dst.width/2)-(src.left+src.width/2);
+   const ty=(dst.top+dst.height/2)-(src.top+src.height/2);
+   im.style.animation='none';                          /* floaty 정지 후 비행 */
+   /* 다음 프레임에 변환을 걸어 트랜지션이 확실히 재생되게 한다 */
+   requestAnimationFrame(()=>{
+    im.style.transition='transform .72s cubic-bezier(.5,-0.05,.25,1.15)';
+    im.style.transform=`translate(${tx}px,${ty}px) scale(${sc})`;
+    intro.classList.add('go');                         /* 글·버튼·배경 사라짐 */
+   });
+   let done=false; const end=()=>{if(done)return;done=true;finish()};
+   im.addEventListener('transitionend',end,{once:true});
+   setTimeout(end,900);                                /* transitionend 누락 대비 */
+  };
+ }
+
  BWUI.start({
   role:'public', title:'당신의 봉화',
   searchPlaceholder:'궁금한 일을 검색해 보세요 (예: 축제, 도로, 교육)',
@@ -279,6 +365,8 @@ function init(){
    };
   }
  });
+
+ setupIntro();   /* 화면이 만들어진 뒤 인트로를 덮는다 */
 }
 </script>
 </body>
