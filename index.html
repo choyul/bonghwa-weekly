@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1F4B3F">
-<title>당신의 봉화</title>
-<meta name="description" content="이번 주 봉화군 소식을 알려드립니다 — 행사·모집·공사·민원을 한눈에">
+<title>봉화의 오늘</title>
+<meta name="description" content="봉화의 이모저모를 알려드립니다 — 오늘·이번 주 행사·모집·공사·민원을 한눈에">
 <!-- 카카오톡·문자·SNS 링크 미리보기(마스코트 카드) -->
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="당신의 봉화">
-<meta property="og:title" content="당신의 봉화">
-<meta property="og:description" content="이번 주 봉화군 소식을 알려드립니다 — 행사·모집·공사·민원을 한눈에">
+<meta property="og:site_name" content="봉화의 오늘">
+<meta property="og:title" content="봉화의 오늘">
+<meta property="og:description" content="봉화의 이모저모를 알려드립니다 — 오늘·이번 주 소식을 한눈에">
 <meta property="og:image" content="https://choyul.github.io/bonghwa-weekly/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -32,7 +32,22 @@ footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decorat
 .glist dt .gi{font-size:15px}
 .glist dd{margin:0;font-weight:600}
 
-/* ── 접이식 검색 (네이버페이식) — 접힌 바를 누르면 아래로 펼쳐져 기간·키워드 선택 ── */
+/* ── 헤더 부제 ── */
+.bw-sub{width:100%;font-size:13px;font-weight:600;opacity:.9;margin-top:3px}
+
+/* ── 상단 주간 달력 (데이 스트립) + 기간 버튼 ── */
+.wstrip{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:12px 12px 10px;margin-bottom:12px}
+.ws-today{font-size:13.5px;font-weight:700;color:var(--acc);padding:0 2px 2px}
+.ws-scopes{display:flex;gap:6px;margin:10px 0 9px}
+.ws-scopes button{flex:1;min-height:42px;border:1px solid var(--line);border-radius:10px;background:var(--paper);
+ color:var(--ink);font-size:14px;font-weight:600;cursor:pointer;transition:all var(--bh-dur,180ms) var(--bh-ease,ease)}
+.ws-scopes button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.wstrip .cal{border:none;background:transparent;padding:0;gap:4px}
+.wstrip .calday{position:relative;min-height:62px}
+.ws-dot{position:absolute;top:6px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.calday.on .ws-dot{background:#fff}
+
+/* ── 접이식 검색 (네이버페이식) — 접힌 바를 누르면 아래로 펼쳐져 키워드 입력 ── */
 .searchbar{display:none}   /* 기본 검색창은 숨기고 아래 카드로 대체 */
 .psearch{border:1px solid var(--line);border-radius:14px;background:var(--paper);
  margin-bottom:12px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
@@ -261,7 +276,7 @@ function init(){
   let when='';
   if(r&&r.start){const s=BW.d2(r.start);when=`${s.getMonth()+1}월 ${s.getDate()}일 · `}
   const text=`[봉화군 이번 주 소식] ${iss.title}\n${when}자세히 보기 👇`;
-  const data={title:'당신의 봉화',text,url};
+  const data={title:'봉화의 오늘',text,url};
   /* 휴대폰은 OS 공유 시트(카카오톡·문자·메일 등)를 띄운다.
      canShare로 가능 여부를 먼저 확인하고, 안 되는 기기(구형·일부 PC)만 링크 복사로 넘어간다. */
   if(navigator.share && (!navigator.canShare || navigator.canShare(data))){
@@ -301,7 +316,7 @@ function init(){
   const intro=document.createElement('div'); intro.id='intro';
   intro.innerHTML=`<div class="ibg"></div>
     <div class="intro-mascot">${MASCOT}</div>
-    <div class="intro-text">안녕하세요<br><b>당신의 봉화</b>에서<br>이번 주 소식을 알려드립니다</div>
+    <div class="intro-text">안녕하세요<br><b>봉화의 오늘</b>이<br>이번 주 소식을 알려드립니다</div>
     <div class="intro-sub">봉화군 주간 소식 · ${D.weekStart} 기준</div>
     <button class="intro-btn" id="introGo">시작하기</button>`;
   document.body.appendChild(intro);
@@ -342,17 +357,17 @@ function init(){
  }
 
  BWUI.start({
-  role:'public', title:'당신의 봉화',
+  role:'public', title:'봉화의 오늘',
   searchPlaceholder:'궁금한 일을 검색해 보세요 (예: 축제, 도로, 교육)',
-  listTitle:'봉화군에서는?',   /* 앞에 '이번 주' / '7월 28일(화)' 처럼 기간이 붙는다 */
+  listTitle:'봉화의 소식은?',   /* 앞에 '오늘' / '이번 주' / '7월 28일(화)' 처럼 기간이 붙는다 */
   publicLabels:true,
   progAsStage:true,
   showAppearance:false,      /* 등장 기준 추정치는 내보내지 않음 (§8.2) */
   showSimilar:false,
   showHistory:false,
-  hideTiles:true,            /* '언제'는 아래 접이식 검색의 기간 선택이 맡는다 */
-  showCalendar:false,        /* 달력 대신 검색바 안의 기간 버튼(이번 주·이번 달·전체)으로 대체 */
-  onRender(){ syncSearchCard(); },   /* 필터가 바뀔 때마다 검색카드 상태를 맞춘다 */
+  hideTiles:true,            /* '언제'는 상단 주간 달력이 맡는다 */
+  showCalendar:false,        /* 공용 월 달력 대신 위쪽 커스텀 주간 데이 스트립을 쓴다 */
+  onRender(){ syncTopControls(); },   /* 필터가 바뀔 때마다 상단 달력·검색·제목을 맞춘다 */
   hideDeptTag:true,          /* 군민은 어느 과인지로 고르지 않는다 — 문의할 때만 필요 */
   /* 카드 태그도 위 '주제' 축과 같은 분류를 쓴다 */
   typeTag:iss=>({v:tag(iss).topics[0], label:tag(iss).topics[0], axis:'topic'}),
@@ -475,10 +490,19 @@ function init(){
   }
  });
 
- /* ── 접이식 검색 카드 (네이버페이식) ──
-    접힌 바 → 탭 → 아래로 펼쳐져 키워드 + 기간(이번 주·이번 달·전체) 선택 → 조회.
-    달력을 없앤 대신 '언제'를 여기 기간 버튼이 맡는다. */
+ /* ── 헤더 부제 ── */
+ function decorateHeader(){
+  const inb=document.querySelector('.bw-head .in'); if(!inb||inb.querySelector('.bw-sub'))return;
+  const sub=document.createElement('div'); sub.className='bw-sub'; sub.textContent='봉화의 이모저모를 알려드립니다';
+  inb.insertBefore(sub, inb.querySelector('.wk')||null);
+ }
+
+ /* ── 상단 주간 달력 (Senso식 데이 스트립) + 기간 버튼 ──
+    이번 주 7일을 요일·날짜로 늘어놓고, 날짜를 누르면 그날 '진행 중'(진행기간 포함)인
+    소식만 본다 → "오늘 봉화의 소식은?". 기간 버튼으로 이번 주·이번 달·전체도 고른다. */
  const WEEK_MONTH=D.weekStart.slice(0,7);
+ const WSTART=BW.d2(D.weekStart);
+ const WEEKDAYS=[]; for(let i=0;i<7;i++){ const d=new Date(WSTART); d.setDate(WSTART.getDate()+i); WEEKDAYS.push(BW.ymd(d)); }
  function setScope(sc){
   const S=BWUI.api.state;
   if(sc==='month'){ S.scope='month'; S.month=WEEK_MONTH; S.day=''; }
@@ -486,13 +510,35 @@ function init(){
   else { S.scope='week'; S.month=WEEK_MONTH; S.day=''; }
   S.limit=60; BWUI.api.render();
  }
+ function setDay(day){ const S=BWUI.api.state; S.scope='day'; S.day=day; S.month=day.slice(0,7); S.limit=60; BWUI.api.render(); }
+
+ function buildDayStrip(){
+  const wrap=document.querySelector('.bw-wrap'); if(!wrap||document.getElementById('wstrip'))return;
+  const today=BWUI.api.today, td=BW.d2(today);
+  const cntOf=day=>BWUI.api.issues.filter(i=>i.list.some(o=>BW.coversDate(o.item,o.week,day))).length;
+  const box=document.createElement('div'); box.id='wstrip'; box.className='wstrip';
+  box.innerHTML=`
+    <div class="ws-today">📅 오늘 · ${td.getMonth()+1}월 ${td.getDate()}일 (${BW.DOW[td.getDay()]})</div>
+    <div class="ws-scopes" id="wsScopes">
+      <button type="button" data-sc="week">이번 주</button>
+      <button type="button" data-sc="month">이번 달</button>
+      <button type="button" data-sc="all">전체 기간</button>
+    </div>
+    <div class="cal ws-days" id="wsDays">
+      ${WEEKDAYS.map(day=>{const d=BW.d2(day);const we=d.getDay()===0||d.getDay()===6;const n=cntOf(day);
+        return `<button type="button" class="calday ${we?'we':''} ${n?'':'zero'}" data-day="${day}">
+          <span class="dow">${BW.DOW[d.getDay()]}</span><span class="d">${d.getDate()}</span><span class="cnt">${n}</span>
+          ${day===today?'<span class="ws-dot"></span>':''}</button>`;}).join('')}
+    </div>`;
+  wrap.insertBefore(box,wrap.firstChild);
+  box.querySelectorAll('#wsScopes button').forEach(b=>b.onclick=()=>setScope(b.dataset.sc));
+  box.querySelectorAll('.calday').forEach(b=>b.onclick=()=>setDay(b.dataset.day));
+ }
+
+ /* 키워드 검색 (접이식) — 기간은 위 달력이 맡으므로 여기선 검색어만 */
  function syncSearchCard(){
   const card=document.getElementById('psearch'); if(!card)return;
-  const S=BWUI.api.state;
-  const sc=S.scope==='month'?'month':(S.scope==='week'?'week':'all');
-  card.querySelectorAll('#psScopes button').forEach(b=>b.classList.toggle('on',b.dataset.sc===sc));
-  card.querySelector('#psPill').textContent=sc==='month'?'이번 달':sc==='all'?'전체 기간':'이번 주';
-  const text=card.querySelector('#psText');
+  const S=BWUI.api.state, text=card.querySelector('#psText');
   if(S.q){ text.textContent='“'+S.q+'”'; text.classList.add('has'); }
   else { text.textContent='궁금한 일을 검색해 보세요 (축제, 도로, 교육)'; text.classList.remove('has'); }
   const input=card.querySelector('#psInput');
@@ -505,19 +551,12 @@ function init(){
     <button type="button" class="ps-bar" id="psBar">
       <svg class="ps-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <span class="ps-text" id="psText">궁금한 일을 검색해 보세요 (축제, 도로, 교육)</span>
-      <span class="ps-pill" id="psPill">이번 주</span>
     </button>
     <div class="ps-panel" id="psPanel">
       <input type="search" class="ps-input" id="psInput" enterkeyhint="search" placeholder="궁금한 일을 검색해 보세요 (축제, 도로, 교육)">
-      <div class="ps-lab">검색 기간</div>
-      <div class="ps-scopes" id="psScopes">
-        <button type="button" data-sc="week">이번 주</button>
-        <button type="button" data-sc="month">이번 달</button>
-        <button type="button" data-sc="all">전체 기간</button>
-      </div>
       <div class="ps-actions">
-        <button type="button" class="ps-reset" id="psReset">초기화</button>
-        <button type="button" class="ps-go" id="psGo">조회하기</button>
+        <button type="button" class="ps-reset" id="psReset">지우기</button>
+        <button type="button" class="ps-go" id="psGo">검색</button>
       </div>
     </div>`;
   wrap.insertBefore(card,wrap.firstChild);
@@ -526,12 +565,35 @@ function init(){
   card.querySelector('#psBar').onclick=()=>setOpen(!card.classList.contains('open'));
   let t; input.oninput=()=>{ clearTimeout(t); t=setTimeout(()=>{ S.q=input.value.trim(); S.limit=60; BWUI.api.render(); },180); };
   input.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); clearTimeout(t); S.q=input.value.trim(); BWUI.api.render(); setOpen(false); } };
-  card.querySelectorAll('#psScopes button').forEach(b=>b.onclick=()=>setScope(b.dataset.sc));
   card.querySelector('#psGo').onclick=()=>{ clearTimeout(t); S.q=input.value.trim(); BWUI.api.render(); setOpen(false); };
-  card.querySelector('#psReset').onclick=()=>{ input.value=''; S.q=''; setScope('week'); };
+  card.querySelector('#psReset').onclick=()=>{ input.value=''; S.q=''; S.limit=60; BWUI.api.render(); };
   syncSearchCard();
  }
+
+ /* 필터가 바뀔 때마다 상단(달력·검색·목록 제목)을 실제 상태에 맞춘다 */
+ function syncTopControls(){
+  const S=BWUI.api.state, strip=document.getElementById('wstrip');
+  if(strip){
+   strip.querySelectorAll('#wsScopes button').forEach(b=>b.classList.toggle('on',b.dataset.sc===S.scope));
+   strip.querySelectorAll('.calday').forEach(b=>b.classList.toggle('on',S.scope==='day'&&b.dataset.day===S.day));
+  }
+  syncSearchCard();
+  const listh=document.querySelector('#bwInfo .listh');
+  if(listh){
+   let t;
+   if(S.scope==='day') t=(S.day===BWUI.api.today?'오늘':(()=>{const d=BW.d2(S.day);return `${d.getMonth()+1}월 ${d.getDate()}일(${BW.DOW[d.getDay()]})`;})())+' 봉화의 소식은?';
+   else if(S.scope==='month'){const[y,m]=S.month.split('-');t=`${+y}년 ${+m}월 봉화의 소식은?`;}
+   else if(S.scope==='all') t='전체 봉화의 소식은?';
+   else t='이번 주 봉화의 소식은?';
+   listh.textContent=t;
+  }
+ }
+
+ decorateHeader();
  buildSearchCard();
+ buildDayStrip();               /* 마지막에 넣어 맨 위에 오게 한다 */
+ /* 기본: 오늘이 이번 자료 주간이면 '오늘 소식'부터, 아니면 이번 주 전체 */
+ if(WEEKDAYS.includes(BWUI.api.today)) setDay(BWUI.api.today); else setScope('week');
 
  /* 링크로 들어온 경우 처리 — 인트로를 건너뛰고 해당 안건으로 바로 간다.
     코드는 짧은 해시(i·r)를 쓰되, 예전 긴 링크(item·remind, 전체 안건번호)도 계속 열리게 둔다. */
