@@ -53,6 +53,9 @@ footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decorat
 .ws-arrow:disabled{opacity:.28;cursor:default;color:var(--sub)}
 .wstrip .cal{border:none;background:transparent;padding:0;gap:4px}
 .wstrip .calday{position:relative;min-height:62px}
+/* 이번 달·전체 기간 모드: 주간 달력·화살표 숨기고 타이틀만 남긴다 */
+.wstrip.broad .ws-arrow,.wstrip.broad .ws-days{display:none}
+.wstrip.broad .ws-nav{margin-bottom:2px}
 .ws-dot{position:absolute;top:6px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--gold)}
 .calday.on .ws-dot{background:#fff}
 
@@ -568,8 +571,15 @@ function init(){
   const S=BWUI.api.state; S.scope='week'; S.week=VIEW_WEEK; S.month=VIEW_WEEK.slice(0,7); S.day=''; S.limit=60;
   renderDayPills(); BWUI.api.render();
  }
- /* 달력 카드 맨 위 타이틀 = 지금 보고 있는 주 범위(주 네비게이터 라벨) */
- function calTitle(){ return weekLabel(VIEW_WEEK); }
+ /* 달력 카드 맨 위 타이틀 = 지금 고른 기간과 동기화
+    (이번 주 → 몇 주차 / 이번 달 → N월 / 전체 → 전체 기간 / 날짜 → 그 날) */
+ function calTitle(){
+  const S=BWUI.api.state;
+  if(S.scope==='day')return dLabel(S.day);
+  if(S.scope==='month'){const[y,m]=S.month.split('-');return `${+y}년 ${+m}월`;}
+  if(S.scope==='all')return '전체 기간 · 지난 1년';
+  return BW.weekKo(VIEW_WEEK);
+ }
  function renderDayPills(){
   const host=document.getElementById('wsDays'); if(!host)return;
   const today=BWUI.api.today;
@@ -643,6 +653,8 @@ function init(){
  function syncTopControls(){
   const S=BWUI.api.state, strip=document.getElementById('wstrip');
   if(strip){
+   /* 주간 달력(요일·화살표)은 '이번 주'(주·날짜) 모드에서만 — 이번 달·전체 땐 숨긴다 */
+   strip.classList.toggle('broad', S.scope==='month'||S.scope==='all');
    const ti=strip.querySelector('#wsTitle'); if(ti)ti.textContent=calTitle();
    const host=strip.querySelector('#wsDays'); if(host&&host.dataset.week!==VIEW_WEEK)renderDayPills();
    /* 기간 버튼은 절대 기준으로 켠다 — 지난 주를 보고 있으면 '이번 주'는 꺼진다 */
