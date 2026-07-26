@@ -200,6 +200,40 @@ function init(){
   calModal(favIss,'봉화군_관심일정');
  }
 
+ /* ── 이 소식을 친구에게 공유 ──
+    안건 번호를 주소에 실어, 링크를 받은 사람이 열면 바로 그 안건이 뜬다.
+    휴대폰은 공유 시트(카톡·문자 등)를, 안 되면 링크 복사로 넘어간다. */
+ function shareUrlOf(iss){
+  const url=new URL(location.pathname,location.origin);
+  url.searchParams.set('item',iss._id);
+  return url.href;
+ }
+ function copyLink(u){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+   navigator.clipboard.writeText(u).then(
+    ()=>BWUI.toast('링크를 복사했어요 — 붙여넣기로 전달하세요'),
+    ()=>window.prompt('아래 링크를 복사해 전달하세요',u));
+  }else{ window.prompt('아래 링크를 복사해 전달하세요',u); }
+ }
+ function shareIssue(iss){
+  const url=shareUrlOf(iss);
+  const r=BW.parseDateRange(tag(iss).item,tag(iss).week);
+  let when='';
+  if(r&&r.start){const s=BW.d2(r.start);when=`${s.getMonth()+1}월 ${s.getDate()}일 · `}
+  const text=`[봉화군 이번 주 소식] ${iss.title}\n${when}자세히 보기 👇`;
+  const data={title:'당신의 봉화',text,url};
+  /* 휴대폰은 OS 공유 시트(카카오톡·문자·메일 등)를 띄운다.
+     canShare로 가능 여부를 먼저 확인하고, 안 되는 기기(구형·일부 PC)만 링크 복사로 넘어간다. */
+  if(navigator.share && (!navigator.canShare || navigator.canShare(data))){
+   navigator.share(data).catch(err=>{
+    if(err&&err.name==='AbortError')return;   /* 사용자가 시트를 닫음 — 조용히 */
+    copyLink(url);                            /* 공유가 실패한 기기만 복사로 대체 */
+   });
+   return;
+  }
+  copyLink(url);
+ }
+
  /* ── 봉화 마스코트 (사과+잎, 반짝이는 눈) — 인트로와 헤더가 함께 쓴다 ── */
  const MASCOT=`<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
    <ellipse cx="88" cy="44" rx="15" ry="27" fill="#4E8A5B" transform="rotate(-24 88 44)"/>
@@ -380,23 +414,29 @@ function init(){
   detailFooter(iss){
    const tel=phoneOf(iss.dept)||'054-679-6114';
    const canRemind=!!buildICS([iss]);
-   return `<div style="display:flex;gap:8px">
-     ${canRemind?`<button class="callbtn" id="remindBtn" style="flex:1;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔔 알림 받기</button>`:''}
-     <a class="callbtn" href="tel:${tel}" style="flex:1">📞 문의</a>
+   return `<div style="display:flex;flex-direction:column;gap:8px">
+     <div style="display:flex;gap:8px">
+      ${canRemind?`<button class="callbtn" id="remindBtn" style="flex:1;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔔 알림 받기</button>`:''}
+      <a class="callbtn" href="tel:${tel}" style="flex:1">📞 문의</a>
+     </div>
+     <button class="callbtn" id="shareBtn" style="background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔗 친구에게 공유하기</button>
    </div>`;
   },
   onFooterMount(iss,foot){
-   const b=foot.querySelector('#remindBtn'); if(!b)return;
-   b.onclick=()=>{
+   const b=foot.querySelector('#remindBtn');
+   if(b)b.onclick=()=>{
     if(!fav[iss._id]){fav[iss._id]={at:BW.ymd(new Date())};saveFav();BWUI.api.render()}  /* 알림 걸면 관심에도 담김 */
     calModal([iss],'봉화군_'+iss.title.replace(/[^가-힣0-9a-zA-Z]/g,'').slice(0,14));
    };
+   const sb=foot.querySelector('#shareBtn');
+   if(sb)sb.onclick=()=>shareIssue(iss);
   }
  });
 
- /* 카카오톡에서 [기본 브라우저로 열기]로 넘어온 경우 — 처음 화면이 아니라
-    방금 보던 안건(상세+알림 팝업)으로 바로 돌아간다. */
- const resumeIds=new URLSearchParams(location.search).get('remind');
+ /* 링크로 들어온 경우 처리 — 인트로를 건너뛰고 해당 안건으로 바로 간다. */
+ const params=new URLSearchParams(location.search);
+ const resumeIds=params.get('remind');   /* 카카오톡 → 기본 브라우저 전환(알림 팝업까지) */
+ const openId=params.get('item');         /* 친구가 보낸 공유 링크(상세만 열기) */
  if(resumeIds){
   history.replaceState(null,'',location.pathname);      /* 주소창은 깨끗하게 되돌려 둔다 */
   const targets=BWUI.api.issues.filter(i=>resumeIds.split(',').includes(i._id));
@@ -408,6 +448,11 @@ function init(){
   }else if(targets.length){
    calModal(targets,'봉화군_관심일정');
   }
+ }else if(openId){
+  history.replaceState(null,'',location.pathname);
+  const target=BWUI.api.issues.find(i=>i._id===openId);
+  if(target){ BWUI.api.openSheet(target); }        /* 공유받은 소식 바로 펼치기(알림·관심 강제 안 함) */
+  else{ BWUI.toast('공유된 소식을 찾지 못했어요 — 지난주 자료이거나 정보가 바뀌었을 수 있어요'); }
  }else{
   setupIntro();   /* 처음 들어왔을 때만 인트로를 보여준다 */
  }
