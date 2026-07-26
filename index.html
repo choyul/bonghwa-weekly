@@ -171,7 +171,15 @@ function init(){
   m.querySelector('#calCancel').onclick=close;
   m.onclick=e=>{if(e.target===m)close()};
   const ext=m.querySelector('#calExt');
-  if(ext)ext.onclick=()=>{location.href='kakaotalk://web/openExternal?url='+encodeURIComponent(location.href)};
+  /* 기본 브라우저로 열면 완전히 새 페이지로 뜬다 — 방금 보던 화면(이 안건)을
+     주소에 담아 보내서, 열리자마자 같은 자리(상세+알림 팝업)로 되돌아오게 한다.
+     즐겨찾기는 카카오톡 안 저장소에만 있어 새 브라우저로 안 넘어오므로,
+     안건 번호 자체를 실어 보낸다. */
+  if(ext)ext.onclick=()=>{
+   const url=new URL(location.pathname,location.origin);
+   url.searchParams.set('remind',list.map(i=>i._id).join(','));
+   location.href='kakaotalk://web/openExternal?url='+encodeURIComponent(url.href);
+  };
   m.querySelector('#calAdd').onclick=async()=>{
    const file=new File([ics],fname,{type:'text/calendar'});
    /* 1) 공유 시트 — 가장 매끄럽다. 눌러서 '캘린더'를 고르면 바로 추가된다. */
@@ -384,7 +392,23 @@ function init(){
   }
  });
 
- setupIntro();   /* 화면이 만들어진 뒤 인트로를 덮는다 */
+ /* 카카오톡에서 [기본 브라우저로 열기]로 넘어온 경우 — 처음 화면이 아니라
+    방금 보던 안건(상세+알림 팝업)으로 바로 돌아간다. */
+ const resumeIds=new URLSearchParams(location.search).get('remind');
+ if(resumeIds){
+  history.replaceState(null,'',location.pathname);      /* 주소창은 깨끗하게 되돌려 둔다 */
+  const targets=BWUI.api.issues.filter(i=>resumeIds.split(',').includes(i._id));
+  targets.forEach(i=>{ if(!fav[i._id])fav[i._id]={at:BW.ymd(new Date())} });  /* 이 브라우저에도 관심 표시를 맞춘다 */
+  if(targets.length)saveFav();
+  if(targets.length===1){
+   BWUI.api.openSheet(targets[0]);
+   calModal(targets,'봉화군_'+targets[0].title.replace(/[^가-힣0-9a-zA-Z]/g,'').slice(0,14));
+  }else if(targets.length){
+   calModal(targets,'봉화군_관심일정');
+  }
+ }else{
+  setupIntro();   /* 처음 들어왔을 때만 인트로를 보여준다 */
+ }
 }
 </script>
 </body>
