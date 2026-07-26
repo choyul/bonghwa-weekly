@@ -32,9 +32,10 @@ footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decorat
 .glist dt .gi{font-size:15px}
 .glist dd{margin:0;font-weight:600}
 
-/* ── 헤더 부제 + 오늘 날짜 ── */
+/* ── 헤더 부제 + 오늘 날짜 (자료 주차 줄은 달력 카드 타이틀로 옮겨 헤더에선 숨김) ── */
 .bw-sub{width:100%;font-size:13px;font-weight:600;opacity:.9;margin-top:3px}
 .bw-today{width:100%;font-size:13px;font-weight:700;margin-top:4px;opacity:.96}
+.bw-head .wk{display:none}
 
 /* ── 상단 주간 달력 (데이 스트립) + 주 네비게이터 + 기간 버튼 ── */
 .wstrip{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:12px 12px 10px;margin-bottom:12px}
@@ -53,9 +54,10 @@ footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decorat
 .ws-arrow:disabled{opacity:.28;cursor:default;color:var(--sub)}
 .wstrip .cal{border:none;background:transparent;padding:0;gap:4px}
 .wstrip .calday{position:relative;min-height:62px}
-/* 이번 달·전체 기간 모드: 주간 달력·화살표 숨기고 타이틀만 남긴다 */
-.wstrip.broad .ws-arrow,.wstrip.broad .ws-days{display:none}
-.wstrip.broad .ws-nav{margin-bottom:2px}
+/* 1개월 모드: 요일 달력만 숨김(화살표는 남겨 달 이동) / 전체 기간: 화살표도 숨김 */
+.wstrip.no-days .ws-days{display:none}
+.wstrip.no-days .ws-nav{margin-bottom:0}
+.wstrip.no-arrows .ws-arrow{display:none}
 .ws-dot{position:absolute;top:6px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--gold)}
 .calday.on .ws-dot{background:#fff}
 
@@ -396,12 +398,15 @@ function init(){
   };
  }
 
- /* ── 주 이동/달력 헬퍼 (onRender가 첫 렌더에서 참조하므로 BWUI.start 이전에 선언) ── */
+ /* ── 주/달 이동·달력 헬퍼 (onRender가 첫 렌더에서 참조하므로 BWUI.start 이전에 선언) ── */
  const WEEKS=D.weeks.slice();                 /* 자료가 있는 주차(월요일) 목록 */
+ const MONTHS=[...new Set(D.weeks.map(w=>w.slice(0,7)))].sort();   /* 자료가 있는 달 목록 */
  let VIEW_WEEK=D.weekStart;                    /* 지금 보고 있는 주(월요일) */
  const daysOf=mon=>{const s=BW.d2(mon),a=[];for(let i=0;i<7;i++){const d=new Date(s);d.setDate(s.getDate()+i);a.push(BW.ymd(d));}return a;};
  const cntOf=day=>BWUI.api.issues.filter(i=>i.list.some(o=>BW.coversDate(o.item,o.week,day))).length;
  const dLabel=day=>{const d=BW.d2(day);return `${d.getMonth()+1}월 ${d.getDate()}일(${BW.DOW[d.getDay()]})`;};
+ const rangeTitle=mon=>{const w=daysOf(mon),a=BW.d2(w[0]),b=BW.d2(w[6]);
+   return `${a.getFullYear()}. ${a.getMonth()+1}. ${a.getDate()}.(${BW.DOW[a.getDay()]}) ~ ${b.getMonth()+1}. ${b.getDate()}.(${BW.DOW[b.getDay()]})`;};
  const weekLabel=mon=>{const w=daysOf(mon),a=BW.d2(w[0]),b=BW.d2(w[6]);return `${a.getMonth()+1}월 ${a.getDate()}일 ~ ${b.getMonth()+1}월 ${b.getDate()}일`;};
 
  BWUI.start({
@@ -555,7 +560,7 @@ function init(){
     소식만 본다. 양쪽 화살표로 이전·다음 주 계획을 넘겨 본다.
     (WEEKS·VIEW_WEEK·daysOf·cntOf·dLabel·weekLabel 은 BWUI.start 앞에서 선언됨) */
  const CUR_MONTH=D.weekStart.slice(0,7);
- /* 기간 버튼은 '절대 기준' — 지난 주를 보고 있어도 항상 현재 주/달/전체로 간다 */
+ /* 기간 버튼 = 보기 단위 선택. 누르면 항상 '지금'(현재 주/달)으로 이동, 이동은 화살표가 맡는다 */
  function setScope(sc){
   const S=BWUI.api.state;
   if(sc==='month'){ S.scope='month'; S.month=CUR_MONTH; S.day=''; }
@@ -564,21 +569,27 @@ function init(){
   S.limit=60; BWUI.api.render();
  }
  function setDay(day){ const S=BWUI.api.state; S.scope='day'; S.day=day; S.month=day.slice(0,7); S.limit=60; BWUI.api.render(); }
- function gotoWeek(dir){
-  const i=WEEKS.indexOf(VIEW_WEEK), ni=i+dir;
-  if(ni<0||ni>=WEEKS.length)return;
-  VIEW_WEEK=WEEKS[ni];
-  const S=BWUI.api.state; S.scope='week'; S.week=VIEW_WEEK; S.month=VIEW_WEEK.slice(0,7); S.day=''; S.limit=60;
-  renderDayPills(); BWUI.api.render();
+ /* 화살표 = 현재 보기 단위대로 이동 (1주 모드→주 단위, 1개월 모드→달 단위) */
+ function navPeriod(dir){
+  const S=BWUI.api.state;
+  if(S.scope==='month'){
+   const i=MONTHS.indexOf(S.month), ni=i+dir;
+   if(ni<0||ni>=MONTHS.length)return;
+   S.month=MONTHS[ni]; S.day=''; S.limit=60; BWUI.api.render();
+  }else{
+   const i=WEEKS.indexOf(VIEW_WEEK), ni=i+dir;
+   if(ni<0||ni>=WEEKS.length)return;
+   VIEW_WEEK=WEEKS[ni]; S.scope='week'; S.week=VIEW_WEEK; S.month=VIEW_WEEK.slice(0,7); S.day=''; S.limit=60;
+   renderDayPills(); BWUI.api.render();
+  }
  }
- /* 달력 카드 맨 위 타이틀 = 지금 고른 기간과 동기화
-    (이번 주 → 몇 주차 / 이번 달 → N월 / 전체 → 전체 기간 / 날짜 → 그 날) */
+ /* 달력 카드 맨 위 타이틀 = 지금 고른 조회 기간 (날짜 선택 시 그 날로 바뀐다) */
  function calTitle(){
   const S=BWUI.api.state;
-  if(S.scope==='day')return dLabel(S.day);
+  if(S.scope==='day'){const d=BW.d2(S.day);return `${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.(${BW.DOW[d.getDay()]})`;}
   if(S.scope==='month'){const[y,m]=S.month.split('-');return `${+y}년 ${+m}월`;}
-  if(S.scope==='all')return '전체 기간 · 지난 1년';
-  return BW.weekKo(VIEW_WEEK);
+  if(S.scope==='all')return '전체 기간';
+  return rangeTitle(VIEW_WEEK);
  }
  function renderDayPills(){
   const host=document.getElementById('wsDays'); if(!host)return;
@@ -596,21 +607,21 @@ function init(){
   const chevR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>';
   const box=document.createElement('div'); box.id='wstrip'; box.className='wstrip';
   box.innerHTML=`
-    <div class="ws-scopes" id="wsScopes">
-      <button type="button" data-sc="week">이번 주</button>
-      <button type="button" data-sc="month">이번 달</button>
-      <button type="button" data-sc="all">전체 기간</button>
-    </div>
     <div class="ws-nav">
-      <button type="button" class="ws-arrow ws-prev" aria-label="이전 주">${chevL}</button>
+      <button type="button" class="ws-arrow ws-prev" aria-label="이전">${chevL}</button>
       <div class="ws-title" id="wsTitle"></div>
-      <button type="button" class="ws-arrow ws-next" aria-label="다음 주">${chevR}</button>
+      <button type="button" class="ws-arrow ws-next" aria-label="다음">${chevR}</button>
+    </div>
+    <div class="ws-scopes" id="wsScopes">
+      <button type="button" data-sc="week">1주</button>
+      <button type="button" data-sc="month">1개월</button>
+      <button type="button" data-sc="all">전체 기간</button>
     </div>
     <div class="cal ws-days" id="wsDays"></div>`;
   wrap.insertBefore(box,wrap.firstChild);
   box.querySelectorAll('#wsScopes button').forEach(b=>b.onclick=()=>setScope(b.dataset.sc));
-  box.querySelector('.ws-prev').onclick=()=>gotoWeek(-1);
-  box.querySelector('.ws-next').onclick=()=>gotoWeek(1);
+  box.querySelector('.ws-prev').onclick=()=>navPeriod(-1);
+  box.querySelector('.ws-next').onclick=()=>navPeriod(1);
   renderDayPills();
  }
 
@@ -653,21 +664,23 @@ function init(){
  function syncTopControls(){
   const S=BWUI.api.state, strip=document.getElementById('wstrip');
   if(strip){
-   /* 주간 달력(요일·화살표)은 '이번 주'(주·날짜) 모드에서만 — 이번 달·전체 땐 숨긴다 */
-   strip.classList.toggle('broad', S.scope==='month'||S.scope==='all');
+   /* 주간 달력(요일)은 1주·날짜 모드에서만. 화살표는 1주·1개월에서 보이고 전체 기간엔 숨긴다 */
+   strip.classList.toggle('no-days', S.scope==='month'||S.scope==='all');
+   strip.classList.toggle('no-arrows', S.scope==='all');
    const ti=strip.querySelector('#wsTitle'); if(ti)ti.textContent=calTitle();
    const host=strip.querySelector('#wsDays'); if(host&&host.dataset.week!==VIEW_WEEK)renderDayPills();
-   /* 기간 버튼은 절대 기준으로 켠다 — 지난 주를 보고 있으면 '이번 주'는 꺼진다 */
+   /* 버튼은 '보기 단위'로 켠다 — 지난 주/달을 넘겨 봐도 그 단위 버튼이 켜진 채 타이틀만 바뀐다 */
    strip.querySelectorAll('#wsScopes button').forEach(b=>{
-    const on=(b.dataset.sc==='week'&&S.scope==='week'&&VIEW_WEEK===D.weekStart)
-          || (b.dataset.sc==='month'&&S.scope==='month'&&S.month===CUR_MONTH)
+    const on=(b.dataset.sc==='week'&&(S.scope==='week'||S.scope==='day'))
+          || (b.dataset.sc==='month'&&S.scope==='month')
           || (b.dataset.sc==='all'&&S.scope==='all');
     b.classList.toggle('on',on);
    });
    strip.querySelectorAll('.calday').forEach(b=>b.classList.toggle('on',S.scope==='day'&&b.dataset.day===S.day));
-   const i=WEEKS.indexOf(VIEW_WEEK);
+   /* 화살표 끝단 처리 — 1개월 모드면 달 목록, 아니면 주 목록 기준 */
    const pv=strip.querySelector('.ws-prev'), nx=strip.querySelector('.ws-next');
-   if(pv)pv.disabled=i<=0; if(nx)nx.disabled=i>=WEEKS.length-1;
+   if(S.scope==='month'){ const i=MONTHS.indexOf(S.month); if(pv)pv.disabled=i<=0; if(nx)nx.disabled=i>=MONTHS.length-1; }
+   else { const i=WEEKS.indexOf(VIEW_WEEK); if(pv)pv.disabled=i<=0; if(nx)nx.disabled=i>=WEEKS.length-1; }
   }
   syncSearchCard();
   const listh=document.querySelector('#bwInfo .listh');
