@@ -32,6 +32,34 @@ footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decorat
 .glist dt .gi{font-size:15px}
 .glist dd{margin:0;font-weight:600}
 
+/* ── 접이식 검색 (네이버페이식) — 접힌 바를 누르면 아래로 펼쳐져 기간·키워드 선택 ── */
+.searchbar{display:none}   /* 기본 검색창은 숨기고 아래 카드로 대체 */
+.psearch{border:1px solid var(--line);border-radius:14px;background:var(--paper);
+ margin-bottom:12px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.psearch.open{border-color:var(--acc);box-shadow:0 0 0 3px var(--bh-primary-tint,var(--acc-soft))}
+.ps-bar{width:100%;display:flex;align-items:center;gap:10px;min-height:54px;padding:13px 15px;
+ background:transparent;border:none;cursor:pointer;text-align:left;font:inherit}
+.ps-mag{width:21px;height:21px;color:var(--sub);flex:none}
+.psearch.open .ps-mag{color:var(--acc)}
+.ps-text{flex:1;min-width:0;color:var(--sub);font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ps-text.has{color:var(--ink);font-weight:600}
+.ps-pill{flex:none;font-size:12.5px;font-weight:700;color:var(--acc);background:var(--acc-soft);border-radius:999px;padding:5px 11px}
+.ps-panel{max-height:0;overflow:hidden;padding:0 15px;transition:max-height .32s var(--bh-ease,ease),padding .32s var(--bh-ease,ease)}
+.psearch.open .ps-panel{max-height:460px;padding:2px 15px 15px}
+.ps-input{width:100%;min-height:50px;padding:13px 14px;border:1px solid var(--line);border-radius:11px;
+ background:var(--bg);color:var(--ink);font-size:16px}
+.ps-input:focus{outline:none;border-color:var(--acc);background:var(--paper);box-shadow:0 0 0 3px var(--bh-primary-tint,var(--acc-soft))}
+.ps-lab{margin:16px 2px 8px;font-size:13px;font-weight:700;color:var(--sub)}
+.ps-scopes{display:flex;gap:8px}
+.ps-scopes button{flex:1;min-height:48px;border:1px solid var(--line);border-radius:11px;background:var(--paper);
+ color:var(--ink);font-size:14.5px;font-weight:600;cursor:pointer;transition:all var(--bh-dur,180ms) var(--bh-ease,ease)}
+.ps-scopes button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.ps-actions{display:flex;gap:8px;margin-top:15px}
+.ps-reset{flex:none;min-width:90px;min-height:52px;border:1px solid var(--line);border-radius:12px;
+ background:var(--paper);color:var(--sub);font-size:15px;font-weight:600;cursor:pointer}
+.ps-go{flex:1;min-height:52px;border:none;border-radius:12px;background:var(--acc);color:#fff;
+ font-size:16px;font-weight:800;cursor:pointer;box-shadow:var(--bh-shadow-cta,0 8px 22px rgba(31,75,63,.28))}
+
 /* ── 첫 화면 인트로 (마스코트 인사 → 헤더로 올라감) ── */
 #intro{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;
  align-items:center;justify-content:center;text-align:center;padding:24px;overflow:hidden}
@@ -322,7 +350,9 @@ function init(){
   showAppearance:false,      /* 등장 기준 추정치는 내보내지 않음 (§8.2) */
   showSimilar:false,
   showHistory:false,
-  hideTiles:true,            /* '언제'는 달력이 맡는다 */
+  hideTiles:true,            /* '언제'는 아래 접이식 검색의 기간 선택이 맡는다 */
+  showCalendar:false,        /* 달력 대신 검색바 안의 기간 버튼(이번 주·이번 달·전체)으로 대체 */
+  onRender(){ syncSearchCard(); },   /* 필터가 바뀔 때마다 검색카드 상태를 맞춘다 */
   hideDeptTag:true,          /* 군민은 어느 과인지로 고르지 않는다 — 문의할 때만 필요 */
   /* 카드 태그도 위 '주제' 축과 같은 분류를 쓴다 */
   typeTag:iss=>({v:tag(iss).topics[0], label:tag(iss).topics[0], axis:'topic'}),
@@ -444,6 +474,64 @@ function init(){
    if(sb)sb.onclick=()=>shareIssue(iss);
   }
  });
+
+ /* ── 접이식 검색 카드 (네이버페이식) ──
+    접힌 바 → 탭 → 아래로 펼쳐져 키워드 + 기간(이번 주·이번 달·전체) 선택 → 조회.
+    달력을 없앤 대신 '언제'를 여기 기간 버튼이 맡는다. */
+ const WEEK_MONTH=D.weekStart.slice(0,7);
+ function setScope(sc){
+  const S=BWUI.api.state;
+  if(sc==='month'){ S.scope='month'; S.month=WEEK_MONTH; S.day=''; }
+  else if(sc==='all'){ S.scope='all'; S.day=''; }
+  else { S.scope='week'; S.month=WEEK_MONTH; S.day=''; }
+  S.limit=60; BWUI.api.render();
+ }
+ function syncSearchCard(){
+  const card=document.getElementById('psearch'); if(!card)return;
+  const S=BWUI.api.state;
+  const sc=S.scope==='month'?'month':(S.scope==='week'?'week':'all');
+  card.querySelectorAll('#psScopes button').forEach(b=>b.classList.toggle('on',b.dataset.sc===sc));
+  card.querySelector('#psPill').textContent=sc==='month'?'이번 달':sc==='all'?'전체 기간':'이번 주';
+  const text=card.querySelector('#psText');
+  if(S.q){ text.textContent='“'+S.q+'”'; text.classList.add('has'); }
+  else { text.textContent='궁금한 일을 검색해 보세요 (축제, 도로, 교육)'; text.classList.remove('has'); }
+  const input=card.querySelector('#psInput');
+  if(document.activeElement!==input && input.value!==(S.q||'')) input.value=S.q||'';
+ }
+ function buildSearchCard(){
+  const wrap=document.querySelector('.bw-wrap'); if(!wrap||document.getElementById('psearch'))return;
+  const card=document.createElement('div'); card.className='psearch'; card.id='psearch';
+  card.innerHTML=`
+    <button type="button" class="ps-bar" id="psBar">
+      <svg class="ps-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <span class="ps-text" id="psText">궁금한 일을 검색해 보세요 (축제, 도로, 교육)</span>
+      <span class="ps-pill" id="psPill">이번 주</span>
+    </button>
+    <div class="ps-panel" id="psPanel">
+      <input type="search" class="ps-input" id="psInput" enterkeyhint="search" placeholder="궁금한 일을 검색해 보세요 (축제, 도로, 교육)">
+      <div class="ps-lab">검색 기간</div>
+      <div class="ps-scopes" id="psScopes">
+        <button type="button" data-sc="week">이번 주</button>
+        <button type="button" data-sc="month">이번 달</button>
+        <button type="button" data-sc="all">전체 기간</button>
+      </div>
+      <div class="ps-actions">
+        <button type="button" class="ps-reset" id="psReset">초기화</button>
+        <button type="button" class="ps-go" id="psGo">조회하기</button>
+      </div>
+    </div>`;
+  wrap.insertBefore(card,wrap.firstChild);
+  const S=BWUI.api.state, input=card.querySelector('#psInput');
+  const setOpen=o=>{ card.classList.toggle('open',o); if(o){ input.value=S.q||''; setTimeout(()=>input.focus(),80); } };
+  card.querySelector('#psBar').onclick=()=>setOpen(!card.classList.contains('open'));
+  let t; input.oninput=()=>{ clearTimeout(t); t=setTimeout(()=>{ S.q=input.value.trim(); S.limit=60; BWUI.api.render(); },180); };
+  input.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); clearTimeout(t); S.q=input.value.trim(); BWUI.api.render(); setOpen(false); } };
+  card.querySelectorAll('#psScopes button').forEach(b=>b.onclick=()=>setScope(b.dataset.sc));
+  card.querySelector('#psGo').onclick=()=>{ clearTimeout(t); S.q=input.value.trim(); BWUI.api.render(); setOpen(false); };
+  card.querySelector('#psReset').onclick=()=>{ input.value=''; S.q=''; setScope('week'); };
+  syncSearchCard();
+ }
+ buildSearchCard();
 
  /* 링크로 들어온 경우 처리 — 인트로를 건너뛰고 해당 안건으로 바로 간다.
     코드는 짧은 해시(i·r)를 쓰되, 예전 긴 링크(item·remind, 전체 안건번호)도 계속 열리게 둔다. */
