@@ -22,6 +22,8 @@ footer{max-width:1100px;margin:0 auto;padding:18px 16px 46px;color:var(--sub);fo
 </head>
 <body>
 <footer>
+ <b>🔔 알림 받기</b> — 관심 있는 일에 ☆를 누른 뒤 위 [🔔 알림받기]를 누르면
+ 휴대폰 캘린더에 담깁니다. 그러면 날짜 전에 휴대폰이 알아서 알려 줍니다.<br><br>
  이 정보는 봉화군 홈페이지에 공개된 주간업무 계획을 바탕으로 합니다.
  계획 단계의 내용이므로 실제 일정과 장소가 달라질 수 있습니다.
  참여하시기 전에 담당 부서로 한 번 확인해 주세요.
@@ -52,6 +54,66 @@ function init(){
   return iss._cls;
  };
 
+ /* ── 관심 업무 → 휴대폰 캘린더 알림 ──
+    서버가 없어 앱이 직접 알림을 못 보내므로, 일정을 알림과 함께 캘린더에 넣어
+    휴대폰 캘린더가 대신 알려주게 한다(.ics 파일). 개인정보·계정 없이 동작. */
+ const pad=n=>String(n).padStart(2,'0');
+ /* 안건별 고정 UID — 제목이 전부 한글이어도 겹치지 않게 해시로 만든다.
+    같은 안건은 늘 같은 UID라, 다시 담아도 캘린더에 중복 생성되지 않는다. */
+ const uidHash=s=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return(h>>>0).toString(36)};
+ const icsD=ymd=>ymd.replace(/-/g,'');
+ const icsEsc=s=>String(s).replace(/\\/g,'\\\\').replace(/[;,]/g,m=>'\\'+m).replace(/\n/g,'\\n');
+ const icsStamp=()=>{const d=new Date();return ''+d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+'T'+pad(d.getUTCHours())+pad(d.getUTCMinutes())+pad(d.getUTCSeconds())+'Z'};
+ function timeOf(item){
+  for(const l of item.lines){const m=l.txt.match(/(\d{1,2})\s*:\s*(\d{2})/);if(/일\s*시/.test(l.txt)&&m)return{h:+m[1],mi:+m[2]}}
+  return null;
+ }
+ function icsEvent(iss){
+  const c=tag(iss), r=BW.parseDateRange(c.item,c.week);
+  if(!r||!r.start)return null;
+  const today=BW.ymd(new Date()), end=r.end||r.start;
+  if(end<today)return null;                          /* 이미 지난 일정은 알림 무의미 */
+  const placeLine=c.item.lines.find(l=>/^(장\s*소|위\s*치)/.test(l.txt));
+  const loc=placeLine?placeLine.txt.replace(/^[^:：]*[:：]\s*/,'').trim():c.regions.filter(x=>x!=='공통').join(', ');
+  const t=timeOf(c.item);
+  const L=['BEGIN:VEVENT','UID:bh'+uidHash(iss._id)+'@bonghwa','DTSTAMP:'+icsStamp()];
+  let alarms;
+  if(t){
+   L.push('DTSTART:'+icsD(r.start)+'T'+pad(t.h)+pad(t.mi)+'00');
+   const ed=new Date(BW.d2(r.start).getFullYear(),BW.d2(r.start).getMonth(),BW.d2(r.start).getDate(),t.h+1,t.mi);
+   L.push('DTEND:'+icsD(BW.ymd(ed))+'T'+pad(ed.getHours())+pad(ed.getMinutes())+'00');
+   alarms=['-P1D','-PT2H'];                          /* 하루 전 · 2시간 전 */
+  }else{
+   L.push('DTSTART;VALUE=DATE:'+icsD(r.start),'DTEND;VALUE=DATE:'+icsD(BW.ymd(BW.addD(BW.d2(end),1))));
+   alarms=['-PT15H'];                                /* 종일 → 전날 오전 9시쯤 */
+  }
+  L.push('SUMMARY:'+icsEsc('[봉화군] '+iss.title));
+  if(loc)L.push('LOCATION:'+icsEsc(loc));
+  L.push('DESCRIPTION:'+icsEsc(iss.dept+' · 봉화군 주간업무 안내\n계획 단계 정보라 실제 일정과 다를 수 있습니다.'));
+  alarms.forEach(tr=>L.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(iss.title),'TRIGGER:'+tr,'END:VALARM'));
+  L.push('END:VEVENT');
+  return L.join('\r\n');
+ }
+ function buildICS(list){
+  const evs=list.map(icsEvent).filter(Boolean);
+  if(!evs.length)return null;
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Bonghwa//weekly//KO','CALSCALE:GREGORIAN',...evs,'END:VCALENDAR'].join('\r\n');
+ }
+ function downloadICS(text,name){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type:'text/calendar;charset=utf-8'}));
+  a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+ }
+ function remindFav(){
+  const favIss=BWUI.api.issues.filter(i=>fav[i._id]);
+  if(!favIss.length){BWUI.toast('관심 업무를 먼저 담아 주세요 (☆)');return}
+  const ics=buildICS(favIss);
+  if(!ics){BWUI.toast('알림 받을 일정이 없어요 — 날짜가 지났거나 정해지지 않았습니다');return}
+  downloadICS(ics,'봉화군_관심일정.ics');
+  BWUI.toast('캘린더 파일을 받았어요 — 열어서 추가하면 날짜 전에 알림이 옵니다');
+ }
+
  BWUI.start({
   role:'public', title:'당신의 봉화',
   searchPlaceholder:'궁금한 일을 검색해 보세요 (예: 축제, 도로, 교육)',
@@ -69,7 +131,10 @@ function init(){
   /* 군민이 참여할 수 있는 일부터 위로 */
   sortWith:(a,b)=>tag(b).score-tag(a).score,
 
-  headerButtons:[{label:'⭐ 관심',on(){BWUI.api.setCustom('fav')}}],
+  headerButtons:[
+   {label:'⭐ 관심',on(){BWUI.api.setCustom('fav')}},
+   {label:'🔔 알림받기',on:remindFav}
+  ],
   customFilters:{fav:{label:'관심 업무만',fn:iss=>!!fav[iss._id]}},
 
   /* ── 세 갈래로 좁혀 가기 (언제는 위 달력이 맡는다) ──
@@ -160,10 +225,20 @@ function init(){
   },
 
   detailFooter(iss){
-   const tel=phoneOf(iss.dept);
-   return tel
-    ? `<a class="callbtn" href="tel:${tel}">📞 ${E(iss.dept)}에 물어보기 ${tel}</a>`
-    : `<a class="callbtn" href="tel:054-679-6114">📞 ${E(iss.dept)}에 물어보기 (군청 054-679-6114)</a>`;
+   const tel=phoneOf(iss.dept)||'054-679-6114';
+   const canRemind=!!buildICS([iss]);
+   return `<div style="display:flex;gap:8px">
+     ${canRemind?`<button class="callbtn" id="remindBtn" style="flex:1;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔔 알림 받기</button>`:''}
+     <a class="callbtn" href="tel:${tel}" style="flex:1">📞 문의</a>
+   </div>`;
+  },
+  onFooterMount(iss,foot){
+   const b=foot.querySelector('#remindBtn'); if(!b)return;
+   b.onclick=()=>{
+    if(!fav[iss._id]){fav[iss._id]={at:BW.ymd(new Date())};saveFav();BWUI.api.render()}  /* 알림 걸면 관심에도 담김 */
+    downloadICS(buildICS([iss]),'봉화군_'+iss.title.replace(/[^가-힣0-9a-zA-Z]/g,'').slice(0,14)+'.ics');
+    BWUI.toast('캘린더 파일을 받았어요 — 열어서 추가하면 날짜 전에 알림이 옵니다');
+   };
   }
  });
 }
