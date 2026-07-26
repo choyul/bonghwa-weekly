@@ -36,19 +36,22 @@ footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decorat
 .bw-sub{width:100%;font-size:13px;font-weight:600;opacity:.9;margin-top:3px}
 .bw-today{width:100%;font-size:13px;font-weight:700;margin-top:4px;opacity:.96}
 
-/* ── 상단 주간 달력 (데이 스트립) + 주 이동 + 기간 버튼 ── */
+/* ── 상단 주간 달력 (데이 스트립) + 주 네비게이터 + 기간 버튼 ── */
 .wstrip{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:12px 12px 10px;margin-bottom:12px}
-.ws-title{font-size:15px;font-weight:800;color:var(--ink);letter-spacing:-.01em;padding:0 2px 2px;text-align:center}
-.ws-scopes{display:flex;gap:6px;margin:10px 0 9px}
+.ws-scopes{display:flex;gap:6px;margin-bottom:12px}
 .ws-scopes button{flex:1;min-height:42px;border:1px solid var(--line);border-radius:10px;background:var(--paper);
  color:var(--ink);font-size:14px;font-weight:600;cursor:pointer;transition:all var(--bh-dur,180ms) var(--bh-ease,ease)}
 .ws-scopes button.on{background:var(--acc);border-color:var(--acc);color:#fff}
-.ws-navrow{display:flex;align-items:stretch;gap:2px}
-.ws-nav{flex:none;width:30px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--acc);
- cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
-.ws-nav svg{width:20px;height:20px}
-.ws-nav:disabled{opacity:.28;cursor:default;color:var(--sub)}
-.wstrip .cal{flex:1;min-width:0;border:none;background:transparent;padding:0;gap:3px}
+/* 주 네비게이터: ◀  7월 27일 ~ 8월 2일  ▶ */
+.ws-nav{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ws-title{flex:1;text-align:center;font-size:15px;font-weight:800;color:var(--ink);letter-spacing:-.01em}
+.ws-arrow{flex:none;width:36px;height:36px;border:1px solid var(--line);border-radius:10px;background:var(--paper);
+ color:var(--acc);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;
+ transition:background var(--bh-dur,180ms) var(--bh-ease,ease)}
+.ws-arrow:hover:not(:disabled){background:var(--acc-soft)}
+.ws-arrow svg{width:20px;height:20px}
+.ws-arrow:disabled{opacity:.28;cursor:default;color:var(--sub)}
+.wstrip .cal{border:none;background:transparent;padding:0;gap:4px}
 .wstrip .calday{position:relative;min-height:62px}
 .ws-dot{position:absolute;top:6px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--gold)}
 .calday.on .ws-dot{background:#fff}
@@ -269,30 +272,58 @@ function init(){
   url.searchParams.set('i',uidHash(iss._id));   /* 한글 안건번호 대신 짧은 코드 — 링크가 길어지지 않게 */
   return url.href;
  }
- function copyLink(u){
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-   navigator.clipboard.writeText(u).then(
-    ()=>BWUI.toast('링크를 복사했어요 — 붙여넣기로 전달하세요'),
-    ()=>window.prompt('아래 링크를 복사해 전달하세요',u));
-  }else{ window.prompt('아래 링크를 복사해 전달하세요',u); }
+ /* 복사 — 최신 클립보드 API가 막히면(카카오톡 인앱 등) execCommand로 대체 */
+ function fallbackCopy(t){
+  try{
+   const ta=document.createElement('textarea'); ta.value=t; ta.readOnly=true;
+   ta.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+   document.body.appendChild(ta); ta.focus(); ta.select();
+   try{ta.setSelectionRange(0,t.length)}catch(e){}
+   const ok=document.execCommand('copy'); document.body.removeChild(ta); return ok;
+  }catch(e){ return false; }
+ }
+ function copyText(t){
+  if(navigator.clipboard&&navigator.clipboard.writeText)
+   return navigator.clipboard.writeText(t).then(()=>true,()=>fallbackCopy(t));
+  return Promise.resolve(fallbackCopy(t));
+ }
+ /* 공유 미지원(카카오톡 인앱 브라우저 등)일 때 뜨는 링크 복사 모달 — 항상 동작 */
+ function shareModal(url){
+  let m=document.getElementById('shareModal');
+  if(!m){m=document.createElement('div');m.id='shareModal';m.className='modal';document.body.appendChild(m)}
+  m.innerHTML=`<div class="mbox">
+    <h2>친구에게 공유</h2>
+    <div class="note">아래 링크를 복사해 <b>카카오톡·문자에 붙여넣어</b> 보내면, 친구가 이 소식을 바로 볼 수 있어요.</div>
+    <div style="padding:4px 18px 2px"><input id="shareUrl" class="ps-input" readonly value="${E(url)}"></div>
+    <div style="padding:8px 18px 2px"><button class="callbtn" id="shareCopy" style="width:100%">🔗 링크 복사하기</button></div>
+    ${isKakao?`<div class="note" style="padding-top:8px">잘 안 되면 카카오톡 오른쪽 위 <b>메뉴 → 공유</b>를 눌러도 됩니다.</div>`:''}
+    <div class="mfoot"><span style="flex:1"></span><button id="shareClose">닫기</button></div>
+  </div>`;
+  m.classList.add('open');
+  const close=()=>m.classList.remove('open');
+  m.querySelector('#shareClose').onclick=close;
+  m.onclick=e=>{if(e.target===m)close()};
+  const inp=m.querySelector('#shareUrl'); inp.onclick=()=>{inp.focus();inp.select()};
+  m.querySelector('#shareCopy').onclick=()=>{
+   copyText(url).then(ok=>{ BWUI.toast(ok?'링크를 복사했어요 — 대화창에 붙여넣어 보내세요':'아래 링크를 길게 눌러 복사해 주세요'); if(ok)close(); });
+  };
  }
  function shareIssue(iss){
   const url=shareUrlOf(iss);
   const r=BW.parseDateRange(tag(iss).item,tag(iss).week);
   let when='';
   if(r&&r.start){const s=BW.d2(r.start);when=`${s.getMonth()+1}월 ${s.getDate()}일 · `}
-  const text=`[봉화군 이번 주 소식] ${iss.title}\n${when}자세히 보기 👇`;
+  const text=`[봉화의 오늘] ${iss.title}\n${when}자세히 보기 👇`;
   const data={title:'봉화의 오늘',text,url};
-  /* 휴대폰은 OS 공유 시트(카카오톡·문자·메일 등)를 띄운다.
-     canShare로 가능 여부를 먼저 확인하고, 안 되는 기기(구형·일부 PC)만 링크 복사로 넘어간다. */
+  /* 휴대폰 기본 브라우저는 OS 공유 시트, 카카오톡 인앱 등 미지원이면 링크 복사 모달 */
   if(navigator.share && (!navigator.canShare || navigator.canShare(data))){
    navigator.share(data).catch(err=>{
     if(err&&err.name==='AbortError')return;   /* 사용자가 시트를 닫음 — 조용히 */
-    copyLink(url);                            /* 공유가 실패한 기기만 복사로 대체 */
+    shareModal(url);                          /* 공유가 실패한 경우 복사 모달로 대체 */
    });
    return;
   }
-  copyLink(url);
+  shareModal(url);   /* navigator.share 자체가 없으면(카카오톡 인앱 등) 바로 복사 모달 */
  }
 
  /* ── 봉화 마스코트 (사과+잎, 반짝이는 눈) — 인트로와 헤더가 함께 쓴다 ── */
@@ -520,11 +551,13 @@ function init(){
     보고 있는 주(VIEW_WEEK)의 7일을 늘어놓고, 날짜를 누르면 그날 '진행 중'(진행기간 포함)인
     소식만 본다. 양쪽 화살표로 이전·다음 주 계획을 넘겨 본다.
     (WEEKS·VIEW_WEEK·daysOf·cntOf·dLabel·weekLabel 은 BWUI.start 앞에서 선언됨) */
+ const CUR_MONTH=D.weekStart.slice(0,7);
+ /* 기간 버튼은 '절대 기준' — 지난 주를 보고 있어도 항상 현재 주/달/전체로 간다 */
  function setScope(sc){
   const S=BWUI.api.state;
-  if(sc==='month'){ S.scope='month'; S.month=VIEW_WEEK.slice(0,7); S.day=''; }
+  if(sc==='month'){ S.scope='month'; S.month=CUR_MONTH; S.day=''; }
   else if(sc==='all'){ S.scope='all'; S.day=''; }
-  else { S.scope='week'; S.week=VIEW_WEEK; S.month=VIEW_WEEK.slice(0,7); S.day=''; }
+  else { VIEW_WEEK=D.weekStart; S.scope='week'; S.week=VIEW_WEEK; S.month=CUR_MONTH; S.day=''; renderDayPills(); }
   S.limit=60; BWUI.api.render();
  }
  function setDay(day){ const S=BWUI.api.state; S.scope='day'; S.day=day; S.month=day.slice(0,7); S.limit=60; BWUI.api.render(); }
@@ -532,16 +565,11 @@ function init(){
   const i=WEEKS.indexOf(VIEW_WEEK), ni=i+dir;
   if(ni<0||ni>=WEEKS.length)return;
   VIEW_WEEK=WEEKS[ni];
-  renderDayPills();
-  setScope('week');   /* 새 주로 옮기면 그 주 전체를 본다 */
+  const S=BWUI.api.state; S.scope='week'; S.week=VIEW_WEEK; S.month=VIEW_WEEK.slice(0,7); S.day=''; S.limit=60;
+  renderDayPills(); BWUI.api.render();
  }
- function calTitle(){
-  const S=BWUI.api.state;
-  if(S.scope==='day')return dLabel(S.day);
-  if(S.scope==='month'){const[y,m]=S.month.split('-');return `${+y}년 ${+m}월`;}
-  if(S.scope==='all')return '전체 기간 · 지난 1년';
-  return weekLabel(VIEW_WEEK)+(VIEW_WEEK===D.weekStart?' · 이번 주':'');
- }
+ /* 달력 카드 맨 위 타이틀 = 지금 보고 있는 주 범위(주 네비게이터 라벨) */
+ function calTitle(){ return weekLabel(VIEW_WEEK); }
  function renderDayPills(){
   const host=document.getElementById('wsDays'); if(!host)return;
   const today=BWUI.api.today;
@@ -558,17 +586,17 @@ function init(){
   const chevR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>';
   const box=document.createElement('div'); box.id='wstrip'; box.className='wstrip';
   box.innerHTML=`
-    <div class="ws-title" id="wsTitle"></div>
     <div class="ws-scopes" id="wsScopes">
       <button type="button" data-sc="week">이번 주</button>
       <button type="button" data-sc="month">이번 달</button>
       <button type="button" data-sc="all">전체 기간</button>
     </div>
-    <div class="ws-navrow">
-      <button type="button" class="ws-nav ws-prev" aria-label="이전 주">${chevL}</button>
-      <div class="cal ws-days" id="wsDays"></div>
-      <button type="button" class="ws-nav ws-next" aria-label="다음 주">${chevR}</button>
-    </div>`;
+    <div class="ws-nav">
+      <button type="button" class="ws-arrow ws-prev" aria-label="이전 주">${chevL}</button>
+      <div class="ws-title" id="wsTitle"></div>
+      <button type="button" class="ws-arrow ws-next" aria-label="다음 주">${chevR}</button>
+    </div>
+    <div class="cal ws-days" id="wsDays"></div>`;
   wrap.insertBefore(box,wrap.firstChild);
   box.querySelectorAll('#wsScopes button').forEach(b=>b.onclick=()=>setScope(b.dataset.sc));
   box.querySelector('.ws-prev').onclick=()=>gotoWeek(-1);
@@ -617,7 +645,13 @@ function init(){
   if(strip){
    const ti=strip.querySelector('#wsTitle'); if(ti)ti.textContent=calTitle();
    const host=strip.querySelector('#wsDays'); if(host&&host.dataset.week!==VIEW_WEEK)renderDayPills();
-   strip.querySelectorAll('#wsScopes button').forEach(b=>b.classList.toggle('on',b.dataset.sc===S.scope));
+   /* 기간 버튼은 절대 기준으로 켠다 — 지난 주를 보고 있으면 '이번 주'는 꺼진다 */
+   strip.querySelectorAll('#wsScopes button').forEach(b=>{
+    const on=(b.dataset.sc==='week'&&S.scope==='week'&&VIEW_WEEK===D.weekStart)
+          || (b.dataset.sc==='month'&&S.scope==='month'&&S.month===CUR_MONTH)
+          || (b.dataset.sc==='all'&&S.scope==='all');
+    b.classList.toggle('on',on);
+   });
    strip.querySelectorAll('.calday').forEach(b=>b.classList.toggle('on',S.scope==='day'&&b.dataset.day===S.day));
    const i=WEEKS.indexOf(VIEW_WEEK);
    const pv=strip.querySelector('.ws-prev'), nx=strip.querySelector('.ws-next');
