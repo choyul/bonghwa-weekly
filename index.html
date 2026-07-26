@@ -105,13 +105,52 @@ function init(){
   a.download=name;document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href),2000);
  }
+ /* 파일을 '어디 저장됐는지 모르게' 내려받는 대신, 팝업을 띄우고
+    한 번 눌러 바로 캘린더에 추가되게 한다. 카카오톡 인앱 브라우저는
+    다운로드가 잘 안 보이므로 '기본 브라우저로 열기'를 함께 안내한다. */
+ const UA=navigator.userAgent;
+ const inApp=/KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\//i.test(UA);
+ const isKakao=/KAKAOTALK/i.test(UA);
+
+ function calModal(list,base){
+  const events=list.map(icsEvent).filter(Boolean);
+  if(!events.length){BWUI.toast('알림 받을 일정이 없어요 — 날짜가 지났거나 정해지지 않았습니다');return}
+  const ics=buildICS(list), fname=base+'.ics';
+  let m=document.getElementById('calModal');
+  if(!m){m=document.createElement('div');m.id='calModal';m.className='modal';document.body.appendChild(m)}
+  m.innerHTML=`<div class="mbox">
+    <h2>휴대폰 캘린더에 추가</h2>
+    <div class="note">관심 일정 <b>${events.length}개</b>를 캘린더에 담아요.
+      추가하면 <b>날짜 전에 휴대폰이 알림</b>을 줍니다. (기존 일정은 그대로예요)</div>
+    <div style="padding:8px 18px 2px"><button class="callbtn" id="calAdd" style="width:100%">📅 캘린더에 추가하기</button></div>
+    ${inApp?`<div class="note" style="color:#8a4b3b;padding-top:8px">
+       ${isKakao?'카카오톡 화면에서는 캘린더 추가가 막힐 수 있어요. 아래 <b>[기본 브라우저로 열기]</b>를 누른 뒤 다시 시도해 주세요.'
+                :'앱 안에서는 막힐 수 있어요. 오른쪽 위 메뉴 → <b>‘다른 브라우저로 열기’</b> 후 다시 시도해 주세요.'}</div>
+       ${isKakao?`<div style="padding:4px 18px 0"><button class="callbtn" id="calExt" style="width:100%;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🌐 기본 브라우저로 열기</button></div>`:''}`:''}
+    <div class="mfoot"><span style="flex:1"></span><button id="calCancel">닫기</button></div>
+  </div>`;
+  m.classList.add('open');
+  const close=()=>m.classList.remove('open');
+  m.querySelector('#calCancel').onclick=close;
+  m.onclick=e=>{if(e.target===m)close()};
+  const ext=m.querySelector('#calExt');
+  if(ext)ext.onclick=()=>{location.href='kakaotalk://web/openExternal?url='+encodeURIComponent(location.href)};
+  m.querySelector('#calAdd').onclick=async()=>{
+   const file=new File([ics],fname,{type:'text/calendar'});
+   /* 1) 공유 시트 — 가장 매끄럽다. 눌러서 '캘린더'를 고르면 바로 추가된다. */
+   if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:'봉화군 관심 일정'});close();return}
+    catch(err){if(err&&err.name==='AbortError')return}   /* 사용자가 취소 */
+   }
+   /* 2) 공유가 안 되면 파일 열기 — 열리면 캘린더 추가 화면이 뜬다. */
+   downloadICS(ics,fname); close();
+   BWUI.toast('파일이 열리면 [추가]를 누르면 캘린더에 들어갑니다');
+  };
+ }
  function remindFav(){
   const favIss=BWUI.api.issues.filter(i=>fav[i._id]);
   if(!favIss.length){BWUI.toast('관심 업무를 먼저 담아 주세요 (☆)');return}
-  const ics=buildICS(favIss);
-  if(!ics){BWUI.toast('알림 받을 일정이 없어요 — 날짜가 지났거나 정해지지 않았습니다');return}
-  downloadICS(ics,'봉화군_관심일정.ics');
-  BWUI.toast('캘린더 파일을 받았어요 — 열어서 추가하면 날짜 전에 알림이 옵니다');
+  calModal(favIss,'봉화군_관심일정');
  }
 
  BWUI.start({
@@ -236,8 +275,7 @@ function init(){
    const b=foot.querySelector('#remindBtn'); if(!b)return;
    b.onclick=()=>{
     if(!fav[iss._id]){fav[iss._id]={at:BW.ymd(new Date())};saveFav();BWUI.api.render()}  /* 알림 걸면 관심에도 담김 */
-    downloadICS(buildICS([iss]),'봉화군_'+iss.title.replace(/[^가-힣0-9a-zA-Z]/g,'').slice(0,14)+'.ics');
-    BWUI.toast('캘린더 파일을 받았어요 — 열어서 추가하면 날짜 전에 알림이 옵니다');
+    calModal([iss],'봉화군_'+iss.title.replace(/[^가-힣0-9a-zA-Z]/g,'').slice(0,14));
    };
   }
  });
