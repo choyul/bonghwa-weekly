@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2E5E4E">
+<title>당신의 봉화</title>
+<link rel="manifest" href="public.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="stylesheet" href="ui.css">
+<style>
+:root{--acc:#2E5E4E;--acc-soft:#eef2f0}
+footer{max-width:1100px;margin:0 auto;padding:18px 16px 46px;color:var(--sub);font-size:12.5px;line-height:1.7;border-top:1px solid var(--line)}
+/* 한눈에 — 언제·어디서·누구만 */
+.glist{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;margin:0;font-size:15px;line-height:1.5}
+.glist dt{color:var(--sub);font-size:13px;white-space:nowrap;display:flex;align-items:center;gap:5px;padding-top:2px}
+.glist dt .gi{font-size:15px}
+.glist dd{margin:0;font-weight:600}
+</style>
+</head>
+<body>
+<footer>
+ 이 정보는 봉화군 홈페이지에 공개된 주간업무 계획을 바탕으로 합니다.
+ 계획 단계의 내용이므로 실제 일정과 장소가 달라질 수 있습니다.
+ 참여하시기 전에 담당 부서로 한 번 확인해 주세요.
+</footer>
+<script src="core.js"></script>
+<script src="ui.js"></script>
+<script>
+(function(){const s=document.createElement('script');s.src='data.js?v='+Date.now();s.onload=init;document.head.appendChild(s)})();
+
+function init(){
+ const D=window.BW_DATA, E=BW.escH;
+ const FKEY='bh.fav';
+ let fav={};try{fav=JSON.parse(localStorage.getItem(FKEY))||{}}catch(e){}
+ const saveFav=()=>localStorage.setItem(FKEY,JSON.stringify(fav));
+ const phoneOf=d=>D.deptPhones[d]||'';
+
+ /* 분류는 현안마다 한 번만 계산해 둔다 (3천 건을 매번 훑으면 느리다) */
+ const tag=iss=>{
+  if(iss._cls)return iss._cls;
+  const last=iss.list[iss.list.length-1];
+  iss._cls={
+   topics:BW.topicsOf(last.item),
+   auds:BW.audiencesOf(last.item),
+   regions:BW.regionsOf(last.item),
+   score:BW.citizenScore(last.item),
+   week:last.week, item:last.item
+  };
+  return iss._cls;
+ };
+
+ BWUI.start({
+  role:'public', title:'당신의 봉화',
+  searchPlaceholder:'궁금한 일을 검색해 보세요 (예: 축제, 도로, 교육)',
+  listTitle:'봉화군에서는?',   /* 앞에 '이번 주' / '7월 28일(화)' 처럼 기간이 붙는다 */
+  publicLabels:true,
+  progAsStage:true,
+  showAppearance:false,      /* 등장 기준 추정치는 내보내지 않음 (§8.2) */
+  showSimilar:false,
+  showHistory:false,
+  hideTiles:true,            /* '언제'는 달력이 맡는다 */
+  hideDeptTag:true,          /* 군민은 어느 과인지로 고르지 않는다 — 문의할 때만 필요 */
+  /* 카드 태그도 위 '주제' 축과 같은 분류를 쓴다 */
+  typeTag:iss=>({v:tag(iss).topics[0], label:tag(iss).topics[0], axis:'topic'}),
+
+  /* 군민이 참여할 수 있는 일부터 위로 */
+  sortWith:(a,b)=>tag(b).score-tag(a).score,
+
+  headerButtons:[{label:'⭐ 관심',on(){BWUI.api.setCustom('fav')}}],
+  customFilters:{fav:{label:'관심 업무만',fn:iss=>!!fav[iss._id]}},
+
+  /* ── 세 갈래로 좁혀 가기 (언제는 위 달력이 맡는다) ──
+     각 축은 '전체'가 기본이다. 아무것도 안 고르면 전부 보인다. */
+  axes:[
+   {key:'topic', label:'무엇을 찾으세요?', chipLabel:'주제', render:'cards',
+    allLabel:'전체', allIcon:'🗂️',
+    values:BW.TOPICS.map(t=>({v:t.k,label:t.k,icon:t.icon}))
+             .concat([{v:'그 밖의 일',label:'그 밖의 일',icon:'📄'}]),
+    match:(iss,v)=>tag(iss).topics.includes(v)},
+
+   {key:'aud', label:'누구를 위한 일인가요?', chipLabel:'대상', render:'circles',
+    allLabel:'전체', allIcon:'👪',
+    values:BW.AUDIENCES.map(a=>({v:a.k,label:a.k,icon:a.icon})),
+    match:(iss,v)=>tag(iss).auds.includes(v)},
+
+   {key:'region', label:'어디에서 열리나요?', chipLabel:'지역', render:'chips',
+    allLabel:'전체',
+    values:[{v:'공통',label:'공통',chip:'공통(전 지역)'}].concat(BW.REGIONS.map(r=>({v:r,label:r}))),
+    match:(iss,v)=>tag(iss).regions.includes(v)}
+  ],
+
+  cardActions:iss=>[{
+   icon:fav[iss._id]?'★':'☆', title:'관심 업무', active:!!fav[iss._id],
+   on(i){ if(fav[i._id])delete fav[i._id]; else fav[i._id]={at:BW.ymd(new Date())}; saveFav(); }
+  }],
+
+  /* 카드 한 줄에 언제·어디서·누구 */
+  cardMeta:iss=>{
+   const c=tag(iss), bits=[];
+   const r=BW.parseDateRange(c.item,c.week);
+   if(r&&r.start){
+    const s=BW.d2(r.start);
+    bits.push(r.end&&r.end!==r.start
+     ? `${s.getMonth()+1}.${s.getDate()} ~ ${BW.d2(r.end).getMonth()+1}.${BW.d2(r.end).getDate()}`
+     : `${s.getMonth()+1}월 ${s.getDate()}일(${BW.DOW[s.getDay()]})`);
+   }
+   if(c.regions.length)bits.push(c.regions.slice(0,2).join('·'));
+   if(c.auds.length)bits.push(c.auds.slice(0,2).join('·'));
+   return bits.join(' · ');
+  },
+
+  /* 제목 옆 ⭐ — 본문에 같은 체크박스를 또 두지 않는다 */
+  sheetActions:iss=>[{
+   icon:fav[iss._id]?'★':'☆', title:'관심 업무', active:!!fav[iss._id],
+   on(i){ if(fav[i._id])delete fav[i._id]; else fav[i._id]={at:BW.ymd(new Date())};
+          saveFav(); BWUI.toast(fav[i._id]?'관심 업무에 담았습니다':'관심 업무에서 뺐습니다'); BWUI.api.render(); }
+  }],
+
+  /* ── 상세 맨 위: 판단에 필요한 것만 ── */
+  detailTop(iss,body){
+   const c=tag(iss);
+   const strip=t=>t.replace(/^[^:：]*[:：]\s*/,'').trim();
+   const line=re=>{const l=c.item.lines.find(x=>re.test(x.txt));return l?strip(l.txt):''};
+   const when=line(/^(일\s*시|기\s*간|일\s*자|기\s*한|점검기간|접수기간|모집기간|교육기간|운영기간|신청기한)/);
+   const place=line(/^(장\s*소|위\s*치|신청장소|접수처)/) || c.regions.join(', ');
+   const who=line(/^(대\s*상|참석대상|교육대상|모집대상|지원대상)/) || c.auds.join(', ');
+   const rows=[
+    when  && ['📅','언제', when],
+    place && ['📍','어디서', place],
+    who   && ['👥','누구',  who]
+   ].filter(Boolean);
+   body.insertAdjacentHTML('beforeend',`
+    <div class="blk glance">
+     <div class="tagrow" style="margin-bottom:10px">
+      <span class="tag st st-${iss._st}" style="cursor:default">${BWUI.api.ST_LABEL[iss._st]}</span>
+      <span class="tag type" style="cursor:default">${E(c.topics[0])}</span>
+     </div>
+     ${rows.length?`<dl class="glist">${rows.map(([ic,k,v])=>
+       `<dt><span class="gi">${ic}</span>${k}</dt><dd>${E(v)}</dd>`).join('')}</dl>`
+      :'<div class="hint">일정과 장소가 계획서에 적혀 있지 않습니다.</div>'}
+    </div>`);
+  },
+
+  /* 본문은 '무엇을 하는가'만 남긴다.
+     위에 이미 쓴 줄(일시·장소·대상)과 행정 내부 항목(참여단체·협조사항·근거·사업비)은 뺀다.
+     뺀 것은 아래 [계획서 원문 그대로 보기]에 그대로 남아 있다. */
+  contentTitle:'무엇을 하나요',
+  contentLines(iss,lines){
+   const already=/^(일\s*시|기\s*간|일\s*자|기\s*한|마\s*감|점검기간|접수기간|모집기간|교육기간|운영기간|신청기한|장\s*소|위\s*치|신청장소|접수처|대\s*상|참석대상|교육대상|모집대상|지원대상)/;
+   const inner=/^(참여단체|참석인원|참석자|참\s*석|협조사항|추진근거|근\s*거|사업비|사\s*업\s*비|총사업비|예\s*산|담\s*당|주\s*관|점검자|조사자|점검반|추진방법|비\s*고|기타사항|제출처|보조비율)/;
+   const out=lines.filter(l=>!already.test(l.txt)&&!inner.test(l.txt))
+    /* '주요내용:' 라벨은 위 제목이 이미 말하고 있으니 지운다.
+       콜론 없이 '주요내용' 한 줄만 있고 아래 줄에 내용이 오는 문서도 있어 그 줄도 없앤다. */
+    .map(l=>({lv:l.lv,txt:l.txt.replace(/^(주요\s*내용|내\s*용|사업내용|프로그램|추진내용|교육내용|점검내용|주요\s*사업)\s*[:：]?\s*/,'')}))
+    .filter(l=>l.txt.trim());
+   return out;
+  },
+
+  detailFooter(iss){
+   const tel=phoneOf(iss.dept);
+   return tel
+    ? `<a class="callbtn" href="tel:${tel}">📞 ${E(iss.dept)}에 물어보기 ${tel}</a>`
+    : `<a class="callbtn" href="tel:054-679-6114">📞 ${E(iss.dept)}에 물어보기 (군청 054-679-6114)</a>`;
+  }
+ });
+}
+</script>
+</body>
+</html>

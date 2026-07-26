@@ -1,0 +1,9 @@
+{
+ "name": "당신의 봉화",
+ "short_name": "봉화군",
+ "display": "standalone",
+ "background_color": "#f8f9f7",
+ "theme_color": "#2E5E4E",
+ "start_url": "./",
+ "icons": [{"src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}]
+}
