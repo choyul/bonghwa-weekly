@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1F4B3F">
 <title>당신의 봉화</title>
+<meta name="description" content="이번 주 봉화군 소식을 알려드립니다 — 행사·모집·공사·민원을 한눈에">
+<!-- 카카오톡·문자·SNS 링크 미리보기(마스코트 카드) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="당신의 봉화">
+<meta property="og:title" content="당신의 봉화">
+<meta property="og:description" content="이번 주 봉화군 소식을 알려드립니다 — 행사·모집·공사·민원을 한눈에">
+<meta property="og:image" content="https://choyul.github.io/bonghwa-weekly/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://choyul.github.io/bonghwa-weekly/">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="manifest" href="public.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -204,7 +215,8 @@ function init(){
     안건 번호를 주소에 실어, 링크를 받은 사람이 열면 바로 그 안건이 뜬다.
     휴대폰은 공유 시트(카톡·문자 등)를, 안 되면 링크 복사로 넘어간다. */
  function shareUrlOf(iss){
-  const url=new URL(location.pathname,location.origin);
+  const path=location.pathname.replace(/index\.html$/,'');   /* .../ 형태로 — index.html 안 붙게 */
+  const url=new URL(path||'/',location.origin);
   url.searchParams.set('i',uidHash(iss._id));   /* 한글 안건번호 대신 짧은 코드 — 링크가 길어지지 않게 */
   return url.href;
  }
