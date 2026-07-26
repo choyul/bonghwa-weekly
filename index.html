@@ -179,7 +179,7 @@ function init(){
      안건 번호 자체를 실어 보낸다. */
   if(ext)ext.onclick=()=>{
    const url=new URL(location.pathname,location.origin);
-   url.searchParams.set('remind',list.map(i=>i._id).join(','));
+   url.searchParams.set('r',list.map(i=>uidHash(i._id)).join(','));   /* 짧은 코드로 — 링크 길이 절약 */
    location.href='kakaotalk://web/openExternal?url='+encodeURIComponent(url.href);
   };
   m.querySelector('#calAdd').onclick=async()=>{
@@ -205,7 +205,7 @@ function init(){
     휴대폰은 공유 시트(카톡·문자 등)를, 안 되면 링크 복사로 넘어간다. */
  function shareUrlOf(iss){
   const url=new URL(location.pathname,location.origin);
-  url.searchParams.set('item',iss._id);
+  url.searchParams.set('i',uidHash(iss._id));   /* 한글 안건번호 대신 짧은 코드 — 링크가 길어지지 않게 */
   return url.href;
  }
  function copyLink(u){
@@ -433,13 +433,16 @@ function init(){
   }
  });
 
- /* 링크로 들어온 경우 처리 — 인트로를 건너뛰고 해당 안건으로 바로 간다. */
+ /* 링크로 들어온 경우 처리 — 인트로를 건너뛰고 해당 안건으로 바로 간다.
+    코드는 짧은 해시(i·r)를 쓰되, 예전 긴 링크(item·remind, 전체 안건번호)도 계속 열리게 둔다. */
  const params=new URLSearchParams(location.search);
- const resumeIds=params.get('remind');   /* 카카오톡 → 기본 브라우저 전환(알림 팝업까지) */
- const openId=params.get('item');         /* 친구가 보낸 공유 링크(상세만 열기) */
- if(resumeIds){
+ const resumeCode=params.get('r')||params.get('remind');   /* 카카오톡 → 기본 브라우저 전환(알림 팝업까지) */
+ const openCode=params.get('i')||params.get('item');        /* 친구가 보낸 공유 링크(상세만 열기) */
+ /* 짧은 해시 또는 예전 전체 ID 둘 다로 안건을 찾는다 */
+ const matchCodes=csv=>{const cs=csv.split(',');return BWUI.api.issues.filter(i=>cs.includes(uidHash(i._id))||cs.includes(i._id))};
+ if(resumeCode){
   history.replaceState(null,'',location.pathname);      /* 주소창은 깨끗하게 되돌려 둔다 */
-  const targets=BWUI.api.issues.filter(i=>resumeIds.split(',').includes(i._id));
+  const targets=matchCodes(resumeCode);
   targets.forEach(i=>{ if(!fav[i._id])fav[i._id]={at:BW.ymd(new Date())} });  /* 이 브라우저에도 관심 표시를 맞춘다 */
   if(targets.length)saveFav();
   if(targets.length===1){
@@ -448,9 +451,9 @@ function init(){
   }else if(targets.length){
    calModal(targets,'봉화군_관심일정');
   }
- }else if(openId){
+ }else if(openCode){
   history.replaceState(null,'',location.pathname);
-  const target=BWUI.api.issues.find(i=>i._id===openId);
+  const target=matchCodes(openCode)[0];
   if(target){ BWUI.api.openSheet(target); }        /* 공유받은 소식 바로 펼치기(알림·관심 강제 안 함) */
   else{ BWUI.toast('공유된 소식을 찾지 못했어요 — 지난주 자료이거나 정보가 바뀌었을 수 있어요'); }
  }else{
