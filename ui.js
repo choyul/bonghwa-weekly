@@ -16,7 +16,7 @@
              'all'   검색할 때 지난 1년까지
      axis : 화면이 정의하는 분류축(주제·대상·지역 등)의 선택값 */
   const S = {
-    scope: 'week', month: '', day: '',
+    scope: 'week', month: '', day: '', week: '',
     q: '', status: '', dept: '', type: '', annual: false, custom: '', axis: {}, limit: 60
   };
   let curIssue = null, simExpanded = false;
@@ -124,7 +124,7 @@
   /* ───────── 필터 ───────── */
   function inRange(iss) {
     if (S.scope === 'all') return true;
-    if (S.scope === 'week') return iss.last === D.weekStart;
+    if (S.scope === 'week') return iss.list.some(o => o.week === (S.week || D.weekStart));
     if (S.scope === 'month') return iss.list.some(o => o.week.slice(0, 7) === S.month);
     if (S.scope === 'day') {
       return iss.list.some(o => BW.coversDate(o.item, o.week, S.day));
