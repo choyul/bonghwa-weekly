@@ -583,13 +583,15 @@ function init(){
    renderDayPills(); BWUI.api.render();
   }
  }
- /* 달력 카드 맨 위 타이틀 = 지금 고른 조회 기간 (날짜 선택 시 그 날로 바뀐다) */
+ /* 달력 카드 맨 위 타이틀 = 지금 고른 조회 기간을 실제 날짜로 (주·달·전체·날짜 모두 동일 형식) */
  function calTitle(){
   const S=BWUI.api.state;
-  if(S.scope==='day'){const d=BW.d2(S.day);return `${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.(${BW.DOW[d.getDay()]})`;}
-  if(S.scope==='month'){const[y,m]=S.month.split('-');return `${+y}년 ${+m}월`;}
-  if(S.scope==='all')return '전체 기간';
-  return rangeTitle(VIEW_WEEK);
+  const f=d=>`${d.getMonth()+1}. ${d.getDate()}.(${BW.DOW[d.getDay()]})`;
+  const rng=(a,b)=>`${a.getFullYear()}. ${f(a)} ~ ${a.getFullYear()!==b.getFullYear()?b.getFullYear()+'. ':''}${f(b)}`;
+  if(S.scope==='day'){const d=BW.d2(S.day);return `${d.getFullYear()}. ${f(d)}`;}
+  if(S.scope==='month'){const[y,m]=S.month.split('-').map(Number);return rng(new Date(y,m-1,1), new Date(y,m,0));}
+  if(S.scope==='all'){const w=daysOf(D.weekStart);return rng(BW.d2(D.weeks[0]), BW.d2(w[6]));}
+  const w=daysOf(VIEW_WEEK); return rng(BW.d2(w[0]), BW.d2(w[6]));
  }
  function renderDayPills(){
   const host=document.getElementById('wsDays'); if(!host)return;
@@ -643,7 +645,7 @@ function init(){
       <span class="ps-text" id="psText">궁금한 일을 검색해 보세요 (축제, 도로, 교육)</span>
     </button>
     <div class="ps-panel" id="psPanel">
-      <input type="search" class="ps-input" id="psInput" enterkeyhint="search" placeholder="궁금한 일을 검색해 보세요 (축제, 도로, 교육)">
+      <input type="search" class="ps-input" id="psInput" enterkeyhint="search" placeholder="예: 은어축제, 도로포장, 어르신 교육">
       <div class="ps-actions">
         <button type="button" class="ps-reset" id="psReset">지우기</button>
         <button type="button" class="ps-go" id="psGo">검색</button>
