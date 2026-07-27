@@ -47,14 +47,14 @@ body:not(.gosi) #noticesView{display:none}
 .nv-search input{width:100%;min-height:48px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;
  background:var(--paper);color:var(--ink);font-size:16px;margin-bottom:10px}
 .nv-search input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--bh-primary-tint,var(--acc-soft))}
-.nv-kinds{display:flex;gap:6px;margin-bottom:8px}
-.nv-kinds button{flex:1;min-height:40px;border:1px solid var(--line);border-radius:10px;background:var(--paper);
- color:var(--ink);font-size:13.5px;font-weight:600;cursor:pointer;transition:all var(--bh-dur,180ms) var(--bh-ease,ease)}
-.nv-kinds button.on{background:var(--acc);border-color:var(--acc);color:#fff}
-.nv-depts{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch}
-.nv-depts button{flex:none;min-height:38px;padding:7px 13px;border:1px solid var(--line);border-radius:999px;
- background:var(--paper);color:var(--ink);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap}
-.nv-depts button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+/* 내용 카테고리 칩 — 줄바꿈으로 한눈에 */
+.nv-cats{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.nv-cats button{min-height:38px;padding:7px 13px;border:1px solid var(--line);border-radius:999px;
+ background:var(--paper);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;
+ transition:all var(--bh-dur,180ms) var(--bh-ease,ease)}
+.nv-cats button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.nv-cats .cc{font-size:11.5px;font-weight:700;color:var(--sub);margin-left:3px}
+.nv-cats button.on .cc{color:rgba(255,255,255,.85)}
 .nv-info{color:var(--sub);font-size:13px;margin:2px 2px 10px}
 .nv-list{display:flex;flex-direction:column;gap:8px}
 .nrow{text-align:left;width:100%;background:var(--paper);border:1px solid var(--line);border-radius:12px;
@@ -64,6 +64,7 @@ body:not(.gosi) #noticesView{display:none}
 .nkind{flex:none;font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:6px}
 .nk-gosi{background:var(--acc-soft);color:var(--acc)}
 .nk-gonggo{background:var(--bh-accent-soft,#F6EFDD);color:var(--gold)}
+.nk-cat{background:var(--acc-soft);color:var(--acc)}
 .nr-date{margin-left:auto;font-size:12px;color:var(--sub);flex:none}
 .nr-title{font-size:14.5px;font-weight:700;line-height:1.42;color:var(--ink);text-wrap:pretty}
 .nr-dept{font-size:12.5px;color:var(--sub);margin-top:5px}
@@ -736,16 +737,28 @@ function init(){
   }
  }
 
+ /* ── 내용 카테고리 규칙 (민원인이 아는 '내용'으로 분류. 위에서부터 먼저 맞는 하나) ── */
+ const NCATS=[
+  ['채용·일자리',    /채용|임용|공무직|기간제|근로자|일자리|인력\s*모집|시험 시행/i],
+  ['모집·교육·공모',  /모집|참가자|참여자|수강생|교육생|공모|선발|수강|신청.?접수/i],
+  ['입찰·용역',      /입찰|낙찰|계약|용역|수의계약|적격심사|제안서|개찰|추정가격|구입|임대 설치/i],
+  ['재산·세금·보상',  /보상|수용|감정평가|편입|손실|지방세|지방소득세|체납|공매|압류|매각|조정금|공시지가|개별주택가격|지가|납부기한|기한연장|재산세|세외수입/i],
+  ['도시·도로·건축',  /도시계획|군관리계획|지구단위|개발행위|실시계획|건축|지적|지목|측량|용도지역|경관|마을만들기|도로명주소|도로명|통행제한|도로\s*구역|도로구간|노선|시행계획|조성사업|시설사업|완료 공고|농촌중심지|농촌용수|공공청사|매장유산/i],
+  ['농림·환경·에너지', /농지|농업|산림|임야|환경|폐기물|태양광|발전|하천|수질|저수지|방제|재선충|축산|비닐|전기자동차|전기차|햇빛소득|방지시설|소규모 사업장|드론/i],
+  ['재해·안전',     /재해|재난|시설물|안전|붕괴|위험|CCTV|방범|점검/i],
+  ['인허가·처분',    /인가|허가|등록|말소|지정|승인|양수|양도|신고|행정처분|공시송달|공시 송달|원상|대집행|계고|과태료|이행강제금|위반|단속|행정예고|시정|폐업|무단방치|견인|폐차/i],
+ ];
+ function ncat(title){ for(const c of NCATS){ if(c[1].test(title)) return c[0]; } return '기타 안내'; }
+
  /* ── 고시·공고 상세 모달 (요약 + 봉화군 원문·첨부 링크) ── */
  function noticeModal(n,viewBase){
   const url=viewBase+'?notAncmtMgtNo='+n.id+'&mid=0201030000';
-  const kc=n.kind==='고시'?'nk-gosi':'nk-gonggo';
   let m=document.getElementById('noticeModal');
   if(!m){m=document.createElement('div');m.id='noticeModal';m.className='modal';document.body.appendChild(m)}
   m.innerHTML=`<div class="mbox">
-    <h2>${n.kind} 상세</h2>
+    <h2>고시·공고 상세</h2>
     <div style="padding:2px 18px 4px">
-     <div class="nr-top" style="margin-bottom:8px"><span class="nkind ${kc}">${n.kind}</span><span class="nr-date">${E(n.date)}</span></div>
+     <div class="nr-top" style="margin-bottom:8px"><span class="nkind nk-cat">${E(n._cat||ncat(n.title))}</span><span class="nr-date">${E(n.date)}</span></div>
      <div style="font-size:16px;font-weight:700;line-height:1.45">${E(n.title)}</div>
      <div class="note" style="padding:8px 0 2px">${E(n.dept)} · ${E(n.num)}</div>
      <div class="note" style="padding:0">본문·첨부파일은 봉화군 공식 페이지에서 확인하세요.</div>
@@ -775,39 +788,36 @@ function init(){
   tabs.innerHTML=`<button class="mtab on" data-mode="week">🗓️ 이번 주 소식</button>
     <button class="mtab" data-mode="gosi">📢 고시·공고 <span class="mtab-n">${N.length}</span></button>`;
   wrap.insertBefore(tabs, wrap.firstChild);   /* 맨 위 */
-  const depts=[...new Set(N.map(n=>n.dept))];
+  /* 내용 카테고리 계산(제목 기준, 위에서부터 먼저 맞는 것 하나로) + 건수 */
+  N.forEach(n=>{n._cat=ncat(n.title)});
+  const catCount={}; N.forEach(n=>catCount[n._cat]=(catCount[n._cat]||0)+1);
+  const catList=NCATS.map(c=>c[0]).concat(['기타 안내']).filter(c=>catCount[c]);
   const view=document.createElement('div'); view.id='noticesView';
   view.innerHTML=`
-    <div class="nv-search"><input id="nvQ" type="search" enterkeyhint="search" placeholder="제목·부서 검색 (예: 도시계획, 보상)"></div>
-    <div class="nv-kinds" id="nvKinds">
-      <button type="button" data-k="" class="on">전체</button>
-      <button type="button" data-k="고시">고시</button>
-      <button type="button" data-k="공고">공고</button>
-    </div>
-    <div class="nv-depts" id="nvDepts">
-      <button type="button" data-d="" class="on">전체 부서</button>
-      ${depts.map(d=>`<button type="button" data-d="${E(d)}">${E(d)}</button>`).join('')}
+    <div class="nv-search"><input id="nvQ" type="search" enterkeyhint="search" placeholder="찾으시는 내용을 검색 (예: 채용, 태양광, 도로)"></div>
+    <div class="nv-cats" id="nvCats">
+      <button type="button" data-c="" class="on">전체 <span class="cc">${N.length}</span></button>
+      ${catList.map(c=>`<button type="button" data-c="${E(c)}">${E(c)} <span class="cc">${catCount[c]}</span></button>`).join('')}
     </div>
     <div class="nv-info" id="nvInfo"></div>
     <div class="nv-list" id="nvList"></div>
     <div id="nvMore"></div>`;
   wrap.appendChild(view);
-  const st={q:'',kind:'',dept:'',limit:40};
+  const st={q:'',cat:'',limit:40};
   const nq=s=>String(s).toLowerCase();
   const filt=()=>N.filter(n=>{
-   if(st.kind&&n.kind!==st.kind)return false;
-   if(st.dept&&n.dept!==st.dept)return false;
+   if(st.cat&&n._cat!==st.cat)return false;
    if(st.q&&!nq(n.title+' '+n.dept+' '+n.num).includes(nq(st.q)))return false;
    return true;
   });
   function renderN(){
    const rows=filt();
-   document.getElementById('nvInfo').textContent=`고시·공고 ${rows.length}건 · 최근 ${ND.months||3}개월`;
+   document.getElementById('nvInfo').textContent=`${st.cat||'고시·공고'} ${rows.length}건 · 최근 ${ND.months||3}개월`;
    const list=document.getElementById('nvList');
    list.innerHTML=rows.slice(0,st.limit).map(n=>{
-    const kc=n.kind==='고시'?'nk-gosi':'nk-gonggo', d=n.date.split('-').map(Number).join('. ')+'.';
+    const d=n.date.split('-').map(Number).join('. ')+'.';
     return `<button type="button" class="nrow" data-id="${n.id}">
-      <div class="nr-top"><span class="nkind ${kc}">${n.kind}</span><span class="nr-date">${d}</span></div>
+      <div class="nr-top"><span class="nkind nk-cat">${E(n._cat)}</span><span class="nr-date">${d}</span></div>
       <div class="nr-title">${E(n.title)}</div>
       <div class="nr-dept">${E(n.dept)} · ${E(n.num)}</div></button>`;
    }).join('') || '<div class="empty">해당하는 고시·공고가 없습니다</div>';
@@ -817,8 +827,7 @@ function init(){
    const mb=more.querySelector('button'); if(mb)mb.onclick=()=>{st.limit+=60;renderN()};
   }
   let t; document.getElementById('nvQ').oninput=e=>{clearTimeout(t);t=setTimeout(()=>{st.q=e.target.value.trim();st.limit=40;renderN()},180)};
-  view.querySelectorAll('#nvKinds button').forEach(b=>b.onclick=()=>{st.kind=b.dataset.k;view.querySelectorAll('#nvKinds button').forEach(x=>x.classList.toggle('on',x===b));st.limit=40;renderN()});
-  view.querySelectorAll('#nvDepts button').forEach(b=>b.onclick=()=>{st.dept=b.dataset.d;view.querySelectorAll('#nvDepts button').forEach(x=>x.classList.toggle('on',x===b));st.limit=40;renderN()});
+  view.querySelectorAll('#nvCats button').forEach(b=>b.onclick=()=>{st.cat=b.dataset.c;view.querySelectorAll('#nvCats button').forEach(x=>x.classList.toggle('on',x===b));st.limit=40;renderN();document.getElementById('noticesView').scrollIntoView({block:'start',behavior:'smooth'})});
   tabs.querySelectorAll('.mtab').forEach(b=>b.onclick=()=>{
    const gosi=b.dataset.mode==='gosi';
    document.body.classList.toggle('gosi',gosi);
