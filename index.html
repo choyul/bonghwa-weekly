@@ -32,38 +32,14 @@ footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decorat
 .glist dt .gi{font-size:15px}
 .glist dd{margin:0;font-weight:600}
 
-/* ── 상단 모드 탭 [이번 주 소식] / [고시·공고] ── */
-.modetabs{display:flex;gap:6px;margin-bottom:12px}
-.modetabs .mtab{flex:1;min-height:48px;border:1px solid var(--line);border-radius:12px;background:var(--paper);
- color:var(--sub);font-size:15px;font-weight:700;cursor:pointer;transition:all var(--bh-dur,180ms) var(--bh-ease,ease)}
-.modetabs .mtab.on{background:var(--acc);border-color:var(--acc);color:#fff}
-.modetabs .mtab-n{font-size:12px;font-weight:700;opacity:.85;margin-left:2px}
-/* 모드 전환 — 고시·공고일 땐 주간 소식 UI를 숨긴다 */
-body.gosi #wstrip,body.gosi #psearch,body.gosi #bwAxes,body.gosi #bwTop,
-body.gosi #bwFilters,body.gosi #bwInfo,body.gosi #bwCards,body.gosi #bwMore{display:none}
-body:not(.gosi) #noticesView{display:none}
-
-/* ── 고시·공고 뷰 ── */
-.nv-search input{width:100%;min-height:48px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;
- background:var(--paper);color:var(--ink);font-size:16px;margin-bottom:10px}
-.nv-search input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--bh-primary-tint,var(--acc-soft))}
-/* 내용 카테고리 칩 — 줄바꿈으로 한눈에 */
-.nv-cats{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-.nv-cats button{min-height:38px;padding:7px 13px;border:1px solid var(--line);border-radius:999px;
- background:var(--paper);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;
- transition:all var(--bh-dur,180ms) var(--bh-ease,ease)}
-.nv-cats button.on{background:var(--acc);border-color:var(--acc);color:#fff}
-.nv-cats .cc{font-size:11.5px;font-weight:700;color:var(--sub);margin-left:3px}
-.nv-cats button.on .cc{color:rgba(255,255,255,.85)}
-.nv-info{color:var(--sub);font-size:13px;margin:2px 2px 10px}
-.nv-list{display:flex;flex-direction:column;gap:8px}
+/* ── 고시·공고를 이번 주 소식과 한 목록에 섞어 보여준다(탭 없음) ── */
+.feed-divider{display:flex;align-items:center;gap:8px;margin:18px 2px 10px;color:var(--sub);font-size:13px;font-weight:700}
+.feed-divider::after{content:'';flex:1;height:1px;background:var(--line)}
 .nrow{text-align:left;width:100%;background:var(--paper);border:1px solid var(--line);border-radius:12px;
  padding:13px 15px;cursor:pointer;transition:box-shadow var(--bh-dur,180ms) var(--bh-ease,ease);font:inherit}
 .nrow:hover{box-shadow:var(--bh-shadow-1,0 1px 2px rgba(0,0,0,.06))}
 .nr-top{display:flex;align-items:center;gap:7px;margin-bottom:6px}
 .nkind{flex:none;font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:6px}
-.nk-gosi{background:var(--acc-soft);color:var(--acc)}
-.nk-gonggo{background:var(--bh-accent-soft,#F6EFDD);color:var(--gold)}
 .nk-cat{background:var(--acc-soft);color:var(--acc)}
 .ntbody{margin:8px 0 2px;padding:12px 13px;background:var(--bg);border:1px solid var(--line);border-radius:10px;
  font-size:13.5px;line-height:1.6;color:var(--ink-2,var(--ink));max-height:200px;overflow-y:auto;
@@ -94,9 +70,9 @@ body:not(.gosi) #noticesView{display:none}
 .ws-arrow:disabled{opacity:.28;cursor:default;color:var(--sub)}
 .wstrip .cal{border:none;background:transparent;padding:0;gap:4px}
 .wstrip .calday{position:relative;min-height:62px}
-/* 1개월 모드: 요일 달력만 숨김(화살표는 남겨 달 이동) / 전체 기간: 화살표도 숨김 */
+/* 1개월 모드: 요일 달력만 숨김(화살표는 남겨 달 이동) / 전체 기간: 화살표도 숨김
+   — 어느 모드든 타이틀·버튼 사이 간격(ws-nav의 margin-bottom)은 그대로 유지한다 */
 .wstrip.no-days .ws-days{display:none}
-.wstrip.no-days .ws-nav{margin-bottom:0}
 .wstrip.no-arrows .ws-arrow{display:none}
 .ws-dot{position:absolute;top:6px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--gold)}
 .calday.on .ws-dot{background:#fff}
@@ -168,7 +144,7 @@ body:not(.gosi) #noticesView{display:none}
 </head>
 <body>
 <footer>
- <b>🔔 알림 받기</b> — 관심 있는 일에 ☆를 누른 뒤 위 [🔔 알림받기]를 누르면
+ <b>🔔 알림 받기</b> — 소식을 눌러 자세히 본 화면 아래 [🔔 알림 받기]를 누르면
  휴대폰 캘린더에 담깁니다. 그러면 날짜 전에 휴대폰이 알아서 알려 줍니다.<br><br>
  이 정보는 봉화군 홈페이지에 공개된 주간업무 계획을 바탕으로 합니다.
  계획 단계의 내용이므로 실제 일정과 장소가 달라질 수 있습니다.
@@ -453,6 +429,41 @@ function init(){
    return `${a.getFullYear()}. ${a.getMonth()+1}. ${a.getDate()}.(${BW.DOW[a.getDay()]}) ~ ${b.getMonth()+1}. ${b.getDate()}.(${BW.DOW[b.getDay()]})`;};
  const weekLabel=mon=>{const w=daysOf(mon),a=BW.d2(w[0]),b=BW.d2(w[6]);return `${a.getMonth()+1}월 ${a.getDate()}일 ~ ${b.getMonth()+1}월 ${b.getDate()}일`;};
 
+ /* ── 주간 소식(weekly)과 고시·공고(notice)를 한 목록에서 찾도록 — 두 분류를 합친 축 ──
+    같은 말은 하나로 합치고(예: 점검·안전=재해·안전), 한쪽에만 있는 건 그대로 따로 둔다.
+    [표시이름, 아이콘, 주간소식 원래 분류 키[], 고시·공고 원래 분류 키[]] */
+ const MERGED_TOPICS=[
+  ['축제·행사','🎪',['축제·행사'],[]],
+  ['교육·모집·공모','🎓',['교육·강좌'],['모집·교육·공모']],
+  ['신청·접수','📋',['신청·접수'],[]],
+  ['채용·일자리','💼',[],['채용·일자리']],
+  ['공사·도로·건축','🚧',['공사·정비'],['도시·도로·건축']],
+  ['점검·안전','🦺',['점검·안전'],['재해·안전']],
+  ['건강·의료','🩺',['건강·의료'],[]],
+  ['민원·인허가','🗂️',['민원·인허가'],['인허가·처분']],
+  ['재산·세금·보상','💰',[],['재산·세금·보상']],
+  ['입찰·용역','🧾',[],['입찰·용역']],
+  ['농림·환경·에너지','🌱',[],['농림·환경·에너지']],
+  ['그 밖의 일','📄',['그 밖의 일'],['기타 안내']],
+ ];
+ const MERGED_AUD=[
+  ['어르신','🧓',['어르신'],[]],
+  ['아이·청소년','🧒',['아이·청소년'],[]],
+  ['청년','🧑',['청년'],[]],
+  ['농업인','🧑‍🌾',['농업인'],['농업인']],
+  ['여성·가족','👨‍👩‍👧',['여성·가족'],[]],
+  ['복지·돌봄','🤝',['복지·돌봄'],[]],
+  ['소상공인','🏪',['소상공인'],['사업자·업체']],
+  ['구직자','🧑‍💼',[],['구직자']],
+  ['토지·주택 소유자','🏠',[],['토지·주택 소유자']],
+  ['주민 누구나','👥',[],['주민 누구나']],
+ ];
+ /* 주간소식 카드의 원래 분류 키 → 합친 표시이름 (카드 태그를 누르면 그 합친 축이 켜지도록) */
+ const W2M_TOPIC={}; MERGED_TOPICS.forEach(([m,,wk])=>wk.forEach(k=>W2M_TOPIC[k]=m));
+ const W2M_AUD={}; MERGED_AUD.forEach(([m,,wk])=>wk.forEach(k=>W2M_AUD[k]=m));
+ /* 고시·공고 목록 상태 — onRender가 BWUI.start 안에서 첫 렌더 때 바로 참조하므로 미리 선언해 둔다 */
+ let NOTICES=null, ntLimit=30, ntSig='';
+
  BWUI.start({
   role:'public', title:'봉화의 오늘',
   searchPlaceholder:'궁금한 일을 검색해 보세요 (예: 축제, 도로, 교육)',
@@ -466,31 +477,29 @@ function init(){
   showCalendar:false,        /* 공용 월 달력 대신 위쪽 커스텀 주간 데이 스트립을 쓴다 */
   onRender(){ syncTopControls(); },   /* 필터가 바뀔 때마다 상단 달력·검색·제목을 맞춘다 */
   hideDeptTag:true,          /* 군민은 어느 과인지로 고르지 않는다 — 문의할 때만 필요 */
-  /* 카드 태그도 위 '주제' 축과 같은 분류를 쓴다 */
-  typeTag:iss=>({v:tag(iss).topics[0], label:tag(iss).topics[0], axis:'topic'}),
+  /* 카드 태그는 고시·공고와 합친 분류 이름으로 보여준다(원래 분류 키를 합친 이름으로 바꿔서) */
+  typeTag:iss=>{const m=W2M_TOPIC[tag(iss).topics[0]]||tag(iss).topics[0];return {v:m,label:m,axis:'topic'};},
 
   /* 군민이 참여할 수 있는 일부터 위로 */
   sortWith:(a,b)=>tag(b).score-tag(a).score,
 
   headerButtons:[
-   {label:'⭐ 관심',on(){BWUI.api.setCustom('fav')}},
-   {label:'🔔 알림받기',on:remindFav}
+   {label:'⭐ 관심',on(){BWUI.api.setCustom('fav')}}
   ],
   customFilters:{fav:{label:'관심 업무만',fn:iss=>!!fav[iss._id]}},
 
-  /* ── 세 갈래로 좁혀 가기 (언제는 위 달력이 맡는다) ──
+  /* ── 두 갈래로 좁혀 가기 (언제는 위 달력이 맡는다) — 주간 소식과 고시·공고를 합친 축 ──
      각 축은 '전체'가 기본이다. 아무것도 안 고르면 전부 보인다. */
   axes:[
    {key:'topic', label:'무엇을 찾으세요?', chipLabel:'주제', render:'cards',
     allLabel:'전체', allIcon:'🗂️',
-    values:BW.TOPICS.map(t=>({v:t.k,label:t.k,icon:t.icon}))
-             .concat([{v:'그 밖의 일',label:'그 밖의 일',icon:'📄'}]),
-    match:(iss,v)=>tag(iss).topics.includes(v)},
+    values:MERGED_TOPICS.map(([v,icon])=>({v,label:v,icon})),
+    match:(iss,v)=>{const e=MERGED_TOPICS.find(x=>x[0]===v);return !!e&&e[2].some(k=>tag(iss).topics.includes(k));}},
 
    {key:'aud', label:'누구를 위한 일인가요?', chipLabel:'대상', render:'circles',
     allLabel:'전체', allIcon:'👪',
-    values:BW.AUDIENCES.map(a=>({v:a.k,label:a.k,icon:a.icon})),
-    match:(iss,v)=>tag(iss).auds.includes(v)},
+    values:MERGED_AUD.map(([v,icon])=>({v,label:v,icon})),
+    match:(iss,v)=>{const e=MERGED_AUD.find(x=>x[0]===v);return !!e&&e[2].some(k=>tag(iss).auds.includes(k));}},
 
    {key:'region', label:'어디에서 열리나요?', chipLabel:'지역', render:'chips',
     allLabel:'전체',
@@ -738,6 +747,7 @@ function init(){
    else t=(VIEW_WEEK===D.weekStart?'이번 주':weekLabel(VIEW_WEEK))+' 봉화의 소식은?';
    listh.textContent=t;
   }
+  renderNoticeSection();   /* 지금 필터에 맞는 고시·공고를 이번 주 소식 아래 이어 붙인다 */
  }
 
  /* ── 내용 카테고리 규칙 [이름, 아이콘, 정규식] (위에서부터 먼저 맞는 하나) ── */
@@ -779,13 +789,22 @@ function init(){
      <div class="note" style="padding:6px 0 2px">일부 내용입니다. 전체 내용·첨부파일은 봉화군 공식 페이지에서 확인하세요.</div>
     </div>
     <div style="padding:8px 18px 2px"><a class="callbtn" href="${url}" target="_blank" rel="noopener">📄 봉화군에서 원문·첨부 보기</a></div>
-    <div style="padding:6px 18px 2px"><button class="callbtn" id="ntShare" style="background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔗 공유</button></div>
+    <div style="padding:6px 18px 2px;display:flex;gap:8px">
+     <button class="callbtn" id="ntFav" style="flex:1;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">${fav['n:'+n.id]?'★ 관심 해제':'☆ 관심에 담기'}</button>
+     <button class="callbtn" id="ntShare" style="flex:1;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔗 공유</button>
+    </div>
     <div class="mfoot"><span style="flex:1"></span><button id="ntClose">닫기</button></div>
   </div>`;
   m.classList.add('open');
   const close=()=>m.classList.remove('open');
   m.querySelector('#ntClose').onclick=close;
   m.onclick=e=>{if(e.target===m)close()};
+  /* 알림받기는 헤더가 아니라 여기, 본문을 보는 자리에서 — 관심에 담으면 목록에서도 ★로 표시된다 */
+  m.querySelector('#ntFav').onclick=()=>{
+   const key='n:'+n.id;
+   if(fav[key])delete fav[key]; else fav[key]={at:BW.ymd(new Date())};
+   saveFav(); noticeModal(n,viewBase); renderNoticeSection();
+  };
   m.querySelector('#ntShare').onclick=()=>{
    const text=`[봉화군 ${n.kind}] ${n.title}`;
    if(navigator.share&&(!navigator.canShare||navigator.canShare({url}))){
@@ -793,82 +812,81 @@ function init(){
    }else shareModal(url);
   };
  }
- /* ── 고시·공고 모드: 상단 탭 + 전용 리스트(검색·구분·부서 필터) ── */
+
+ /* ── 고시·공고를 이번 주 소식과 한 목록에 섞는다 (탭 전환 없음) ──
+    BWUI가 자기 카드(#bwCards)를 그린 뒤(onRender), 지금 필터(기간·검색·주제·대상·관심)에
+    맞는 고시·공고만 그 아래 이어 붙인다. 주제·대상은 위에서 정의한 합친 축을 그대로 쓴다.
+    (NOTICES·ntLimit·ntSig 는 BWUI.start 앞에서 선언됨) */
  function buildNotices(){
-  const wrap=document.querySelector('.bw-wrap');
-  const ND=window.BW_NOTICES||{}, N=(ND.items||[]);
-  if(!wrap||!N.length||document.getElementById('modetabs'))return;   /* 자료 없으면 주간 소식만 */
-  const viewBase=ND.viewBase||'https://www.bonghwa.go.kr/portal/saeol/gosi/view.do';
-  const tabs=document.createElement('div'); tabs.className='modetabs'; tabs.id='modetabs';
-  tabs.innerHTML=`<button class="mtab on" data-mode="week">🗓️ 이번 주 소식</button>
-    <button class="mtab" data-mode="gosi">📢 고시·공고 <span class="mtab-n">${N.length}</span></button>`;
-  wrap.insertBefore(tabs, wrap.firstChild);   /* 맨 위 */
-  /* 내용 카테고리·대상 계산 (제목 기준) */
-  N.forEach(n=>{n._cat=ncat(n.title); n._tgts=ntgts(n.title)});
-  const view=document.createElement('div'); view.id='noticesView';
-  view.innerHTML=`
-    <div class="nv-search"><input id="nvQ" type="search" enterkeyhint="search" placeholder="찾으시는 내용을 검색 (예: 채용, 태양광, 도로)"></div>
-    <div class="axis"><p class="axh">무엇에 대한 것인가요?</p><div class="topics" id="nvCats"></div></div>
-    <div class="axis"><p class="axh">누구를 위한 것인가요?</p><div class="circles" id="nvTgts"></div></div>
-    <div class="nv-info" id="nvInfo"></div>
-    <div class="nv-list" id="nvList"></div>
-    <div id="nvMore"></div>`;
-  wrap.appendChild(view);
-  const st={q:'',cat:'',tgt:'',limit:40};
-  const nq=s=>String(s).toLowerCase();
-  const passQ=n=>!st.q||nq(n.title+' '+n.dept+' '+n.num+' '+(n.body||'')).includes(nq(st.q));
-  /* exCat/exTgt: 그 축은 빼고 나머지 조건으로 거른다(교차 필터의 건수용) */
-  const base=(exCat,exTgt)=>N.filter(n=>passQ(n)
-    &&(exCat||!st.cat||n._cat===st.cat)
-    &&(exTgt||!st.tgt||n._tgts.includes(st.tgt)));
-  function renderCats(){
-   const pool=base(true,false), cnt={}; pool.forEach(n=>cnt[n._cat]=(cnt[n._cat]||0)+1);
-   const cats=NCATS.map(c=>c[0]).concat(['기타 안내']);
-   let h=`<button type="button" class="topic ${st.cat===''?'on':''}" data-c=""><span class="ic">🗂️</span><span class="lb">전체</span><span class="n">${pool.length}</span></button>`;
-   h+=cats.filter(c=>cnt[c]||st.cat===c).map(c=>`<button type="button" class="topic ${st.cat===c?'on':''} ${cnt[c]?'':'zero'}" data-c="${E(c)}"><span class="ic">${NCAT_ICON[c]}</span><span class="lb">${E(c)}</span><span class="n">${cnt[c]||0}</span></button>`).join('');
-   const box=document.getElementById('nvCats'); box.innerHTML=h;
-   box.querySelectorAll('.topic').forEach(b=>b.onclick=()=>{st.cat=(st.cat===b.dataset.c?'':b.dataset.c);st.limit=40;renderN()});
-  }
-  function renderTgts(){
-   const pool=base(false,true), cnt={}; pool.forEach(n=>n._tgts.forEach(x=>cnt[x]=(cnt[x]||0)+1));
-   const tgts=NTGTS.map(t=>t[0]).concat(['주민 누구나']);
-   let h=`<button type="button" class="circ ${st.tgt===''?'on':''}" data-t=""><span class="ic">👪</span><span class="lb">전체</span><span class="n">${pool.length}</span></button>`;
-   h+=tgts.filter(t=>cnt[t]||st.tgt===t).map(t=>`<button type="button" class="circ ${st.tgt===t?'on':''} ${cnt[t]?'':'zero'}" data-t="${E(t)}"><span class="ic">${NTGT_ICON[t]}</span><span class="lb">${E(t)}</span><span class="n">${cnt[t]||0}</span></button>`).join('');
-   const box=document.getElementById('nvTgts'); box.innerHTML=h;
-   box.querySelectorAll('.circ').forEach(b=>b.onclick=()=>{st.tgt=(st.tgt===b.dataset.t?'':b.dataset.t);st.limit=40;renderN()});
-  }
-  function renderN(){
-   renderCats(); renderTgts();
-   const rows=base(false,false);
-   document.getElementById('nvInfo').textContent=`${st.cat||'고시·공고'} ${rows.length}건 · 최근 ${ND.months||3}개월`;
-   const list=document.getElementById('nvList');
-   list.innerHTML=rows.slice(0,st.limit).map(n=>{
-    const d=n.date.split('-').map(Number).join('. ')+'.';
-    return `<button type="button" class="nrow" data-id="${n.id}">
-      <div class="nr-top"><span class="nkind nk-cat">${E(n._cat)}</span><span class="nr-date">${d}</span></div>
-      <div class="nr-title">${E(n.title)}</div>
-      <div class="nr-dept">${E(n.dept)} · ${E(n.num)}</div></button>`;
-   }).join('') || '<div class="empty">해당하는 고시·공고가 없습니다</div>';
-   list.querySelectorAll('.nrow').forEach(b=>b.onclick=()=>{const n=N.find(x=>x.id===b.dataset.id);if(n)noticeModal(n,viewBase)});
-   const more=document.getElementById('nvMore');
-   more.innerHTML=rows.length>st.limit?`<button class="morebtn">${rows.length-st.limit}건 더 보기</button>`:'';
-   const mb=more.querySelector('button'); if(mb)mb.onclick=()=>{st.limit+=60;renderN()};
-  }
-  let t; document.getElementById('nvQ').oninput=e=>{clearTimeout(t);t=setTimeout(()=>{st.q=e.target.value.trim();st.limit=40;renderN()},180)};
-  tabs.querySelectorAll('.mtab').forEach(b=>b.onclick=()=>{
-   const gosi=b.dataset.mode==='gosi';
-   document.body.classList.toggle('gosi',gosi);
-   tabs.querySelectorAll('.mtab').forEach(x=>x.classList.toggle('on',x===b));
-   if(gosi)renderN();
-   window.scrollTo({top:0,behavior:'smooth'});
+  const ND=window.BW_NOTICES||{};
+  NOTICES=(ND.items||[]).map(n=>({...n,_cat:ncat(n.title),_tgts:ntgts(n.title)}));
+  NOTICES._viewBase=ND.viewBase||'https://www.bonghwa.go.kr/portal/saeol/gosi/view.do';
+  NOTICES._months=ND.months||3;
+ }
+ function noticeMatches(){
+  if(!NOTICES||!NOTICES.length)return [];
+  const S=BWUI.api.state, q=(S.q||'').toLowerCase();
+  const inScope=n=>{
+   if(S.scope==='all')return true;
+   if(S.scope==='day')return n.date===S.day;
+   if(S.scope==='month')return n.date.slice(0,7)===S.month;
+   return daysOf(VIEW_WEEK).includes(n.date);   /* week */
+  };
+  const topicE=S.axis.topic&&MERGED_TOPICS.find(x=>x[0]===S.axis.topic);
+  const audE=S.axis.aud&&MERGED_AUD.find(x=>x[0]===S.axis.aud);
+  return NOTICES.filter(n=>
+   inScope(n)
+   && (!q || (n.title+' '+n.dept+' '+n.num+' '+(n.body||'')).toLowerCase().includes(q))
+   && (!topicE || topicE[3].includes(n._cat))
+   && (!audE || audE[3].some(t=>n._tgts.includes(t)))
+   && (S.custom!=='fav' || !!fav['n:'+n.id])
+  );
+ }
+ function renderNoticeSection(){
+  const box=document.getElementById('bwCards'); if(!box||!NOTICES)return;
+  document.getElementById('ntSection')?.remove();   /* 이전 렌더에서 붙인 것 제거 후 다시 붙인다 */
+  const S=BWUI.api.state;
+  const sig=JSON.stringify([S.scope,S.day,S.month,S.q,S.axis.topic,S.axis.aud,S.custom]);
+  if(sig!==ntSig){ntLimit=30;ntSig=sig;}
+  const rows=noticeMatches();
+  if(!rows.length)return;
+  const sec=document.createElement('div'); sec.id='ntSection';
+  const div=document.createElement('div'); div.className='feed-divider'; div.textContent=`📢 관련 고시·공고 ${rows.length}건`;
+  sec.appendChild(div);
+  const list=document.createElement('div'); list.className='cards';
+  rows.slice(0,ntLimit).forEach(n=>{
+   const d=n.date.split('-').map(Number).join('.')+'.';
+   const el=document.createElement('div'); el.className='card';
+   const on=!!fav['n:'+n.id];
+   el.innerHTML=`
+    <div class="top">
+     <h3>${E(n.title)}</h3>
+     <div class="acts"><button class="iconb ${on?'on':''}" title="관심">${on?'★':'☆'}</button></div>
+    </div>
+    <div class="tagrow"><span class="tag type" style="cursor:default">${NCAT_ICON[n._cat]||'📄'} ${E(n._cat)}</span></div>
+    <div class="meta">${d} · ${E(n.dept)}</div>`;
+   el.querySelector('h3').onclick=()=>noticeModal(n,NOTICES._viewBase);
+   el.querySelector('.iconb').onclick=e=>{
+    e.stopPropagation();
+    const key='n:'+n.id; if(fav[key])delete fav[key]; else fav[key]={at:BW.ymd(new Date())};
+    saveFav(); renderNoticeSection();
+   };
+   list.appendChild(el);
   });
-  renderN();
+  sec.appendChild(list);
+  if(rows.length>ntLimit){
+   const more=document.createElement('button'); more.className='morebtn';
+   more.textContent=`${rows.length-ntLimit}건 더 보기`;
+   more.onclick=()=>{ntLimit+=60;renderNoticeSection()};
+   sec.appendChild(more);
+  }
+  box.appendChild(sec);
  }
 
  decorateHeader();
  buildSearchCard();
  buildDayStrip();
- buildNotices();                /* 맨 위 모드 탭 — 마지막에 넣어 최상단에 오게 한다 */
+ buildNotices();
  /* 기본: 오늘이 이번 자료 주간이면 '오늘 소식'부터, 아니면 이번 주 전체 */
  if(daysOf(D.weekStart).includes(BWUI.api.today)) setDay(BWUI.api.today); else setScope('week');
 

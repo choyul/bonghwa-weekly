@@ -412,12 +412,17 @@
       ? `<span class="listh">${E(scopeLabel)} ${E(CFG.listTitle)}</span> <span class="hint">${rows.length}건</span>`
       : `${E(scopeLabel)} ${rows.length}건 <span class="hint">· 태그를 누르면 그 조건으로 모아 봅니다</span>`;
     const box = $('#bwCards'); box.innerHTML = '';
-    if (!rows.length) { box.innerHTML = '<div class="empty">해당하는 업무가 없습니다</div>'; $('#bwMore').innerHTML = ''; return; }
-    rows.slice(0, S.limit).forEach(iss => box.appendChild(cardEl(iss)));
-    $('#bwMore').innerHTML = rows.length > S.limit
-      ? `<button class="morebtn">${rows.length - S.limit}건 더 보기</button>` : '';
-    const mb = $('#bwMore').querySelector('button');
-    if (mb) mb.onclick = () => { S.limit += 120; render(); };
+    if (!rows.length) {
+      box.innerHTML = '<div class="empty">해당하는 업무가 없습니다</div>'; $('#bwMore').innerHTML = '';
+    } else {
+      rows.slice(0, S.limit).forEach(iss => box.appendChild(cardEl(iss)));
+      $('#bwMore').innerHTML = rows.length > S.limit
+        ? `<button class="morebtn">${rows.length - S.limit}건 더 보기</button>` : '';
+      const mb = $('#bwMore').querySelector('button');
+      if (mb) mb.onclick = () => { S.limit += 120; render(); };
+    }
+    /* rows가 0건이어도 onRender는 늘 부른다 — 화면이 이 훅으로 다른 목록(예: 관련 소식)을
+       이어 붙이는 경우, 여기서 건너뛰면 그 목록이 갱신되지 않고 멈춰 버린다. */
     if (CFG.onRender) CFG.onRender();
   }
 
