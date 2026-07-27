@@ -62,10 +62,18 @@ def fetch_body(nid):
         if 0 < j < cut:
             cut = j
     seg = seg[:cut]
+    # 줄바꿈 태그(<br>, </p>, </li>, </div>)는 실제 개행으로 바꿔 둔다 —
+    # 원문이 "1. ... <br>2. ... <br>3. ..." 처럼 번호 목록을 줄바꿈으로만 구분하는
+    # 경우가 많아, 그냥 태그를 지우면 한 문장으로 뭉쳐 읽기 어려워진다.
+    seg = re.sub(r"<br\s*/?>", "\n", seg, flags=re.I)
+    seg = re.sub(r"</(p|li|div|tr)\s*>", "\n", seg, flags=re.I)
     body = html.unescape(re.sub(r"<[^>]+>", " ", seg))
     body = re.sub(r"<[^>]*$", "", body)              # 끝에 잘린 미완성 태그 제거
-    body = re.sub(r"[ \t\r\n ]+", " ", body).strip()
-    return body[:400]
+    body = body.replace("\xa0", " ")
+    body = re.sub(r"[ \t\r]+", " ", body)           # 줄 안의 연속 공백만 줄인다(개행은 남긴다)
+    body = re.sub(r" *\n *", "\n", body).strip()
+    body = re.sub(r"\n{3,}", "\n\n", body)          # 빈 줄 과도한 반복 방지
+    return body[:450]
 
 def parse_rows(t):
     out = []
