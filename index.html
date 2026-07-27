@@ -65,6 +65,9 @@ body:not(.gosi) #noticesView{display:none}
 .nk-gosi{background:var(--acc-soft);color:var(--acc)}
 .nk-gonggo{background:var(--bh-accent-soft,#F6EFDD);color:var(--gold)}
 .nk-cat{background:var(--acc-soft);color:var(--acc)}
+.ntbody{margin:8px 0 2px;padding:12px 13px;background:var(--bg);border:1px solid var(--line);border-radius:10px;
+ font-size:13.5px;line-height:1.6;color:var(--ink-2,var(--ink));max-height:200px;overflow-y:auto;
+ -webkit-overflow-scrolling:touch;white-space:pre-line}
 .nr-date{margin-left:auto;font-size:12px;color:var(--sub);flex:none}
 .nr-title{font-size:14.5px;font-weight:700;line-height:1.42;color:var(--ink);text-wrap:pretty}
 .nr-dept{font-size:12.5px;color:var(--sub);margin-top:5px}
@@ -737,18 +740,29 @@ function init(){
   }
  }
 
- /* ── 내용 카테고리 규칙 (민원인이 아는 '내용'으로 분류. 위에서부터 먼저 맞는 하나) ── */
+ /* ── 내용 카테고리 규칙 [이름, 아이콘, 정규식] (위에서부터 먼저 맞는 하나) ── */
  const NCATS=[
-  ['채용·일자리',    /채용|임용|공무직|기간제|근로자|일자리|인력\s*모집|시험 시행/i],
-  ['모집·교육·공모',  /모집|참가자|참여자|수강생|교육생|공모|선발|수강|신청.?접수/i],
-  ['입찰·용역',      /입찰|낙찰|계약|용역|수의계약|적격심사|제안서|개찰|추정가격|구입|임대 설치/i],
-  ['재산·세금·보상',  /보상|수용|감정평가|편입|손실|지방세|지방소득세|체납|공매|압류|매각|조정금|공시지가|개별주택가격|지가|납부기한|기한연장|재산세|세외수입/i],
-  ['도시·도로·건축',  /도시계획|군관리계획|지구단위|개발행위|실시계획|건축|지적|지목|측량|용도지역|경관|마을만들기|도로명주소|도로명|통행제한|도로\s*구역|도로구간|노선|시행계획|조성사업|시설사업|완료 공고|농촌중심지|농촌용수|공공청사|매장유산/i],
-  ['농림·환경·에너지', /농지|농업|산림|임야|환경|폐기물|태양광|발전|하천|수질|저수지|방제|재선충|축산|비닐|전기자동차|전기차|햇빛소득|방지시설|소규모 사업장|드론/i],
-  ['재해·안전',     /재해|재난|시설물|안전|붕괴|위험|CCTV|방범|점검/i],
-  ['인허가·처분',    /인가|허가|등록|말소|지정|승인|양수|양도|신고|행정처분|공시송달|공시 송달|원상|대집행|계고|과태료|이행강제금|위반|단속|행정예고|시정|폐업|무단방치|견인|폐차/i],
+  ['채용·일자리','💼',    /채용|임용|공무직|기간제|근로자|일자리|인력\s*모집|시험 시행/i],
+  ['모집·교육·공모','🎓', /모집|참가자|참여자|수강생|교육생|공모|선발|수강|신청.?접수/i],
+  ['입찰·용역','🧾',     /입찰|낙찰|계약|용역|수의계약|적격심사|제안서|개찰|추정가격|구입|임대 설치/i],
+  ['재산·세금·보상','💰', /보상|수용|감정평가|편입|손실|지방세|지방소득세|체납|공매|압류|매각|조정금|공시지가|개별주택가격|지가|납부기한|기한연장|재산세|세외수입/i],
+  ['도시·도로·건축','🏗️', /도시계획|군관리계획|지구단위|개발행위|실시계획|건축|지적|지목|측량|용도지역|경관|마을만들기|도로명주소|도로명|통행제한|도로\s*구역|도로구간|노선|시행계획|조성사업|시설사업|완료 공고|농촌중심지|농촌용수|공공청사|매장유산/i],
+  ['농림·환경·에너지','🌱', /농지|농업|산림|임야|환경|폐기물|태양광|발전|하천|수질|저수지|방제|재선충|축산|비닐|전기자동차|전기차|햇빛소득|방지시설|소규모 사업장|드론/i],
+  ['재해·안전','⚠️',    /재해|재난|시설물|안전|붕괴|위험|CCTV|방범|점검/i],
+  ['인허가·처분','📋',   /인가|허가|등록|말소|지정|승인|양수|양도|신고|행정처분|공시송달|공시 송달|원상|대집행|계고|과태료|이행강제금|위반|단속|행정예고|시정|폐업|무단방치|견인|폐차/i],
  ];
- function ncat(title){ for(const c of NCATS){ if(c[1].test(title)) return c[0]; } return '기타 안내'; }
+ function ncat(title){ for(const c of NCATS){ if(c[2].test(title)) return c[0]; } return '기타 안내'; }
+ const NCAT_ICON={'기타 안내':'📄'}; NCATS.forEach(c=>NCAT_ICON[c[0]]=c[1]);
+
+ /* ── 대상(누구를 위한 것) 규칙 [이름, 아이콘, 정규식] — 여러 대상에 걸칠 수 있음 ── */
+ const NTGTS=[
+  ['구직자','🧑‍💼',       /채용|임용|일자리|근로자|공무직|기간제|인력/i],
+  ['사업자·업체','🏢',    /입찰|낙찰|용역|계약|수의계약|제안서|인가|허가|등록|말소|폐업|양수|양도|전기사업|발전소|공장|업체|사업자|제조|판매|영업/i],
+  ['농업인','🧑‍🌾',       /농지|농업|산림|임야|축산|재선충|방제|농촌|영농|작물|가축/i],
+  ['토지·주택 소유자','🏠', /보상|수용|편입|공시지가|개별주택가격|지가|도시계획|군관리계획|지구단위|개발행위|건축|지적|지목|측량|도로\s*구역|도로구간|무단점용|재산세|주택|토지/i],
+ ];
+ function ntgts(title){ const a=NTGTS.filter(t=>t[2].test(title)).map(t=>t[0]); return a.length?a:['주민 누구나']; }
+ const NTGT_ICON={'주민 누구나':'👥'}; NTGTS.forEach(t=>NTGT_ICON[t[0]]=t[1]);
 
  /* ── 고시·공고 상세 모달 (요약 + 봉화군 원문·첨부 링크) ── */
  function noticeModal(n,viewBase){
@@ -761,7 +775,8 @@ function init(){
      <div class="nr-top" style="margin-bottom:8px"><span class="nkind nk-cat">${E(n._cat||ncat(n.title))}</span><span class="nr-date">${E(n.date)}</span></div>
      <div style="font-size:16px;font-weight:700;line-height:1.45">${E(n.title)}</div>
      <div class="note" style="padding:8px 0 2px">${E(n.dept)} · ${E(n.num)}</div>
-     <div class="note" style="padding:0">본문·첨부파일은 봉화군 공식 페이지에서 확인하세요.</div>
+     ${n.body?`<div class="ntbody">${E(n.body)} …</div>`:''}
+     <div class="note" style="padding:6px 0 2px">일부 내용입니다. 전체 내용·첨부파일은 봉화군 공식 페이지에서 확인하세요.</div>
     </div>
     <div style="padding:8px 18px 2px"><a class="callbtn" href="${url}" target="_blank" rel="noopener">📄 봉화군에서 원문·첨부 보기</a></div>
     <div style="padding:6px 18px 2px"><button class="callbtn" id="ntShare" style="background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔗 공유</button></div>
@@ -788,30 +803,43 @@ function init(){
   tabs.innerHTML=`<button class="mtab on" data-mode="week">🗓️ 이번 주 소식</button>
     <button class="mtab" data-mode="gosi">📢 고시·공고 <span class="mtab-n">${N.length}</span></button>`;
   wrap.insertBefore(tabs, wrap.firstChild);   /* 맨 위 */
-  /* 내용 카테고리 계산(제목 기준, 위에서부터 먼저 맞는 것 하나로) + 건수 */
-  N.forEach(n=>{n._cat=ncat(n.title)});
-  const catCount={}; N.forEach(n=>catCount[n._cat]=(catCount[n._cat]||0)+1);
-  const catList=NCATS.map(c=>c[0]).concat(['기타 안내']).filter(c=>catCount[c]);
+  /* 내용 카테고리·대상 계산 (제목 기준) */
+  N.forEach(n=>{n._cat=ncat(n.title); n._tgts=ntgts(n.title)});
   const view=document.createElement('div'); view.id='noticesView';
   view.innerHTML=`
     <div class="nv-search"><input id="nvQ" type="search" enterkeyhint="search" placeholder="찾으시는 내용을 검색 (예: 채용, 태양광, 도로)"></div>
-    <div class="nv-cats" id="nvCats">
-      <button type="button" data-c="" class="on">전체 <span class="cc">${N.length}</span></button>
-      ${catList.map(c=>`<button type="button" data-c="${E(c)}">${E(c)} <span class="cc">${catCount[c]}</span></button>`).join('')}
-    </div>
+    <div class="axis"><p class="axh">무엇에 대한 것인가요?</p><div class="topics" id="nvCats"></div></div>
+    <div class="axis"><p class="axh">누구를 위한 것인가요?</p><div class="circles" id="nvTgts"></div></div>
     <div class="nv-info" id="nvInfo"></div>
     <div class="nv-list" id="nvList"></div>
     <div id="nvMore"></div>`;
   wrap.appendChild(view);
-  const st={q:'',cat:'',limit:40};
+  const st={q:'',cat:'',tgt:'',limit:40};
   const nq=s=>String(s).toLowerCase();
-  const filt=()=>N.filter(n=>{
-   if(st.cat&&n._cat!==st.cat)return false;
-   if(st.q&&!nq(n.title+' '+n.dept+' '+n.num).includes(nq(st.q)))return false;
-   return true;
-  });
+  const passQ=n=>!st.q||nq(n.title+' '+n.dept+' '+n.num+' '+(n.body||'')).includes(nq(st.q));
+  /* exCat/exTgt: 그 축은 빼고 나머지 조건으로 거른다(교차 필터의 건수용) */
+  const base=(exCat,exTgt)=>N.filter(n=>passQ(n)
+    &&(exCat||!st.cat||n._cat===st.cat)
+    &&(exTgt||!st.tgt||n._tgts.includes(st.tgt)));
+  function renderCats(){
+   const pool=base(true,false), cnt={}; pool.forEach(n=>cnt[n._cat]=(cnt[n._cat]||0)+1);
+   const cats=NCATS.map(c=>c[0]).concat(['기타 안내']);
+   let h=`<button type="button" class="topic ${st.cat===''?'on':''}" data-c=""><span class="ic">🗂️</span><span class="lb">전체</span><span class="n">${pool.length}</span></button>`;
+   h+=cats.filter(c=>cnt[c]||st.cat===c).map(c=>`<button type="button" class="topic ${st.cat===c?'on':''} ${cnt[c]?'':'zero'}" data-c="${E(c)}"><span class="ic">${NCAT_ICON[c]}</span><span class="lb">${E(c)}</span><span class="n">${cnt[c]||0}</span></button>`).join('');
+   const box=document.getElementById('nvCats'); box.innerHTML=h;
+   box.querySelectorAll('.topic').forEach(b=>b.onclick=()=>{st.cat=(st.cat===b.dataset.c?'':b.dataset.c);st.limit=40;renderN()});
+  }
+  function renderTgts(){
+   const pool=base(false,true), cnt={}; pool.forEach(n=>n._tgts.forEach(x=>cnt[x]=(cnt[x]||0)+1));
+   const tgts=NTGTS.map(t=>t[0]).concat(['주민 누구나']);
+   let h=`<button type="button" class="circ ${st.tgt===''?'on':''}" data-t=""><span class="ic">👪</span><span class="lb">전체</span><span class="n">${pool.length}</span></button>`;
+   h+=tgts.filter(t=>cnt[t]||st.tgt===t).map(t=>`<button type="button" class="circ ${st.tgt===t?'on':''} ${cnt[t]?'':'zero'}" data-t="${E(t)}"><span class="ic">${NTGT_ICON[t]}</span><span class="lb">${E(t)}</span><span class="n">${cnt[t]||0}</span></button>`).join('');
+   const box=document.getElementById('nvTgts'); box.innerHTML=h;
+   box.querySelectorAll('.circ').forEach(b=>b.onclick=()=>{st.tgt=(st.tgt===b.dataset.t?'':b.dataset.t);st.limit=40;renderN()});
+  }
   function renderN(){
-   const rows=filt();
+   renderCats(); renderTgts();
+   const rows=base(false,false);
    document.getElementById('nvInfo').textContent=`${st.cat||'고시·공고'} ${rows.length}건 · 최근 ${ND.months||3}개월`;
    const list=document.getElementById('nvList');
    list.innerHTML=rows.slice(0,st.limit).map(n=>{
@@ -827,7 +855,6 @@ function init(){
    const mb=more.querySelector('button'); if(mb)mb.onclick=()=>{st.limit+=60;renderN()};
   }
   let t; document.getElementById('nvQ').oninput=e=>{clearTimeout(t);t=setTimeout(()=>{st.q=e.target.value.trim();st.limit=40;renderN()},180)};
-  view.querySelectorAll('#nvCats button').forEach(b=>b.onclick=()=>{st.cat=b.dataset.c;view.querySelectorAll('#nvCats button').forEach(x=>x.classList.toggle('on',x===b));st.limit=40;renderN();document.getElementById('noticesView').scrollIntoView({block:'start',behavior:'smooth'})});
   tabs.querySelectorAll('.mtab').forEach(b=>b.onclick=()=>{
    const gosi=b.dataset.mode==='gosi';
    document.body.classList.toggle('gosi',gosi);

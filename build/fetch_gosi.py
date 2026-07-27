@@ -41,6 +41,32 @@ def fetch(url):
 def clean(x):
     return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", x)).strip()
 
+def fetch_body(nid):
+    """상세 페이지 본문(view_cont) 앞부분만 미리보기로. 실패해도 빈 문자열."""
+    t = fetch(VIEW.format(id=nid))
+    if not t:
+        return ""
+    i = t.find('class="view_cont"')
+    if i < 0:
+        return ""
+    i = t.find(">", i)   # 여는 태그(<div ...>) 끝으로 이동 — 'class="view_cont">' 조각 제거
+    if i < 0:
+        return ""
+    seg = t[i + 1:i + 12000]
+    # 본문 뒤 첨부/버튼/네비 영역을 잘라낸다 (가장 먼저 나오는 경계에서)
+    cut = len(seg)
+    for mk in ("updateFileList", 'id="updateFile', 'class="file_list',
+               "첨부 파일", "첨부파일", "<ul", "<table", 'class="btn',
+               "목록으로", "이전글", "다음글"):
+        j = seg.find(mk)
+        if 0 < j < cut:
+            cut = j
+    seg = seg[:cut]
+    body = html.unescape(re.sub(r"<[^>]+>", " ", seg))
+    body = re.sub(r"<[^>]*$", "", body)              # 끝에 잘린 미완성 태그 제거
+    body = re.sub(r"[ \t\r\n ]+", " ", body).strip()
+    return body[:400]
+
 def parse_rows(t):
     out = []
     for r in re.findall(r"<tr[^>]*>(.*?)</tr>", t, re.S):
@@ -79,6 +105,13 @@ def main():
         if oldest < cut:  # 이 페이지에 컷오프보다 오래된 게 나오면 종료
             break
         time.sleep(0.8)
+    # 각 건의 본문 미리보기 수집 (상세 페이지)
+    sys.stderr.write(f"본문 미리보기 수집 {len(items)}건...\n")
+    for k, x in enumerate(items):
+        x["body"] = fetch_body(x["id"])
+        if (k + 1) % 30 == 0:
+            sys.stderr.write(f"  {k+1}/{len(items)}\n")
+        time.sleep(0.35)
     items.sort(key=lambda x: (x["date"], x["id"]), reverse=True)
     latest = items[0]["date"] if items else date.today().isoformat()
     data = {"builtAt": latest, "viewBase": BASE + "/view.do",
