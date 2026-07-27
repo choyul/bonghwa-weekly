@@ -1,17 +1,18 @@
-name: 주간업무 자동 갱신
+name: 봉화의 오늘 자동 갱신
 
-# 매주 목요일에 봉화군 홈페이지를 확인해 새 주간업무가 올라왔으면 data.js를 갱신한다.
-# 새 주차가 없으면 아무것도 커밋하지 않는다(무해).
+# 매일 봉화군 홈페이지를 확인한다.
+#  - 주간업무: 새 주차가 올라왔으면 data.js 갱신(대개 목요일에만 바뀜, 없으면 무커밋)
+#  - 고시·공고: 최근 3개월치를 매일 새로 받아 notices.js 갱신
 on:
   schedule:
-    - cron: '0 1 * * 4'    # UTC 목 01:00 = 한국시간 목요일 오전 10시
+    - cron: '0 1 * * *'    # UTC 01:00 = 한국시간 매일 오전 10시
   workflow_dispatch: {}     # Actions 탭에서 수동 실행 버튼
 
 permissions:
   contents: write
 
 concurrency:
-  group: weekly-update
+  group: daily-update
   cancel-in-progress: false
 
 jobs:
@@ -32,16 +33,19 @@ jobs:
       - name: data.js 재생성 (md → data.js)
         run: node build/build.js md data.js
 
+      - name: 고시·공고 최근 3개월 수집 (봉화군 게시판 → notices.js)
+        run: python3 build/fetch_gosi.py notices.js 3
+        continue-on-error: true   # 게시판 일시 오류가 주간 갱신을 막지 않도록
+
       - name: 바뀌었으면 커밋·푸시
         run: |
-          if [[ -n "$(git status --porcelain data.js md)" ]]; then
+          if [[ -n "$(git status --porcelain data.js md notices.js)" ]]; then
             git config user.name "bonghwa-bot"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add data.js md
-            git commit -m "주간 데이터 자동 갱신 ($(date -u +%Y-%m-%d))"
+            git add data.js md notices.js
+            git commit -m "자동 갱신 ($(date -u +%Y-%m-%d))"
             git push
             echo "갱신 완료"
           else
-            echo "새 주차 없음 — 변경 없음"
+            echo "변경 없음"
           fi
-

@@ -32,6 +32,42 @@ footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decorat
 .glist dt .gi{font-size:15px}
 .glist dd{margin:0;font-weight:600}
 
+/* ── 상단 모드 탭 [이번 주 소식] / [고시·공고] ── */
+.modetabs{display:flex;gap:6px;margin-bottom:12px}
+.modetabs .mtab{flex:1;min-height:48px;border:1px solid var(--line);border-radius:12px;background:var(--paper);
+ color:var(--sub);font-size:15px;font-weight:700;cursor:pointer;transition:all var(--bh-dur,180ms) var(--bh-ease,ease)}
+.modetabs .mtab.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.modetabs .mtab-n{font-size:12px;font-weight:700;opacity:.85;margin-left:2px}
+/* 모드 전환 — 고시·공고일 땐 주간 소식 UI를 숨긴다 */
+body.gosi #wstrip,body.gosi #psearch,body.gosi #bwAxes,body.gosi #bwTop,
+body.gosi #bwFilters,body.gosi #bwInfo,body.gosi #bwCards,body.gosi #bwMore{display:none}
+body:not(.gosi) #noticesView{display:none}
+
+/* ── 고시·공고 뷰 ── */
+.nv-search input{width:100%;min-height:48px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;
+ background:var(--paper);color:var(--ink);font-size:16px;margin-bottom:10px}
+.nv-search input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--bh-primary-tint,var(--acc-soft))}
+.nv-kinds{display:flex;gap:6px;margin-bottom:8px}
+.nv-kinds button{flex:1;min-height:40px;border:1px solid var(--line);border-radius:10px;background:var(--paper);
+ color:var(--ink);font-size:13.5px;font-weight:600;cursor:pointer;transition:all var(--bh-dur,180ms) var(--bh-ease,ease)}
+.nv-kinds button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.nv-depts{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+.nv-depts button{flex:none;min-height:38px;padding:7px 13px;border:1px solid var(--line);border-radius:999px;
+ background:var(--paper);color:var(--ink);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap}
+.nv-depts button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.nv-info{color:var(--sub);font-size:13px;margin:2px 2px 10px}
+.nv-list{display:flex;flex-direction:column;gap:8px}
+.nrow{text-align:left;width:100%;background:var(--paper);border:1px solid var(--line);border-radius:12px;
+ padding:13px 15px;cursor:pointer;transition:box-shadow var(--bh-dur,180ms) var(--bh-ease,ease);font:inherit}
+.nrow:hover{box-shadow:var(--bh-shadow-1,0 1px 2px rgba(0,0,0,.06))}
+.nr-top{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.nkind{flex:none;font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:6px}
+.nk-gosi{background:var(--acc-soft);color:var(--acc)}
+.nk-gonggo{background:var(--bh-accent-soft,#F6EFDD);color:var(--gold)}
+.nr-date{margin-left:auto;font-size:12px;color:var(--sub);flex:none}
+.nr-title{font-size:14.5px;font-weight:700;line-height:1.42;color:var(--ink);text-wrap:pretty}
+.nr-dept{font-size:12.5px;color:var(--sub);margin-top:5px}
+
 /* ── 헤더 부제 + 오늘 날짜 (자료 주차 줄은 달력 카드 타이틀로 옮겨 헤더에선 숨김) ── */
 .bw-sub{width:100%;font-size:13px;font-weight:600;opacity:.9;margin-top:3px}
 .bw-today{width:100%;font-size:13px;font-weight:700;margin-top:4px;opacity:.96}
@@ -138,7 +174,11 @@ footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decorat
 <script src="core.js"></script>
 <script src="ui.js"></script>
 <script>
-(function(){const s=document.createElement('script');s.src='data.js?v='+Date.now();s.onload=init;document.head.appendChild(s)})();
+/* data.js(필수) → notices.js(고시·공고, 실패해도 진행) → init */
+(function(){
+ function load(src,cb){const s=document.createElement('script');s.src=src;s.onload=cb;s.onerror=cb;document.head.appendChild(s)}
+ load('data.js?v='+Date.now(), function(){ load('notices.js?v='+Date.now(), init); });
+})();
 
 function init(){
  const D=window.BW_DATA, E=BW.escH;
@@ -696,9 +736,103 @@ function init(){
   }
  }
 
+ /* ── 고시·공고 상세 모달 (요약 + 봉화군 원문·첨부 링크) ── */
+ function noticeModal(n,viewBase){
+  const url=viewBase+'?notAncmtMgtNo='+n.id+'&mid=0201030000';
+  const kc=n.kind==='고시'?'nk-gosi':'nk-gonggo';
+  let m=document.getElementById('noticeModal');
+  if(!m){m=document.createElement('div');m.id='noticeModal';m.className='modal';document.body.appendChild(m)}
+  m.innerHTML=`<div class="mbox">
+    <h2>${n.kind} 상세</h2>
+    <div style="padding:2px 18px 4px">
+     <div class="nr-top" style="margin-bottom:8px"><span class="nkind ${kc}">${n.kind}</span><span class="nr-date">${E(n.date)}</span></div>
+     <div style="font-size:16px;font-weight:700;line-height:1.45">${E(n.title)}</div>
+     <div class="note" style="padding:8px 0 2px">${E(n.dept)} · ${E(n.num)}</div>
+     <div class="note" style="padding:0">본문·첨부파일은 봉화군 공식 페이지에서 확인하세요.</div>
+    </div>
+    <div style="padding:8px 18px 2px"><a class="callbtn" href="${url}" target="_blank" rel="noopener">📄 봉화군에서 원문·첨부 보기</a></div>
+    <div style="padding:6px 18px 2px"><button class="callbtn" id="ntShare" style="background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔗 공유</button></div>
+    <div class="mfoot"><span style="flex:1"></span><button id="ntClose">닫기</button></div>
+  </div>`;
+  m.classList.add('open');
+  const close=()=>m.classList.remove('open');
+  m.querySelector('#ntClose').onclick=close;
+  m.onclick=e=>{if(e.target===m)close()};
+  m.querySelector('#ntShare').onclick=()=>{
+   const text=`[봉화군 ${n.kind}] ${n.title}`;
+   if(navigator.share&&(!navigator.canShare||navigator.canShare({url}))){
+    navigator.share({title:'봉화군 '+n.kind,text,url}).catch(err=>{if(err&&err.name==='AbortError')return;shareModal(url)});
+   }else shareModal(url);
+  };
+ }
+ /* ── 고시·공고 모드: 상단 탭 + 전용 리스트(검색·구분·부서 필터) ── */
+ function buildNotices(){
+  const wrap=document.querySelector('.bw-wrap');
+  const ND=window.BW_NOTICES||{}, N=(ND.items||[]);
+  if(!wrap||!N.length||document.getElementById('modetabs'))return;   /* 자료 없으면 주간 소식만 */
+  const viewBase=ND.viewBase||'https://www.bonghwa.go.kr/portal/saeol/gosi/view.do';
+  const tabs=document.createElement('div'); tabs.className='modetabs'; tabs.id='modetabs';
+  tabs.innerHTML=`<button class="mtab on" data-mode="week">🗓️ 이번 주 소식</button>
+    <button class="mtab" data-mode="gosi">📢 고시·공고 <span class="mtab-n">${N.length}</span></button>`;
+  wrap.insertBefore(tabs, wrap.firstChild);   /* 맨 위 */
+  const depts=[...new Set(N.map(n=>n.dept))];
+  const view=document.createElement('div'); view.id='noticesView';
+  view.innerHTML=`
+    <div class="nv-search"><input id="nvQ" type="search" enterkeyhint="search" placeholder="제목·부서 검색 (예: 도시계획, 보상)"></div>
+    <div class="nv-kinds" id="nvKinds">
+      <button type="button" data-k="" class="on">전체</button>
+      <button type="button" data-k="고시">고시</button>
+      <button type="button" data-k="공고">공고</button>
+    </div>
+    <div class="nv-depts" id="nvDepts">
+      <button type="button" data-d="" class="on">전체 부서</button>
+      ${depts.map(d=>`<button type="button" data-d="${E(d)}">${E(d)}</button>`).join('')}
+    </div>
+    <div class="nv-info" id="nvInfo"></div>
+    <div class="nv-list" id="nvList"></div>
+    <div id="nvMore"></div>`;
+  wrap.appendChild(view);
+  const st={q:'',kind:'',dept:'',limit:40};
+  const nq=s=>String(s).toLowerCase();
+  const filt=()=>N.filter(n=>{
+   if(st.kind&&n.kind!==st.kind)return false;
+   if(st.dept&&n.dept!==st.dept)return false;
+   if(st.q&&!nq(n.title+' '+n.dept+' '+n.num).includes(nq(st.q)))return false;
+   return true;
+  });
+  function renderN(){
+   const rows=filt();
+   document.getElementById('nvInfo').textContent=`고시·공고 ${rows.length}건 · 최근 ${ND.months||3}개월`;
+   const list=document.getElementById('nvList');
+   list.innerHTML=rows.slice(0,st.limit).map(n=>{
+    const kc=n.kind==='고시'?'nk-gosi':'nk-gonggo', d=n.date.split('-').map(Number).join('. ')+'.';
+    return `<button type="button" class="nrow" data-id="${n.id}">
+      <div class="nr-top"><span class="nkind ${kc}">${n.kind}</span><span class="nr-date">${d}</span></div>
+      <div class="nr-title">${E(n.title)}</div>
+      <div class="nr-dept">${E(n.dept)} · ${E(n.num)}</div></button>`;
+   }).join('') || '<div class="empty">해당하는 고시·공고가 없습니다</div>';
+   list.querySelectorAll('.nrow').forEach(b=>b.onclick=()=>{const n=N.find(x=>x.id===b.dataset.id);if(n)noticeModal(n,viewBase)});
+   const more=document.getElementById('nvMore');
+   more.innerHTML=rows.length>st.limit?`<button class="morebtn">${rows.length-st.limit}건 더 보기</button>`:'';
+   const mb=more.querySelector('button'); if(mb)mb.onclick=()=>{st.limit+=60;renderN()};
+  }
+  let t; document.getElementById('nvQ').oninput=e=>{clearTimeout(t);t=setTimeout(()=>{st.q=e.target.value.trim();st.limit=40;renderN()},180)};
+  view.querySelectorAll('#nvKinds button').forEach(b=>b.onclick=()=>{st.kind=b.dataset.k;view.querySelectorAll('#nvKinds button').forEach(x=>x.classList.toggle('on',x===b));st.limit=40;renderN()});
+  view.querySelectorAll('#nvDepts button').forEach(b=>b.onclick=()=>{st.dept=b.dataset.d;view.querySelectorAll('#nvDepts button').forEach(x=>x.classList.toggle('on',x===b));st.limit=40;renderN()});
+  tabs.querySelectorAll('.mtab').forEach(b=>b.onclick=()=>{
+   const gosi=b.dataset.mode==='gosi';
+   document.body.classList.toggle('gosi',gosi);
+   tabs.querySelectorAll('.mtab').forEach(x=>x.classList.toggle('on',x===b));
+   if(gosi)renderN();
+   window.scrollTo({top:0,behavior:'smooth'});
+  });
+  renderN();
+ }
+
  decorateHeader();
  buildSearchCard();
- buildDayStrip();               /* 마지막에 넣어 맨 위에 오게 한다 */
+ buildDayStrip();
+ buildNotices();                /* 맨 위 모드 탭 — 마지막에 넣어 최상단에 오게 한다 */
  /* 기본: 오늘이 이번 자료 주간이면 '오늘 소식'부터, 아니면 이번 주 전체 */
  if(daysOf(D.weekStart).includes(BWUI.api.today)) setDay(BWUI.api.today); else setScope('week');
 
