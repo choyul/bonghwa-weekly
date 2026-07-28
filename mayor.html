@@ -208,6 +208,14 @@ function init(){
  const cm=document.getElementById('cmodal');
  function openContacts(){
   document.getElementById('clist').innerHTML=
+   /* 전화번호를 부서마다 하나씩 치기 번거로울 때 — 한 번호를 모든 부서에 한꺼번에 넣는다.
+      이 번호는 코드/저장소에 저장되지 않고, [전체 적용]을 누른 이 기기의 localStorage에만 남는다. */
+   `<div style="display:flex;gap:8px;margin-bottom:13px;padding-bottom:13px;border-bottom:1px solid var(--line)">
+     <input id="bulkPhone" inputmode="tel" placeholder="010-0000-0000" value="010-7392-6070"
+      style="flex:1;min-width:0;padding:9px 10px;min-height:44px;border:1px solid var(--line);border-radius:8px;font-size:14px">
+     <button id="bulkApply" style="flex:none;padding:9px 16px;min-height:44px;border-radius:8px;border:none;
+      background:var(--acc);color:#fff;font-weight:600;cursor:pointer;white-space:nowrap">전체 부서에 적용</button>
+    </div>`+
    '<div class="crow" style="color:var(--sub);font-size:12px"><span>부서</span><span>과장명</span><span>전화번호</span></div>'+
    D.depts.map(d=>{const c=contacts[d]||{};
     return `<div class="crow"><span>${E(d)}</span>
@@ -215,10 +223,16 @@ function init(){
      <input data-d="${E(d)}" data-f="phone" value="${E(c.phone||'')}" inputmode="tel" placeholder="010-....">
     </div>`}).join('');
   cm.classList.add('open');
+  document.getElementById('bulkApply').onclick=()=>{
+   const v=document.getElementById('bulkPhone').value.trim();
+   if(!v){BWUI.toast('번호를 입력해 주세요');return}
+   document.querySelectorAll('#clist input[data-f="phone"]').forEach(i=>i.value=v);
+   BWUI.toast(`전화번호 ${D.depts.length}곳에 채웠습니다 — 아래 [저장]을 눌러 확정하세요`);
+  };
  }
  document.getElementById('cClose').onclick=()=>cm.classList.remove('open');
  document.getElementById('cSave').onclick=()=>{
-  document.querySelectorAll('#clist input').forEach(i=>{(contacts[i.dataset.d]=contacts[i.dataset.d]||{})[i.dataset.f]=i.value.trim()});
+  document.querySelectorAll('#clist input[data-d]').forEach(i=>{(contacts[i.dataset.d]=contacts[i.dataset.d]||{})[i.dataset.f]=i.value.trim()});
   localStorage.setItem(CKEY,JSON.stringify(contacts));
   cm.classList.remove('open');BWUI.toast('저장했습니다 (이 기기에만)');refresh();
  };
