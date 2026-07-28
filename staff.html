@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1F4B3F">
+<title>주간업무 조회 — 직원용</title>
+<link rel="manifest" href="staff.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon.svg">
+<!-- 토큰은 반드시 ui.css보다 먼저 로드한다 -->
+<link rel="stylesheet" href="bonghwa-tokens.css">
+<link rel="stylesheet" href="ui.css">
+<style>
+/* ── 첫 접속 코드 확인 (완전한 보안이 아니라 가벼운 잠금) ── */
+#gate{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+#gate .gbox{width:100%;max-width:340px;text-align:center}
+#gate h1{font-size:19px;margin:0 0 6px;color:var(--ink)}
+#gate p{font-size:13.5px;color:var(--sub);margin:0 0 20px;line-height:1.5}
+#gate input{width:100%;min-height:50px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;
+ background:var(--paper);color:var(--ink);font-size:17px;text-align:center;letter-spacing:.05em;margin-bottom:12px}
+#gate input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--bh-primary-tint,var(--acc-soft))}
+#gate button{width:100%;min-height:50px;border:none;border-radius:11px;background:var(--acc);color:#fff;
+ font-size:16px;font-weight:700;cursor:pointer}
+#gate .gerr{color:var(--warn);font-size:13px;margin-top:10px;display:none}
+#gate .gerr.on{display:block}
+body.gated>*:not(#gate){display:none}
+</style>
+</head>
+<body class="gated">
+<div id="gate"><div class="gbox">
+ <h1>🔒 주간업무 조회 — 직원용</h1>
+ <p>담당자에게 받은 코드를 입력하세요.</p>
+ <input id="gateCode" type="password" inputmode="text" autocomplete="off" placeholder="코드 입력">
+ <button id="gateGo">확인</button>
+ <div class="gerr" id="gateErr">코드가 올바르지 않습니다</div>
+</div></div>
+
+<div class="modal" id="cmodal"><div class="mbox">
+ <h2>연락처 관리</h2>
+ <div class="note">조직도를 보고 직접 입력하세요. 이 기기에만 저장되며 서버나 코드에 올라가지 않습니다.</div>
+ <div class="mbody" id="clist"></div>
+ <div class="mfoot">
+  <button class="pri" id="cSave">저장</button>
+  <button id="cExport">내보내기</button>
+  <button id="cImport">불러오기</button><input type="file" id="cFile" accept=".json" hidden>
+  <span style="flex:1"></span><button id="cClose">닫기</button>
+ </div>
+</div></div>
+
+<script src="core.js"></script>
+<script src="ui.js"></script>
+<script>
+(function(){
+ const GKEY='bh.gate.staff', HASH='881d8cbb85958c5993545db9756b287d47a0d1ab46b7c579bf403c0006635c24';
+ async function sha256(s){
+  const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+ }
+ function unlock(){
+  document.body.classList.remove('gated');
+  document.getElementById('gate').remove();
+  /* init()은 다음 <script> 태그에서 선언되므로 지금 당장(이 스크립트 실행 시점)은
+     아직 없을 수 있다 — 함수로 감싸 실제 로드가 끝난 뒤(항상 나중 시점)에 이름을 찾게 한다. */
+  const s=document.createElement('script');s.src='data.js?v='+Date.now();s.onload=function(){init()};document.head.appendChild(s);
+ }
+ if(localStorage.getItem(GKEY)==='1'){ unlock(); return; }
+ const inp=document.getElementById('gateCode'), go=document.getElementById('gateGo'), err=document.getElementById('gateErr');
+ const tryCode=async()=>{
+  const h=await sha256(inp.value.trim());
+  if(h===HASH){ localStorage.setItem(GKEY,'1'); unlock(); }
+  else{ err.classList.add('on'); inp.value=''; inp.focus(); }
+ };
+ go.onclick=tryCode;
+ inp.onkeydown=e=>{ if(e.key==='Enter')tryCode(); };
+ setTimeout(()=>inp.focus(),50);
+})();
+</script>
+<script>
+function init(){
+ const D=window.BW_DATA, E=BW.escH;
+ const CKEY='bh.contacts', FKEY='bh.fav.staff';
+ let contacts={};try{contacts=JSON.parse(localStorage.getItem(CKEY))||{}}catch(e){}
+ let fav={};try{fav=JSON.parse(localStorage.getItem(FKEY))||{}}catch(e){}
+ const saveFav=()=>localStorage.setItem(FKEY,JSON.stringify(fav));
+
+ const telOf=d=>(contacts[d]&&contacts[d].phone)||D.deptPhones[d]||'';
+ const contactText=d=>{
+  const c=contacts[d]||{};const tel=telOf(d);
+  if(!c.name&&!tel)return '연락처 미입력';
+  return [c.name?c.name+' 과장':'',tel].filter(Boolean).join(' ');
+ };
+
+ /* ── 연락처 모달 ── */
+ const cm=document.getElementById('cmodal');
+ function openContacts(){
+  document.getElementById('clist').innerHTML=
+   '<div class="crow" style="color:var(--sub);font-size:12px"><span>부서</span><span>과장명</span><span>전화번호</span></div>'+
+   D.depts.map(d=>{const c=contacts[d]||{};
+    return `<div class="crow"><span>${E(d)}</span>
+     <input data-d="${E(d)}" data-f="name" value="${E(c.name||'')}" placeholder="이름">
+     <input data-d="${E(d)}" data-f="phone" value="${E(c.phone||'')}" inputmode="tel" placeholder="054-679-....">
+    </div>`}).join('');
+  cm.classList.add('open');
+ }
+ document.getElementById('cClose').onclick=()=>cm.classList.remove('open');
+ document.getElementById('cSave').onclick=()=>{
+  document.querySelectorAll('#clist input').forEach(i=>{(contacts[i.dataset.d]=contacts[i.dataset.d]||{})[i.dataset.f]=i.value.trim()});
+  localStorage.setItem(CKEY,JSON.stringify(contacts));
+  cm.classList.remove('open');BWUI.toast('저장했습니다 (이 기기에만)');BWUI.api.render();
+ };
+ document.getElementById('cExport').onclick=()=>{
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify({contacts},null,1)],{type:'application/json'}));
+  a.download='봉화_연락처.json';a.click();
+ };
+ document.getElementById('cImport').onclick=()=>document.getElementById('cFile').click();
+ document.getElementById('cFile').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  f.text().then(t=>{try{const o=JSON.parse(t);if(!o.contacts)throw 0;
+   contacts=o.contacts;localStorage.setItem(CKEY,JSON.stringify(contacts));openContacts();BWUI.toast('불러왔습니다');
+  }catch(_){BWUI.toast('형식이 맞지 않습니다')}});
+  e.target.value='';
+ };
+
+ BWUI.start({
+  role:'staff', title:'주간업무 조회',
+  searchPlaceholder:'업무명·내용 검색 — 다른 과의 비슷한 일을 찾아보세요',
+  headerButtons:[
+   {label:'⭐ 즐겨찾기',on(){BWUI.api.setCustom('fav')}},
+   {label:'연락처',on:openContacts}
+  ],
+  customFilters:{fav:{label:'즐겨찾기만',fn:iss=>!!fav[iss._id]}},
+  showContact:contactText,      /* 유사업무 목록에 담당 연락처를 함께 */
+
+  cardActions:iss=>[{
+   icon:fav[iss._id]?'★':'☆', title:'즐겨찾기', active:!!fav[iss._id],
+   on(i){ if(fav[i._id])delete fav[i._id]; else fav[i._id]={at:BW.ymd(new Date())}; saveFav(); }
+  }],
+
+  detailBlocks(iss,body){
+   body.insertAdjacentHTML('beforeend',`
+    <div class="blk"><h3>담당</h3>
+     <div class="hint">${E(iss.dept)} · ${E(contactText(iss.dept))}
+      ${telOf(iss.dept)?'':' <span style="color:var(--warn)">— 상단 [연락처]에서 입력하면 바로 전화할 수 있습니다</span>'}</div>
+     <label class="chk" style="margin-top:4px"><input type="checkbox" id="favChk" ${fav[iss._id]?'checked':''}> 즐겨찾기에 담기</label>
+    </div>`);
+   body.querySelector('#favChk').onchange=e=>{
+    if(e.target.checked)fav[iss._id]={at:BW.ymd(new Date())}; else delete fav[iss._id];
+    saveFav();BWUI.toast(e.target.checked?'즐겨찾기에 담았습니다':'즐겨찾기에서 뺐습니다');
+   };
+  },
+  detailFooter(iss){
+   const tel=telOf(iss.dept);
+   return tel?`<a class="callbtn" href="tel:${tel}">📞 ${E(iss.dept)} ${tel}</a>`
+             :`<button class="callbtn dis">연락처 미입력</button>`;
+  }
+ });
+}
+</script>
+</body>
+</html>

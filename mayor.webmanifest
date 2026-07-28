@@ -1,0 +1,16 @@
+{
+ "name": "봉화군정 주간확인",
+ "short_name": "군정확인",
+ "display": "standalone",
+ "background_color": "#F7F6F1",
+ "theme_color": "#1F4B3F",
+ "icons": [
+  {
+   "src": "icon.svg",
+   "sizes": "any",
+   "type": "image/svg+xml",
+   "purpose": "any maskable"
+  }
+ ],
+ "start_url": "./mayor.html"
+}

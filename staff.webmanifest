@@ -1,0 +1,16 @@
+{
+ "name": "주간업무 조회",
+ "short_name": "주간업무",
+ "display": "standalone",
+ "background_color": "#F7F6F1",
+ "theme_color": "#1F4B3F",
+ "icons": [
+  {
+   "src": "icon.svg",
+   "sizes": "any",
+   "type": "image/svg+xml",
+   "purpose": "any maskable"
+  }
+ ],
+ "start_url": "./staff.html"
+}

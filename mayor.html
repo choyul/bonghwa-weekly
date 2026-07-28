@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1F4B3F">
+<title>봉화군정 주간확인</title>
+<link rel="manifest" href="mayor.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon.svg">
+<!-- 토큰은 반드시 ui.css보다 먼저 로드한다 -->
+<link rel="stylesheet" href="bonghwa-tokens.css">
+<link rel="stylesheet" href="ui.css">
+<style>
+/* 상단 모드 탭 */
+.modetabs{display:flex;gap:5px;margin-bottom:12px}
+.modetabs button{flex:1;padding:8px 4px;min-height:48px;border:1px solid var(--line);border-radius:10px;
+  background:var(--paper);color:var(--sub);cursor:pointer;font-size:13.5px;font-weight:600;line-height:1.2;
+  display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}
+.modetabs button br{display:none}
+@media(max-width:400px){.modetabs button{font-size:12.5px}.modetabs button br{display:inline}}
+.modetabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.modetabs .cnt{background:var(--warn);color:#fff;border-radius:999px;min-width:20px;height:20px;
+  display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700}
+.modetabs button.on .cnt{background:#fff;color:var(--acc)}
+/* 화면 전환 */
+body.orders #bwCal,body.orders .searchbar,body.orders #bwAxes,
+body.orders #bwFilters,body.orders #bwInfo,body.orders #bwCards,body.orders #bwMore{display:none}
+body:not(.orders) #ordersView{display:none}
+body:not(.lastyear) #lyNote{display:none}
+#lyNote{background:#fdf9ec;border:1px solid #f0e3b8;border-radius:10px;padding:11px 13px;
+  font-size:13px;line-height:1.55;margin-bottom:10px}
+#lyNote b{color:#7a5c00}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tabs button{flex:1;padding:10px 6px;min-height:44px;border:1px solid var(--line);border-radius:9px;
+  background:var(--paper);color:var(--sub);cursor:pointer;font-size:13.5px}
+.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600}
+.tabs .n{font-size:11.5px;opacity:.8;margin-left:3px}
+.ofilters{display:flex;gap:6px;overflow-x:auto;padding:0 0 10px;-webkit-overflow-scrolling:touch}
+.ofilters select{padding:9px 10px;min-height:40px;border:1px solid var(--line);border-radius:9px;
+  background:var(--paper);font-size:13.5px;flex:none}
+.ord{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;
+  padding:11px 13px;margin-bottom:8px;background:var(--paper)}
+.ord.reported{border-left-color:var(--warn);background:var(--bh-warn-soft,#FBEAE7)}
+.ord.sent{border-left-color:var(--gold)}
+.ord.draft{border-left-color:#a8adb4}
+.ord.done{border-left-color:var(--ongoing);opacity:.72}
+.ord .t{font-size:14.5px;font-weight:600;line-height:1.4;cursor:pointer}
+.ord .m{font-size:12.5px;color:var(--sub);margin-top:4px;line-height:1.5}
+.ord .m b{color:var(--warn)}
+.ord .memo{font-size:12.5px;color:var(--ink);background:var(--bg);border-radius:7px;padding:6px 9px;margin-top:6px}
+.ord .acts{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+.ord .acts button{padding:9px 12px;min-height:40px;border:1px solid var(--line);border-radius:8px;
+  background:var(--paper);cursor:pointer;font-size:13px}
+.ord .acts button.pri{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600}
+.ord .acts button.ok{background:var(--ongoing);color:#fff;border-color:var(--ongoing);font-weight:600}
+.newrep{background:var(--bh-warn-soft,#FBEAE7);border:1px solid rgba(178,58,47,.25);border-radius:8px;padding:8px 11px;
+  font-size:12.5px;color:var(--warn);margin-top:7px;line-height:1.5}
+/* 상세 */
+.dig{display:grid;grid-template-columns:auto 1fr;gap:7px 11px;margin:0;font-size:15px;line-height:1.5}
+.dig .ic{font-size:15px}
+.dig .v{font-weight:600}
+.askrow{display:flex;align-items:center;gap:10px;min-height:50px;font-size:15.5px;font-weight:600;cursor:pointer}
+.askrow input{width:24px;height:24px}
+.orderbox{background:var(--acc-soft);border-radius:10px;padding:11px 13px;font-size:13px;
+  color:var(--bh-primary-ink,#143128);line-height:1.55;white-space:pre-wrap;margin-top:8px}
+.btnrow{display:flex;gap:8px}
+.btnrow .callbtn{flex:1;font-size:15px}
+.callbtn.ghost{background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)}
+.callbtn.ghost.dis{background:var(--paper);color:var(--bh-sub-2,#8A929C);border-color:var(--line)}
+/* ── 첫 접속 코드 확인 (완전한 보안이 아니라 가벼운 잠금) ── */
+#gate{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+#gate .gbox{width:100%;max-width:340px;text-align:center}
+#gate h1{font-size:19px;margin:0 0 6px;color:var(--ink)}
+#gate p{font-size:13.5px;color:var(--sub);margin:0 0 20px;line-height:1.5}
+#gate input{width:100%;min-height:50px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;
+ background:var(--paper);color:var(--ink);font-size:17px;text-align:center;letter-spacing:.05em;margin-bottom:12px}
+#gate input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--bh-primary-tint,var(--acc-soft))}
+#gate button{width:100%;min-height:50px;border:none;border-radius:11px;background:var(--acc);color:#fff;
+ font-size:16px;font-weight:700;cursor:pointer}
+#gate .gerr{color:var(--warn);font-size:13px;margin-top:10px;display:none}
+#gate .gerr.on{display:block}
+body.gated>*:not(#gate){display:none}
+</style>
+</head>
+<body class="gated">
+<div id="gate"><div class="gbox">
+ <h1>🔒 봉화군정 주간확인</h1>
+ <p>담당자에게 받은 코드를 입력하세요.</p>
+ <input id="gateCode" type="password" inputmode="text" autocomplete="off" placeholder="코드 입력">
+ <button id="gateGo">확인</button>
+ <div class="gerr" id="gateErr">코드가 올바르지 않습니다</div>
+</div></div>
+
+<div class="modal" id="cmodal"><div class="mbox">
+ <h2>연락처 관리</h2>
+ <div class="note">조직도를 보고 직접 입력하세요. 이 기기에만 저장되며 서버나 코드에 올라가지 않습니다.</div>
+ <div class="mbody" id="clist"></div>
+ <div class="mfoot"><button class="pri" id="cSave">저장</button><span style="flex:1"></span><button id="cClose">닫기</button></div>
+</div></div>
+
+<script src="core.js"></script>
+<script src="ui.js"></script>
+<script>
+/* 코드 자체를 그대로 두지 않고 해시로만 비교한다 — 완전한 보안은 아니지만
+   페이지 소스를 슬쩍 봐도 코드 원문이 바로 보이진 않는다. 한 번 맞으면
+   이 기기에서는 다시 안 묻는다(localStorage). */
+(function(){
+ const GKEY='bh.gate.mayor', HASH='4d7eccd9d03451114bf2ce9d9949446957650ebfd64a1885eaaa45488601d438';
+ async function sha256(s){
+  const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+ }
+ function unlock(){
+  document.body.classList.remove('gated');
+  document.getElementById('gate').remove();
+  /* init()은 다음 <script> 태그에서 선언되므로 지금 당장(이 스크립트 실행 시점)은
+     아직 없을 수 있다 — 함수로 감싸 실제 로드가 끝난 뒤(항상 나중 시점)에 이름을 찾게 한다. */
+  const s=document.createElement('script');s.src='data.js?v='+Date.now();s.onload=function(){init()};document.head.appendChild(s);
+ }
+ if(localStorage.getItem(GKEY)==='1'){ unlock(); return; }
+ const inp=document.getElementById('gateCode'), go=document.getElementById('gateGo'), err=document.getElementById('gateErr');
+ const tryCode=async()=>{
+  const h=await sha256(inp.value.trim());
+  if(h===HASH){ localStorage.setItem(GKEY,'1'); unlock(); }
+  else{ err.classList.add('on'); inp.value=''; inp.focus(); }
+ };
+ go.onclick=tryCode;
+ inp.onkeydown=e=>{ if(e.key==='Enter')tryCode(); };
+ setTimeout(()=>inp.focus(),50);
+})();
+</script>
+<script>
+function init(){
+ const D=window.BW_DATA, E=BW.escH;
+ /* 군수 개인 자료는 이 기기 안에만 둔다 (§5.3) */
+ const OKEY='bh.mayor.orders', FKEY='bh.mayor.fav', MKEY='bh.mayor.marks', CKEY='bh.contacts';
+ let contacts={};try{contacts=JSON.parse(localStorage.getItem(CKEY))||{}}catch(e){}
+ let fav={};try{fav=JSON.parse(localStorage.getItem(FKEY))||{}}catch(e){}
+ const saveFav=()=>localStorage.setItem(FKEY,JSON.stringify(fav));
+
+ /* ═══ 지시 이력 ═══
+    주간업무 보고에는 계획만 실리고 결과는 실리지 않는다. 문서 관행이라 이 도구로
+    고칠 수 없다. 대신 "후속 보고하라"고 시켜 두면, 그 업무가 다음 보고에 다시
+    올라왔을 때 확인할 자리를 만든다.
+      draft  체크만 해 둠 (아직 안 보냄)
+      sent   지시를 보냄 — 후속 보고 기다리는 중
+      done   군수가 확인하고 마무리함
+    'reported'(후속 보고가 올라옴)는 저장하지 않고 그때그때 계산한다. */
+ let orders=[];
+ try{orders=JSON.parse(localStorage.getItem(OKEY))||[]}catch(e){}
+ (function migrate(){
+  /* 예전 방식(진척확인/후속보고 두 갈래)으로 담아 둔 것을 하나로 합쳐 옮긴다 */
+  orders.forEach(o=>{delete o.kinds});
+  if(orders.length){saveOrders();return}
+  let old={};try{old=JSON.parse(localStorage.getItem(MKEY))||{}}catch(e){}
+  Object.entries(old).forEach(([id,m])=>{
+   if(!(m.progress||m.report||m.memo))return;
+   orders.push({id:'o'+Math.random().toString(36).slice(2,9),issueId:id,
+    title:id.split('|')[1]||id,dept:id.split('|')[0],topic:'',
+    memo:m.memo||'',sentAt:m.at||BW.ymd(new Date()),sentWeek:D.weekStart,status:'draft'});
+  });
+  if(orders.length)saveOrders();
+ })();
+ function saveOrders(){localStorage.setItem(OKEY,JSON.stringify(orders))}
+
+ const telOf=d=>(contacts[d]&&contacts[d].phone)||D.deptPhones[d]||'';
+ const nameOf=d=>(contacts[d]&&contacts[d].name)?contacts[d].name+' 과장':d;
+ const lastOf=iss=>iss.list[iss.list.length-1];
+ let ISS=[],KEYWORDS=[];
+ const natOf=iss=>iss._nat||'단발';
+ /* 달 단위로 볼 때(이번 달·작년 이맘때)는 그 달에 실린 기재분을 대표로 본다.
+    최신분을 쓰면 "작년 7월 일" 자리에 올해 날짜가 찍힌다. */
+ function occFor(iss){
+  if(BWUI.api.state.scope==='month'){
+   const m=BWUI.api.state.month;
+   const hit=iss.list.filter(x=>x.week.slice(0,7)===m);
+   if(hit.length)return hit[hit.length-1];
+  }
+  return lastOf(iss);
+ }
+ const topOf=iss=>{
+  const o=occFor(iss);
+  if(o!==lastOf(iss))return BW.topicsOf(o.item);
+  return iss._top||['그 밖의 일'];
+ };
+ const byId=id=>ISS.find(i=>i._id===id);
+ const orderOf=iss=>orders.find(o=>o.issueId===iss._id&&o.status!=='done');
+
+ function newReports(o){
+  const iss=byId(o.issueId); if(!iss)return [];
+  return iss.list.filter(x=>x.week>o.sentWeek);
+ }
+ function stateOf(o){
+  if(o.status==='done')return 'done';
+  if(o.status==='draft')return 'draft';
+  return newReports(o).length?'reported':'sent';
+ }
+ function orderText(o){
+  const lines=[`[군수 확인] ${o.title}`,'· 추진 상황 후속 보고 바랍니다'];
+  if(o.memo)lines.push('· '+o.memo);
+  lines.push(`(${o.sentAt} 주간업무 확인)`);
+  return lines.join('\n');
+ }
+
+ /* ── 연락처 ── */
+ const cm=document.getElementById('cmodal');
+ function openContacts(){
+  document.getElementById('clist').innerHTML=
+   '<div class="crow" style="color:var(--sub);font-size:12px"><span>부서</span><span>과장명</span><span>전화번호</span></div>'+
+   D.depts.map(d=>{const c=contacts[d]||{};
+    return `<div class="crow"><span>${E(d)}</span>
+     <input data-d="${E(d)}" data-f="name" value="${E(c.name||'')}" placeholder="이름">
+     <input data-d="${E(d)}" data-f="phone" value="${E(c.phone||'')}" inputmode="tel" placeholder="010-....">
+    </div>`}).join('');
+  cm.classList.add('open');
+ }
+ document.getElementById('cClose').onclick=()=>cm.classList.remove('open');
+ document.getElementById('cSave').onclick=()=>{
+  document.querySelectorAll('#clist input').forEach(i=>{(contacts[i.dataset.d]=contacts[i.dataset.d]||{})[i.dataset.f]=i.value.trim()});
+  localStorage.setItem(CKEY,JSON.stringify(contacts));
+  cm.classList.remove('open');BWUI.toast('저장했습니다 (이 기기에만)');refresh();
+ };
+ function backup(){
+  const out=confirm('[확인] 파일로 내보내기\n[취소] 파일 불러오기');
+  if(out){
+   const a=document.createElement('a');
+   a.href=URL.createObjectURL(new Blob([JSON.stringify({orders,fav,contacts},null,1)],{type:'application/json'}));
+   a.download='봉화군정_지시이력_'+BW.ymd(new Date())+'.json';a.click();
+   BWUI.toast('백업 파일을 저장했습니다');
+  }else{
+   const i=document.createElement('input');i.type='file';i.accept='.json';
+   i.onchange=()=>{const f=i.files[0];if(!f)return;
+    f.text().then(t=>{try{const o=JSON.parse(t);
+     if(Array.isArray(o.orders)){orders=o.orders;saveOrders()}
+     if(o.fav){fav=o.fav;saveFav()}
+     if(o.contacts){contacts=o.contacts;localStorage.setItem(CKEY,JSON.stringify(contacts))}
+     refresh();BWUI.toast('불러왔습니다');
+    }catch(_){BWUI.toast('파일 형식이 맞지 않습니다')}})};
+   i.click();
+  }
+ }
+
+ /* ── 전화·문자 ── */
+ const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+ function copy(t,msg){
+  if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>BWUI.toast(msg),()=>BWUI.toast('복사하지 못했습니다'));
+  else BWUI.toast('복사할 수 없습니다');
+ }
+ function callDept(dept){
+  const tel=telOf(dept);
+  if(!tel){BWUI.toast('연락처를 먼저 넣어 주세요 — 위 [연락처]');return}
+  const num=tel.replace(/[^0-9+]/g,'');
+  if(isMobile)location.href='tel:'+num;
+  else copy(tel,`${nameOf(dept)} ${tel} — 번호를 복사했습니다`);
+ }
+ function sendOrder(o){
+  const txt=orderText(o), tel=telOf(o.dept);
+  if(!tel){copy(txt,'연락처가 없어 지시 문구만 복사했습니다');return}
+  if(!isMobile){copy(txt,'컴퓨터에서는 문자를 보낼 수 없어 문구를 복사했습니다');return}
+  const num=tel.replace(/[^0-9+]/g,'');
+  const sep=/iPhone|iPad|iPod/i.test(navigator.userAgent)?'&':'?';
+  location.href=`sms:${num}${sep}body=${encodeURIComponent(txt)}`;
+ }
+
+ /* ═══ 「내 지시」 화면 ═══ */
+ let oTab='reported', oPeriod='all', oDept='', oTopic='';
+ function periodOk(o){
+  if(oPeriod==='all')return true;
+  const ws=D.weekStart;
+  if(oPeriod==='week')return o.sentAt>=ws;
+  if(oPeriod==='prev'){const p=BW.ymd(BW.addD(BW.d2(ws),-7));return o.sentAt>=p&&o.sentAt<ws}
+  if(oPeriod==='month')return o.sentAt.slice(0,7)===ws.slice(0,7);
+  return true;
+ }
+ function renderOrders(){
+  const all=orders.filter(o=>periodOk(o)&&(!oDept||o.dept===oDept)&&(!oTopic||o.topic===oTopic));
+  const cnt={reported:0,sent:0,draft:0,done:0};
+  all.forEach(o=>cnt[stateOf(o)]++);
+  const host=document.getElementById('ordersView');
+  host.querySelectorAll('.tabs button').forEach(b=>{
+   b.classList.toggle('on',b.dataset.t===oTab);
+   b.querySelector('.n').textContent=cnt[b.dataset.t];
+  });
+  const dsel=document.getElementById('oDept'),tsel=document.getElementById('oTopic');
+  const depts=[...new Set(orders.map(o=>o.dept))].sort();
+  const topics=[...new Set(orders.map(o=>o.topic).filter(Boolean))].sort();
+  dsel.innerHTML='<option value="">실과소 전체</option>'+depts.map(d=>`<option${d===oDept?' selected':''}>${E(d)}</option>`).join('');
+  tsel.innerHTML='<option value="">주제 전체</option>'+topics.map(t=>`<option${t===oTopic?' selected':''}>${E(t)}</option>`).join('');
+
+  const rows=all.filter(o=>stateOf(o)===oTab).sort((a,b)=>a.sentAt<b.sentAt?1:-1);
+  const list=document.getElementById('oList');list.innerHTML='';
+  if(!rows.length){
+   list.innerHTML=`<div class="empty">${oTab==='reported'?'후속 보고가 올라온 지시가 없습니다'
+     :oTab==='sent'?'기다리는 지시가 없습니다':oTab==='draft'?'보내기 전 지시가 없습니다':'마무리한 지시가 없습니다'}</div>`;
+   return;
+  }
+  rows.forEach(o=>list.appendChild(orderEl(o)));
+ }
+ function orderEl(o){
+  const st=stateOf(o), reps=newReports(o), iss=byId(o.issueId);
+  const el=document.createElement('div');el.className='ord '+st;
+  el.innerHTML=`
+   <div class="t">${E(o.title)}</div>
+   <div class="m">${E(o.dept)}${o.topic?' · '+E(o.topic):''} · <b>${o.sentAt}</b> 지시
+     ${st==='done'&&o.doneAt?` · ${o.doneAt} 마무리`:''}</div>
+   ${o.memo?`<div class="memo">${E(o.memo)}</div>`:''}
+   ${st==='reported'?`<div class="newrep"><b>후속 보고가 올라왔습니다.</b>
+     ${reps.map(r=>E(r.week)).join(', ')} 주차 계획서에 이 업무가 다시 실렸습니다.
+     내용을 보고 마무리할지 정하세요.</div>`:''}
+   ${st==='sent'?`<div class="m" style="margin-top:6px">아직 다음 보고에 올라오지 않았습니다.</div>`:''}
+   <div class="acts">
+     ${iss?`<button data-a="open">내용 보기</button>`:''}
+     ${st==='draft'?`<button class="pri" data-a="send">💬 지시 보내기</button>`:''}
+     <button data-a="call">📞 전화</button>
+     ${st==='reported'||st==='sent'?`<button class="ok" data-a="done">✓ 확인하고 마무리</button>`:''}
+     ${st==='sent'?`<button data-a="resend">다시 보내기</button>`:''}
+     ${st==='done'?`<button data-a="reopen">다시 열기</button>`:''}
+     <button data-a="del">지우기</button>
+   </div>`;
+  const t=el.querySelector('.t');
+  if(iss)t.onclick=()=>BWUI.api.openSheet(iss);
+  el.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{
+   const a=b.dataset.a;
+   if(a==='open'&&iss)BWUI.api.openSheet(iss);
+   else if(a==='call')callDept(o.dept);
+   else if(a==='send'||a==='resend'){o.status='sent';o.sentAt=BW.ymd(new Date());o.sentWeek=D.weekStart;saveOrders();sendOrder(o);refresh()}
+   else if(a==='done'){o.status='done';o.doneAt=BW.ymd(new Date());saveOrders();refresh();BWUI.toast('마무리했습니다')}
+   else if(a==='reopen'){o.status='sent';delete o.doneAt;saveOrders();refresh()}
+   else if(a==='del'){if(confirm('이 지시를 지울까요?')){orders=orders.filter(x=>x!==o);saveOrders();refresh()}}
+  });
+  return el;
+ }
+
+ /* 상세에서 태그를 누르면 그 조건으로 이번 주 목록을 본다.
+    다른 축은 풀어 준다 — 눌렀는데 빈 목록이 나오는 일을 막는다. */
+ function focusBy(axKey,val,label){
+  setMode('week');
+  const S=BWUI.api.state;
+  S.axis={}; S.axis[axKey]=val;
+  S.q=''; const q=document.getElementById('bwQ'); if(q)q.value='';
+  S.status=''; S.custom=''; S.limit=60;
+  BWUI.api.closeSheet();
+  window.scrollTo({top:0,behavior:'smooth'});
+  BWUI.toast(label+' · 이번 주');
+ }
+
+ /* ═══ 모드 전환 ═══ */
+ let mode='week';
+ /* 작년 이맘때 = 지금 보고 있는 주차의 한 해 전 같은 달 */
+ const lastYearMonth=()=>{
+  const [y,m]=D.weekStart.slice(0,7).split('-');
+  return (Number(y)-1)+'-'+m;
+ };
+ /* 지금 어느 탭에 있는지는 mode 와 실제 조회범위(scope)로 판단한다.
+    달력에서 특정 날짜를 고르면 어느 탭도 켜지지 않는다(그 상태는 달력 줄이 알려 준다). */
+ function paintTabs(){
+  const S=BWUI.api.state, cur=D.weekStart.slice(0,7);
+  const listMode = mode!=='lastyear' && mode!=='orders';
+  const on={
+   week:  listMode && S.scope==='week',
+   month: listMode && S.scope==='month' && S.month===cur,  /* 달력으로 이번 달을 골라도 켜진다 */
+   lastyear: mode==='lastyear',
+   orders:   mode==='orders'
+  };
+  document.querySelectorAll('.modetabs button').forEach(b=>b.classList.toggle('on',!!on[b.dataset.m]));
+ }
+ function setMode(m){
+  mode=m;
+  document.body.classList.toggle('orders',m==='orders');
+  document.body.classList.toggle('lastyear',m==='lastyear');
+  const S=BWUI.api.state;
+  const q=document.getElementById('bwQ');
+  if(m==='lastyear'){
+   const lm=lastYearMonth();
+   S.scope='month'; S.month=D.weeks.some(w=>w.slice(0,7)===lm)?lm:D.weeks[0].slice(0,7);
+   S.day='';S.q='';if(q)q.value='';
+   const [ly,lmm]=S.month.split('-');
+   document.getElementById('lyNote').innerHTML=
+    `<b>작년 이맘때 — ${Number(ly)}년 ${Number(lmm)}월</b><br>
+     작년 이 시기에 무슨 일이 있었는지 봅니다. 행사부터 위에 놓습니다.`;
+  }else if(m==='month'){
+   /* 지금 걸어 둔 필터(실과소·주제 등)는 그대로 두고 기간만 이번 달로 넓힌다 */
+   S.scope='month'; S.month=D.weekStart.slice(0,7); S.day='';
+   S.q='';if(q)q.value='';
+  }else if(m==='week'){
+   S.scope='week'; S.month=D.weekStart.slice(0,7); S.day='';
+   S.q='';if(q)q.value='';
+  }
+  refresh(); paintTabs();
+  window.scrollTo({top:0,behavior:'smooth'});
+ }
+ function refresh(){
+  const need=orders.filter(o=>stateOf(o)==='reported').length;
+  const badge=document.querySelector('.modetabs [data-m="orders"] .cnt');
+  if(badge){badge.textContent=need;badge.style.display=need?'':'none'}
+  if(mode==='orders')renderOrders();
+  else BWUI.api.render();
+ }
+
+ BWUI.start({
+  role:'mayor', title:'봉화군정 주간확인',
+  searchPlaceholder:'업무명·내용 검색',
+  listTitle:'전체',
+  hideTiles:true,
+  calendarOpen:false,
+  axesOpen:false,
+  axesLabel:'주제별 / 실과소별 보기',
+  listStyle:'rows',
+  showSimilar:false,
+  showTrend:false,
+  hideDeptTag:true,
+  headerButtons:[
+   {label:'연락처',on:openContacts},
+   {label:'백업',on:backup}
+  ],
+  customFilters:{fav:{label:'즐겨찾기만',fn:iss=>!!fav[iss._id]}},
+
+  axes:[
+   {key:'nature', label:'업무 성격', chipLabel:'성격', render:'cards',
+    allLabel:'전체', allIcon:'🗃️',
+    values:BW.NATURES.map(n=>({v:n.k,label:n.k,icon:n.icon})),
+    match:(iss,v)=>natOf(iss)===v},
+   {key:'topic', label:'주제별', chipLabel:'주제', render:'cards',
+    allLabel:'전체', allIcon:'📚',
+    values:BW.TOPICS.map(t=>({v:t.k,label:t.k,icon:t.icon}))
+             .concat([{v:'그 밖의 일',label:'그 밖의 일',icon:'📄'}]),
+    match:(iss,v)=>topOf(iss).includes(v)},
+   {key:'dept2', label:'실과소별', chipLabel:'실과소', render:'chips',
+    allLabel:'전체',
+    values:()=>D.depts.map(d=>({v:d,label:d})),
+    match:(iss,v)=>iss.dept===v},
+   {key:'kw', label:'1년 동안 자주 나온 사안', chipLabel:'키워드', render:'chips',
+    allLabel:'전체', kwStyle:true, globalCount:true, expandScope:true,
+    values:()=>KEYWORDS.map(k=>({v:k.w,label:'#'+k.w})),
+    match:(iss,v)=>BW.hasKeyword(iss,v)}
+  ],
+
+  /* 작년 이맘때 화면에서는 행사부터 */
+  sortWith:(a,b)=>{
+   if(mode!=='lastyear')return 0;
+   const P={'축제·행사':0,'공사·정비':1,'교육·강좌':2,'신청·접수':3,'점검·안전':4,'건강·의료':5,'민원·인허가':6,'그 밖의 일':7};
+   return (P[topOf(a)[0]]??9)-(P[topOf(b)[0]]??9);
+  },
+
+  onReady({issues}){
+   ISS=issues;
+   const ann=BW.annualGroups(D.occ);
+   issues.forEach(i=>{i._nat=BW.natureOf(i,ann);i._top=BW.topicsOf(lastOf(i).item)});
+   KEYWORDS=BW.topKeywords(issues,{limit:36});
+   let fixed=false;
+   orders.forEach(o=>{if(!o.topic){const i=byId(o.issueId);if(i){o.topic=topOf(i)[0];fixed=true}}});
+   if(fixed)saveOrders();
+   refresh();
+  },
+  onSheetClose(){refresh()},
+  onRender(){paintTabs()},   /* 달력에서 월을 바꿔도 탭 표시가 따라오게 */
+
+  rowMeta:iss=>{
+   const b=BW.briefOf(occFor(iss).item), n=natOf(iss);
+   return iss.dept+(n!=='단발'?' · '+n:'')+(b?' · '+b:'');
+  },
+  /* 상세도 같은 주차 기재분을 보여준다 */
+  pickOcc:iss=>occFor(iss),
+
+  /* 목록의 ☆ 는 즐겨찾기다 — 지시와는 별개 */
+  cardActions:iss=>[{
+   icon:fav[iss._id]?'★':'☆', title:'즐겨찾기', active:!!fav[iss._id],
+   on(i){ if(fav[i._id])delete fav[i._id]; else fav[i._id]={at:BW.ymd(new Date())}; saveFav(); }
+  }],
+  onQuickAct(){refresh()},
+
+  /* 상세 제목 옆에서도 즐겨찾기 — 내용을 읽다가 바로 담을 수 있게 */
+  sheetActions:iss=>[{
+   icon:fav[iss._id]?'★':'☆', title:'즐겨찾기', active:!!fav[iss._id],
+   on(i){
+    if(fav[i._id])delete fav[i._id]; else fav[i._id]={at:BW.ymd(new Date())};
+    saveFav(); BWUI.toast(fav[i._id]?'즐겨찾기에 담았습니다':'즐겨찾기에서 뺐습니다');
+   }
+  }],
+
+  /* 같은 계열로 묶인 안건들 */
+  historyTitle:iss=>`유사 안건 보기 (${iss.list.length})`,
+  historyBtn:iss=>`유사 안건 ${iss.list.length}건 펼치기`,
+
+  topSections(host){
+   host.insertAdjacentHTML('afterbegin',`
+    <div class="modetabs">
+     <button data-m="week" class="on">이번 주</button>
+     <button data-m="month">이번 달</button>
+     <button data-m="lastyear">작년<br>이맘때</button>
+     <button data-m="orders">내 지시 <span class="cnt" style="display:none">0</span></button>
+    </div>
+    <div id="lyNote"></div>
+    <div id="ordersView">
+     <div class="tabs">
+      <button data-t="reported">확인 필요 <span class="n">0</span></button>
+      <button data-t="sent">기다리는 중 <span class="n">0</span></button>
+      <button data-t="draft">보내기 전 <span class="n">0</span></button>
+      <button data-t="done">마무리 <span class="n">0</span></button>
+     </div>
+     <div class="ofilters">
+      <select id="oPeriod">
+       <option value="all">기간 전체</option>
+       <option value="week">이번 주 지시</option>
+       <option value="prev">지난주 지시</option>
+       <option value="month">이번 달 지시</option>
+      </select>
+      <select id="oDept"></select>
+      <select id="oTopic"></select>
+     </div>
+     <div class="sec open" style="margin-bottom:10px"><div class="bd" style="display:block;padding:11px 13px">
+      <div class="hint">주간업무 보고에는 계획만 실리고 결과는 실리지 않습니다.
+       그래서 후속 보고를 요구해 두면, 그 업무가 다음 보고에 다시 올라왔을 때
+       여기에서 <b>확인 필요</b>로 알려 드립니다.</div>
+     </div></div>
+     <div id="oList"></div>
+    </div>`);
+   host.querySelectorAll('.modetabs button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+   host.querySelectorAll('#ordersView .tabs button').forEach(b=>b.onclick=()=>{oTab=b.dataset.t;renderOrders()});
+   document.getElementById('oPeriod').onchange=e=>{oPeriod=e.target.value;renderOrders()};
+   document.getElementById('oDept').onchange=e=>{oDept=e.target.value;renderOrders()};
+   document.getElementById('oTopic').onchange=e=>{oTopic=e.target.value;renderOrders()};
+  },
+
+  /* ── 상세 맨 위: 언제·어디서·얼마 ── */
+  detailTop(iss,body){
+   const rows=BW.digestOf(occFor(iss).item);
+   body.insertAdjacentHTML('beforeend',`
+    <div class="blk">
+     <div class="tagrow" style="margin-bottom:9px">
+      <span class="tag st st-${iss._st}" style="cursor:default">${BWUI.api.ST_LABEL[iss._st]}</span>
+      <button class="tag dept" data-go="dept2" data-v="${E(iss.dept)}">${E(iss.dept)}</button>
+      <button class="tag type" data-go="topic" data-v="${E(topOf(iss)[0])}">${E(topOf(iss)[0])}</button>
+      ${natOf(iss)!=='단발'?`<button class="tag type" data-go="nature" data-v="${E(natOf(iss))}">${E(natOf(iss))}</button>`:''}
+      ${iss._ann?'<span class="tag annual" style="cursor:default">매년 이맘때</span>':''}
+      ${iss.prog!=null?`<span class="tag type" style="cursor:default">공정률 ${iss.prog}%</span>`:''}
+     </div>
+     ${rows.length?`<dl class="dig">${rows.map(([ic,v])=>
+       `<dt><span class="ic">${ic}</span></dt><dd class="v">${E(v)}</dd>`).join('')}</dl>`
+      :'<div class="hint">일정·장소가 계획서에 적혀 있지 않습니다.</div>'}
+    </div>`);
+   body.querySelectorAll('[data-go]').forEach(b=>
+    b.onclick=()=>focusBy(b.dataset.go,b.dataset.v,b.dataset.v));
+  },
+
+  /* 날짜·장소 바로 아래에 상세 내용 */
+  contentTitle:'상세 내용',
+  contentLines(iss,lines){
+   const used=/^(일\s*시|기\s*간|일\s*자|기\s*한|마\s*감|점검기간|접수기간|모집기간|교육기간|운영기간|사업기간|공사기간|용역기간|신청기한|장\s*소|위\s*치|대\s*상|참석대상|참석인원|참\s*석|인\s*원|교육대상|모집대상|지원대상|사\s*업\s*비|총사업비|사업비|예\s*산|용역비)/;
+   return lines.filter(l=>!used.test(l.txt))
+    .map(l=>({lv:l.lv,txt:l.txt.replace(/^(주요\s*내용|내\s*용|추진내용)\s*[:：]?\s*/,'')}))
+    .filter(l=>l.txt.trim());
+  },
+
+  /* ── 상세 내용 바로 뒤: 후속 보고 요구 하나만 ── */
+  afterContent(iss,body){
+   const cur=orderOf(iss);
+   body.insertAdjacentHTML('beforeend',`
+    <div class="blk">
+     <label class="askrow"><input type="checkbox" id="ckAsk" ${cur?'checked':''}> 후속 보고 받기</label>
+     <textarea class="memo" id="memo" placeholder="덧붙일 말 (예: 다음 간부회의 전까지)"
+       style="${cur?'':'display:none'}">${E(cur?cur.memo||'':'')}</textarea>
+     <div id="orderPrev"></div>
+    </div>`);
+   const prev=()=>{
+    const o=orderOf(iss), el=body.querySelector('#orderPrev');
+    if(!o){el.innerHTML='';return}
+    el.innerHTML=`<div class="hint" style="margin-top:8px">${
+      stateOf(o)==='draft'?'아래 [지시 전달]을 누르면 이 문구가 문자로 채워집니다'
+      :`${o.sentAt}에 보낸 지시입니다`}</div>
+      <div class="orderbox">${E(orderText(o))}</div>`;
+   };
+   const save=()=>{
+    const on=body.querySelector('#ckAsk').checked;
+    const memo=body.querySelector('#memo').value.trim();
+    body.querySelector('#memo').style.display=on?'':'none';
+    let o=orderOf(iss);
+    if(!on){ if(o&&o.status==='draft')orders=orders.filter(x=>x!==o); }
+    else if(o){ o.memo=memo }
+    else orders.push({id:'o'+Math.random().toString(36).slice(2,9),issueId:iss._id,
+      title:iss.title,dept:iss.dept,topic:topOf(iss)[0],memo,
+      sentAt:BW.ymd(new Date()),sentWeek:D.weekStart,status:'draft'});
+    saveOrders();prev();
+    const btn=document.querySelector('#bwShFoot #sendOrder');
+    if(btn)btn.classList.toggle('dis',!on);
+   };
+   body.querySelector('#ckAsk').onchange=save;
+   let t;body.querySelector('#memo').oninput=()=>{clearTimeout(t);t=setTimeout(save,400)};
+   prev();
+  },
+
+  detailFooter(iss){
+   const tel=telOf(iss.dept), has=!!orderOf(iss);
+   return `<div class="btnrow">
+     <a class="callbtn ghost" id="callBtn" href="#">📞 전화</a>
+     <button class="callbtn ${has?'':'dis'}" id="sendOrder">💬 지시 전달</button>
+   </div>
+   ${tel?'':'<div class="hint" style="margin-top:7px;text-align:center">과장 연락처를 넣으면 바로 걸 수 있습니다 — 위 [연락처]</div>'}`;
+  },
+  onFooterMount(iss,foot){
+   const call=foot.querySelector('#callBtn');
+   if(call)call.onclick=e=>{e.preventDefault();callDept(iss.dept)};
+   const btn=foot.querySelector('#sendOrder'); if(!btn)return;
+   btn.onclick=()=>{
+    if(btn.classList.contains('dis'))return;
+    const o=orderOf(iss); if(!o)return;
+    o.status='sent';o.sentAt=BW.ymd(new Date());o.sentWeek=D.weekStart;
+    saveOrders();sendOrder(o);refresh();
+    BWUI.toast('지시로 기록했습니다 — [내 지시]에서 후속 보고를 확인하세요');
+   };
+  }
+ });
+}
+</script>
+</body>
+</html>
