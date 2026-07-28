@@ -262,7 +262,20 @@ function init(){
   if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>BWUI.toast(msg),()=>BWUI.toast('복사하지 못했습니다'));
   else BWUI.toast('복사할 수 없습니다');
  }
- function callDept(dept){
+ const canPickContact=!!(navigator.contacts&&navigator.contacts.select&&window.ContactsManager);
+ async function callDept(dept){
+  /* 안드로이드 크롬 등 일부 브라우저는 폰에 저장된 연락처를 직접 고를 수 있다.
+     아이폰 사파리는 이 기능이 없어 항상 아래 저장된 번호로 건다(기능 미지원 브라우저 표준 동작). */
+  if(canPickContact){
+   try{
+    const picked=await navigator.contacts.select(['tel'],{multiple:false});
+    if(!picked.length)return; /* 선택 취소 */
+    const t=(picked[0].tel||[])[0];
+    if(!t){BWUI.toast('선택한 연락처에 전화번호가 없습니다');return}
+    location.href='tel:'+t.replace(/[^0-9+]/g,'');
+    return;
+   }catch(e){ /* 권한 거부 등 — 아래 저장된 번호로 폴백 */ }
+  }
   const tel=telOf(dept);
   if(!tel){BWUI.toast('연락처를 먼저 넣어 주세요 — 위 [연락처]');return}
   const num=tel.replace(/[^0-9+]/g,'');
