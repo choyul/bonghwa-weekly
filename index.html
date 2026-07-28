@@ -24,7 +24,12 @@
 <link rel="stylesheet" href="bonghwa-tokens.css">
 <link rel="stylesheet" href="ui.css">
 <style>
-footer{max-width:1100px;margin:0 auto;padding:18px 16px 46px;color:var(--sub);font-size:12.5px;line-height:1.7;border-top:1px solid var(--line)}
+/* 푸터는 body에 정적으로 있지만, 위 화면(헤더·달력·카드)은 data.js를 다 받아야
+   JS가 만든다. 그 사이 잠깐 푸터 글이 엉뚱하게 화면 맨 위쪽에 홀로 떠 있다가
+   콘텐츠가 채워지며 아래로 밀리는 게 "잔상"처럼 보였다 — 화면이 다 준비된 뒤에만 보이게 한다. */
+footer{max-width:1100px;margin:0 auto;padding:18px 16px 46px;color:var(--sub);font-size:12.5px;line-height:1.7;border-top:1px solid var(--line);
+ visibility:hidden}
+body.ready footer{visibility:visible}
 footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decoration-color:rgba(31,75,63,.4);text-underline-offset:3px}
 /* 한눈에 — 언제·어디서·누구만 */
 .glist{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;margin:0;font-size:15px;line-height:1.5}
@@ -945,6 +950,8 @@ function init(){
  }else{
   setupIntro();   /* 처음 들어왔을 때만 인트로를 보여준다 */
  }
+
+ document.body.classList.add('ready');   /* 이제 화면이 다 준비됐다 — 푸터도 이제부터 보인다 */
 }
 </script>
 </body>
