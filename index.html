@@ -333,15 +333,12 @@ function init(){
    copyText(url).then(ok=>{ BWUI.toast(ok?'링크를 복사했어요 — 대화창에 붙여넣어 보내세요':'아래 링크를 길게 눌러 복사해 주세요'); if(ok)close(); });
   };
  }
- function shareIssue(iss){
-  const url=shareUrlOf(iss);
-  const r=BW.parseDateRange(tag(iss).item,tag(iss).week);
-  let when='';
-  if(r&&r.start){const s=BW.d2(r.start);when=`${s.getMonth()+1}월 ${s.getDate()}일 · `}
-  const text=`[봉화의 오늘] ${iss.title}\n${when}자세히 보기 👇`;
-  const data={title:'봉화의 오늘',text,url};
-  /* 휴대폰 기본 브라우저는 OS 공유 시트, 카카오톡 인앱 등 미지원이면 링크 복사 모달 */
-  if(navigator.share && (!navigator.canShare || navigator.canShare(data))){
+ /* ── 앱 전체가 공유 버튼에서 공통으로 쓰는 함수 — 소식이든 고시·공고든 똑같이 동작해야 한다.
+    canShare()는 브라우저마다 지원이 들쭉날쭉해서(특히 title+text+url 조합에서 오탐 사례가 있다)
+    미리 걸러내지 않고, navigator.share가 있으면 일단 시도부터 한다 — 카카오톡·문자 등이 뜨는
+    휴대폰 OS 공유 시트는 이렇게 해야 가장 안정적으로 뜬다. 실패하면 그때 링크 복사로 넘어간다. */
+ function nativeShare(data,url){
+  if(navigator.share){
    navigator.share(data).catch(err=>{
     if(err&&err.name==='AbortError')return;   /* 사용자가 시트를 닫음 — 조용히 */
     shareModal(url);                          /* 공유가 실패한 경우 복사 모달로 대체 */
@@ -349,6 +346,14 @@ function init(){
    return;
   }
   shareModal(url);   /* navigator.share 자체가 없으면(카카오톡 인앱 등) 바로 복사 모달 */
+ }
+ function shareIssue(iss){
+  const url=shareUrlOf(iss);
+  const r=BW.parseDateRange(tag(iss).item,tag(iss).week);
+  let when='';
+  if(r&&r.start){const s=BW.d2(r.start);when=`${s.getMonth()+1}월 ${s.getDate()}일 · `}
+  const text=`[봉화의 오늘] ${iss.title}\n${when}자세히 보기 👇`;
+  nativeShare({title:'봉화의 오늘',text,url},url);
  }
 
  /* ── 봉화 마스코트 (사과+잎, 반짝이는 눈) — 인트로와 헤더가 함께 쓴다 ── */
@@ -833,9 +838,7 @@ function init(){
   };
   m.querySelector('#ntShare').onclick=()=>{
    const text=`[봉화군 ${n.kind}] ${n.title}`;
-   if(navigator.share&&(!navigator.canShare||navigator.canShare({url}))){
-    navigator.share({title:'봉화군 '+n.kind,text,url}).catch(err=>{if(err&&err.name==='AbortError')return;shareModal(url)});
-   }else shareModal(url);
+   nativeShare({title:'봉화군 '+n.kind,text,url},url);
   };
  }
 
