@@ -317,25 +317,28 @@ function init(){
    return navigator.clipboard.writeText(t).then(()=>true,()=>fallbackCopy(t));
   return Promise.resolve(fallbackCopy(t));
  }
- /* 공유 미지원(카카오톡 인앱 브라우저·컴퓨터 등)일 때 뜨는 대체 모달 — 항상 동작.
-    OS 공유 시트를 못 쓰더라도 최소한 '문자로 바로 보내기'는 되게 한다.
-    (카카오톡으로 바로 보내기는 카카오 앱키가 있어야만 가능해 링크 복사로 안내한다.) */
+ /* 공유 시트를 못 쓰는 환경(카카오톡 인앱 브라우저·컴퓨터 등)에서 뜨는 대체 모달.
+    ※ 카카오톡 안의 브라우저는 OS 공유 시트(카톡·문자 고르기)가 원천적으로 막혀 있어
+      코드로는 띄울 수 없다. 대신 '기본 브라우저로 열기'로 넘겨주면 거기서는 정상으로 뜬다.
+      그래서 카카오톡에서는 그 버튼을 가장 크게 두고, 다른 곳에서는 링크 복사를 안내한다. */
  const isPhone=/iPhone|iPad|iPod|Android/i.test(UA);
  function shareModal(url,text){
-  const body=(text?text+'\n':'')+url;      /* 문자 본문 — 제목·날짜까지 함께 */
+  const body=(text?text+'\n':'')+url;                       /* 문자 본문 — 제목·날짜까지 함께 */
+  const sep=/iPhone|iPad|iPod/i.test(UA)?'&':'?';           /* iOS는 '&', 안드로이드는 '?' */
+  const smsHref=`sms:${sep}body=${encodeURIComponent(body)}`;
   let m=document.getElementById('shareModal');
   if(!m){m=document.createElement('div');m.id='shareModal';m.className='modal';document.body.appendChild(m)}
-  /* iOS는 sms 본문 구분자가 '&', 안드로이드는 '?' */
-  const sep=/iPhone|iPad|iPod/i.test(UA)?'&':'?';
-  const smsHref=`sms:${sep}body=${encodeURIComponent(body)}`;
   m.innerHTML=`<div class="mbox">
     <h2>친구에게 공유</h2>
-    <div class="note">${isPhone?'문자로 바로 보내거나, 링크를 복사해 <b>카카오톡</b>에 붙여넣어 보낼 수 있어요.'
-      :'아래 링크를 복사해 <b>카카오톡·문자에 붙여넣어</b> 보내면, 친구가 이 소식을 바로 볼 수 있어요.'}</div>
-    <div style="padding:4px 18px 2px"><input id="shareUrl" class="ps-input" readonly value="${E(url)}"></div>
+    <div class="note">${isPhone
+      ? '문자로 바로 보내거나, 링크를 복사해 <b>카카오톡</b>에 붙여넣어 보낼 수 있어요.'
+      : '아래 링크를 복사해 <b>카카오톡·문자에 붙여넣어</b> 보내면, 친구가 이 소식을 바로 볼 수 있어요.'}</div>
     ${isPhone?`<div style="padding:8px 18px 0"><a class="callbtn" id="shareSms" href="${E(smsHref)}" style="width:100%;display:block;text-align:center">💬 문자로 보내기</a></div>`:''}
-    <div style="padding:8px 18px 2px"><button class="callbtn" id="shareCopy" style="width:100%">🔗 링크 복사하기</button></div>
-    ${isKakao?`<div class="note" style="padding-top:8px">잘 안 되면 카카오톡 오른쪽 위 <b>메뉴 → 공유</b>를 눌러도 됩니다.</div>`:''}
+    <div style="padding:4px 18px 2px"><input id="shareUrl" class="ps-input" readonly value="${E(url)}"></div>
+    <div style="padding:8px 18px 2px"><button class="callbtn" id="shareCopy" style="width:100%;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔗 링크 복사하기</button></div>
+    ${isKakao?`<div class="note" style="padding-top:8px">카톡·문자를 <b>고르는 창</b>으로 보내고 싶으면
+       <button id="shareExt" style="background:none;border:none;padding:0;font:inherit;color:var(--acc);text-decoration:underline;cursor:pointer">기본 브라우저로 열기</button></div>`:''}
+    ${inApp&&!isKakao?`<div class="note" style="padding-top:8px">앱 안에서는 고르기 창이 막힐 수 있어요. 오른쪽 위 메뉴 → <b>‘다른 브라우저로 열기’</b> 후 다시 눌러 보세요.</div>`:''}
     <div class="mfoot"><span style="flex:1"></span><button id="shareClose">닫기</button></div>
   </div>`;
   m.classList.add('open');
@@ -343,6 +346,14 @@ function init(){
   m.querySelector('#shareClose').onclick=close;
   m.onclick=e=>{if(e.target===m)close()};
   const inp=m.querySelector('#shareUrl'); inp.onclick=()=>{inp.focus();inp.select()};
+  /* 기본 브라우저로 넘길 때, 공유하려던 그 소식(?i=)과 '공유하러 왔음'(&s=1)을 함께 실어 보낸다.
+     새 브라우저에서 자동으로 공유 시트를 띄울 수는 없다(사용자가 직접 눌러야만 열린다) —
+     그래서 해당 소식을 펼쳐 두고 안내 문구만 띄운다. */
+  const ext=m.querySelector('#shareExt');
+  if(ext)ext.onclick=()=>{
+   const u=new URL(url); u.searchParams.set('s','1');
+   location.href='kakaotalk://web/openExternal?url='+encodeURIComponent(u.href);
+  };
   m.querySelector('#shareCopy').onclick=()=>{
    copyText(url).then(ok=>{ BWUI.toast(ok?'링크를 복사했어요 — 대화창에 붙여넣어 보내세요':'아래 링크를 길게 눌러 복사해 주세요'); if(ok)close(); });
   };
@@ -952,9 +963,14 @@ function init(){
    calModal(targets,'봉화군_관심일정');
   }
  }else if(openCode){
+  const wantShare=params.get('s')==='1';   /* 카카오톡에서 '기본 브라우저로 열기'로 넘어온 경우 */
   history.replaceState(null,'',location.pathname);
   const target=matchCodes(openCode)[0];
-  if(target){ BWUI.api.openSheet(target); }        /* 공유받은 소식 바로 펼치기(알림·관심 강제 안 함) */
+  if(target){
+   BWUI.api.openSheet(target);        /* 공유받은 소식 바로 펼치기(알림·관심 강제 안 함) */
+   /* 공유 시트는 사용자가 직접 눌러야만 열리므로(자동 실행은 브라우저가 막는다) 안내만 한다 */
+   if(wantShare)setTimeout(()=>BWUI.toast('이제 아래 [친구에게 공유하기]를 누르면 카카오톡·문자를 고를 수 있어요'),400);
+  }
   else{ BWUI.toast('공유된 소식을 찾지 못했어요 — 지난주 자료이거나 정보가 바뀌었을 수 있어요'); }
  }else{
   setupIntro();   /* 처음 들어왔을 때만 인트로를 보여준다 */

@@ -32,7 +32,9 @@ P="$DEPLOY/index.html"
 must "$P" "navigator.share"        "군민용: OS 공유 시트 호출부"
 must "$P" "function nativeShare"   "군민용: 공유 공통 함수"
 must "$P" "shareModal(url,data.text)" "군민용: 공유 실패 시 대체 모달 연결"
-must "$P" "shareSms"               "군민용: 공유 시트 없을 때 '문자로 보내기'"
+must "$P" "shareSms"               "군민용: 공유 시트 못 쓸 때 '문자로 보내기'"
+must "$P" "shareExt"               "군민용: 카카오톡에서 '기본 브라우저로 열기'(선택지, 작은 링크)"
+must "$P" "openExternal"           "군민용: 카카오톡 → 기본 브라우저 전환 스킴"
 # nativeShare 안에서의 canShare 사전검사는 오탐으로 공유 시트가 죽는 원인 — 되살아나면 실패.
 # (캘린더 .ics '파일' 공유의 canShare({files:...}) 는 정당한 사용이므로 건드리지 않는다)
 if awk '/function nativeShare/,/^ \}/' "$P" | grep -q "canShare"; then
