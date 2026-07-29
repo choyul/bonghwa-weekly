@@ -42,7 +42,9 @@ occ.sort((a, b) => a.week < b.week ? -1 : 1);
 const latest = weeks[weeks.length - 1];
 
 const data = {
-  builtAt: new Date().toISOString(),
+  /* 최신 주차를 기준으로 둔다(고정값). 실행 시각을 넣으면 내용이 같아도 매번 달라져
+     새 주차가 없는데도 매일 커밋되므로, 데이터에서 결정되는 값만 쓴다. */
+  builtAt: latest,
   weekStart: latest,                       /* 데이터 기준 주차 — 화면 상단 상시 표시 (§5.6) */
   weeks: [...new Set(weeks)].sort(),
   depts: [...new Set(occ.map(o => o.dept))],

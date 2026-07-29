@@ -44,7 +44,22 @@ echo "── 3) 전화 걸기 ──"
 must "$DEPLOY/mayor.html" "navigator.contacts" "군수용: 저장된 연락처 선택(안드로이드)"
 must "$DEPLOY/mayor.html" "tel:"               "군수용: 전화 걸기 폴백"
 
-echo "── 4) 개인정보가 섞여 들어가지 않았는지 ──"
+echo "── 4) 한 번 고친 버그가 되살아나지 않았는지 ──"
+# (a) data.js 의 builtAt 에 실행시각을 넣으면 내용이 같아도 매일 커밋된다
+if grep -q "builtAt: new Date()" "$DEPLOY/build/build.js"; then
+  no "build.js: builtAt 이 실행시각으로 되돌아감 (매일 불필요하게 커밋됨)"
+else ok "build.js: builtAt 고정값 유지"; fi
+# (b) 서비스워커가 HTML/JS 를 캐시 우선으로 주면, 고쳐도 사용자에게 안 간다
+if grep -q "cache-first" "$DEPLOY/sw.js" || grep -q "caches.match(e.request, *{ *ignoreSearch" "$DEPLOY/sw.js"; then
+  no "sw.js: 앱 셸이 캐시 우선으로 되돌아감 (고친 내용이 사용자에게 전달되지 않음)"
+else ok "sw.js: 네트워크 우선 유지"; fi
+# (c) 소스와 배포본의 나머지 파일도 어긋나면 안 된다
+for f in sw.js build/build.js; do
+  if diff -q "$SRC/$f" "$DEPLOY/$f" >/dev/null 2>&1; then ok "$f 소스=배포본"
+  else no "$f 가 소스와 배포본에서 다름"; fi
+done
+
+echo "── 5) 개인정보가 섞여 들어가지 않았는지 ──"
 if grep -rlE "01[016789]-[0-9]{3,4}-[0-9]{4}" "$DEPLOY/data.js" "$DEPLOY/md" 2>/dev/null | grep -q .; then
   no "데이터에 휴대폰번호가 들어 있습니다 — 커밋 금지"
 else ok "데이터에 휴대폰번호 없음"; fi
