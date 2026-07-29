@@ -333,7 +333,8 @@ function init(){
     <div class="note">${isPhone
       ? '문자로 바로 보내거나, 링크를 복사해 <b>카카오톡</b>에 붙여넣어 보낼 수 있어요.'
       : '아래 링크를 복사해 <b>카카오톡·문자에 붙여넣어</b> 보내면, 친구가 이 소식을 바로 볼 수 있어요.'}</div>
-    ${isPhone?`<div style="padding:8px 18px 0"><a class="callbtn" id="shareSms" href="${E(smsHref)}" style="width:100%;display:block;text-align:center">💬 문자로 보내기</a></div>`:''}
+    ${/* .callbtn 이 이미 flex 로 글자를 가운데 놓는다 — display:block 으로 덮어쓰면 글자가 위로 몰린다 */''}
+    ${isPhone?`<div style="padding:8px 18px 0"><a class="callbtn" id="shareSms" href="${E(smsHref)}">💬 문자로 보내기</a></div>`:''}
     <div style="padding:4px 18px 2px"><input id="shareUrl" class="ps-input" readonly value="${E(url)}"></div>
     <div style="padding:8px 18px 2px"><button class="callbtn" id="shareCopy" style="width:100%;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔗 링크 복사하기</button></div>
     ${isKakao?`<div class="note" style="padding-top:8px">카톡·문자를 <b>고르는 창</b>으로 보내고 싶으면
