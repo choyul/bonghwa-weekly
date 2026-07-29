@@ -317,14 +317,23 @@ function init(){
    return navigator.clipboard.writeText(t).then(()=>true,()=>fallbackCopy(t));
   return Promise.resolve(fallbackCopy(t));
  }
- /* 공유 미지원(카카오톡 인앱 브라우저 등)일 때 뜨는 링크 복사 모달 — 항상 동작 */
- function shareModal(url){
+ /* 공유 미지원(카카오톡 인앱 브라우저·컴퓨터 등)일 때 뜨는 대체 모달 — 항상 동작.
+    OS 공유 시트를 못 쓰더라도 최소한 '문자로 바로 보내기'는 되게 한다.
+    (카카오톡으로 바로 보내기는 카카오 앱키가 있어야만 가능해 링크 복사로 안내한다.) */
+ const isPhone=/iPhone|iPad|iPod|Android/i.test(UA);
+ function shareModal(url,text){
+  const body=(text?text+'\n':'')+url;      /* 문자 본문 — 제목·날짜까지 함께 */
   let m=document.getElementById('shareModal');
   if(!m){m=document.createElement('div');m.id='shareModal';m.className='modal';document.body.appendChild(m)}
+  /* iOS는 sms 본문 구분자가 '&', 안드로이드는 '?' */
+  const sep=/iPhone|iPad|iPod/i.test(UA)?'&':'?';
+  const smsHref=`sms:${sep}body=${encodeURIComponent(body)}`;
   m.innerHTML=`<div class="mbox">
     <h2>친구에게 공유</h2>
-    <div class="note">아래 링크를 복사해 <b>카카오톡·문자에 붙여넣어</b> 보내면, 친구가 이 소식을 바로 볼 수 있어요.</div>
+    <div class="note">${isPhone?'문자로 바로 보내거나, 링크를 복사해 <b>카카오톡</b>에 붙여넣어 보낼 수 있어요.'
+      :'아래 링크를 복사해 <b>카카오톡·문자에 붙여넣어</b> 보내면, 친구가 이 소식을 바로 볼 수 있어요.'}</div>
     <div style="padding:4px 18px 2px"><input id="shareUrl" class="ps-input" readonly value="${E(url)}"></div>
+    ${isPhone?`<div style="padding:8px 18px 0"><a class="callbtn" id="shareSms" href="${E(smsHref)}" style="width:100%;display:block;text-align:center">💬 문자로 보내기</a></div>`:''}
     <div style="padding:8px 18px 2px"><button class="callbtn" id="shareCopy" style="width:100%">🔗 링크 복사하기</button></div>
     ${isKakao?`<div class="note" style="padding-top:8px">잘 안 되면 카카오톡 오른쪽 위 <b>메뉴 → 공유</b>를 눌러도 됩니다.</div>`:''}
     <div class="mfoot"><span style="flex:1"></span><button id="shareClose">닫기</button></div>
@@ -346,11 +355,11 @@ function init(){
   if(navigator.share){
    navigator.share(data).catch(err=>{
     if(err&&err.name==='AbortError')return;   /* 사용자가 시트를 닫음 — 조용히 */
-    shareModal(url);                          /* 공유가 실패한 경우 복사 모달로 대체 */
+    shareModal(url,data.text);                /* 공유가 실패한 경우 대체 모달로 */
    });
    return;
   }
-  shareModal(url);   /* navigator.share 자체가 없으면(카카오톡 인앱 등) 바로 복사 모달 */
+  shareModal(url,data.text);   /* navigator.share 자체가 없으면(카카오톡 인앱 등) 바로 대체 모달 */
  }
  function shareIssue(iss){
   const url=shareUrlOf(iss);
