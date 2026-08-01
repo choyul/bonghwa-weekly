@@ -1,6 +1,6 @@
 {
- "name": "봉화의 오늘",
- "short_name": "봉화의 오늘",
+ "name": "오늘의 봉화",
+ "short_name": "오늘의 봉화",
  "display": "standalone",
  "background_color": "#F7F6F1",
  "theme_color": "#1F4B3F",

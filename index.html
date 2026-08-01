@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1F4B3F">
-<title>봉화의 오늘</title>
+<title>오늘의 봉화</title>
 <meta name="description" content="봉화의 이모저모를 알려드립니다 — 오늘·이번 주 행사·모집·공사·민원을 한눈에">
 <!-- 카카오톡·문자·SNS 링크 미리보기(마스코트 카드) -->
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="봉화의 오늘">
-<meta property="og:title" content="봉화의 오늘">
+<meta property="og:site_name" content="오늘의 봉화">
+<meta property="og:title" content="오늘의 봉화">
 <meta property="og:description" content="봉화의 이모저모를 알려드립니다 — 오늘·이번 주 소식을 한눈에">
 <meta property="og:image" content="https://choyul.github.io/bonghwa-weekly/og.png">
 <meta property="og:image:width" content="1200">
@@ -84,15 +84,17 @@ footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decorat
 
 /* ── 접이식 검색 (네이버페이식) — 접힌 바를 누르면 아래로 펼쳐져 키워드 입력 ── */
 .searchbar{display:none}   /* 기본 검색창은 숨기고 아래 카드로 대체 */
-.psearch{border:1px solid var(--line);border-radius:14px;background:var(--paper);
- margin-bottom:12px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
-.psearch.open{border-color:var(--acc);box-shadow:0 0 0 3px var(--bh-primary-tint,var(--acc-soft))}
-.ps-bar{width:100%;display:flex;align-items:center;gap:10px;min-height:54px;padding:13px 15px;
+/* 검색은 이 화면에서 가장 많이 쓰는 기능이라, 다른 카드보다 확실히 도드라지게 둔다 —
+   테두리를 굵고 진하게, 살짝 띄우고, 글씨도 한 단계 크게. */
+.psearch{border:2px solid var(--acc);border-radius:14px;background:var(--paper);
+ margin-bottom:12px;overflow:hidden;transition:border-color .2s,box-shadow .2s;
+ box-shadow:0 2px 10px rgba(31,75,63,.13)}
+.psearch.open{box-shadow:0 0 0 4px var(--bh-primary-tint,var(--acc-soft))}
+.ps-bar{width:100%;display:flex;align-items:center;gap:10px;min-height:60px;padding:15px;
  background:transparent;border:none;cursor:pointer;text-align:left;font:inherit}
-.ps-mag{width:21px;height:21px;color:var(--sub);flex:none}
-.psearch.open .ps-mag{color:var(--acc)}
-.ps-text{flex:1;min-width:0;color:var(--sub);font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ps-text.has{color:var(--ink);font-weight:600}
+.ps-mag{width:23px;height:23px;color:var(--acc);flex:none}
+.ps-text{flex:1;min-width:0;color:var(--ink);font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ps-text.has{color:var(--acc)}
 .ps-pill{flex:none;font-size:12.5px;font-weight:700;color:var(--acc);background:var(--acc-soft);border-radius:999px;padding:5px 11px}
 .ps-panel{max-height:0;overflow:hidden;padding:0 15px;transition:max-height .32s var(--bh-ease,ease),padding .32s var(--bh-ease,ease)}
 .psearch.open .ps-panel{max-height:460px;padding:2px 15px 15px}
@@ -378,8 +380,8 @@ function init(){
   const r=BW.parseDateRange(tag(iss).item,tag(iss).week);
   let when='';
   if(r&&r.start){const s=BW.d2(r.start);when=`${s.getMonth()+1}월 ${s.getDate()}일 · `}
-  const text=`[봉화의 오늘] ${iss.title}\n${when}자세히 보기 👇`;
-  nativeShare({title:'봉화의 오늘',text,url},url);
+  const text=`[오늘의 봉화] ${iss.title}\n${when}자세히 보기 👇`;
+  nativeShare({title:'오늘의 봉화',text,url},url);
  }
 
  /* ── 봉화 마스코트 (사과+잎, 반짝이는 눈) — 인트로와 헤더가 함께 쓴다 ── */
@@ -409,7 +411,7 @@ function init(){
   const intro=document.createElement('div'); intro.id='intro';
   intro.innerHTML=`<div class="ibg"></div>
     <div class="intro-mascot">${MASCOT}</div>
-    <div class="intro-text">안녕하세요<br><b>봉화의 오늘</b>이<br>이번 주 소식을 알려드립니다</div>
+    <div class="intro-text">안녕하세요<br><b>오늘의 봉화</b>가<br>이번 주 소식을 알려드립니다</div>
     <div class="intro-sub">봉화군 주간 소식 · ${D.weekStart} 기준</div>
     <button class="intro-btn" id="introGo">시작하기</button>`;
   document.body.appendChild(intro);
@@ -496,7 +498,7 @@ function init(){
  let NOTICES=null, ntLimit=30, ntSig='';
 
  BWUI.start({
-  role:'public', title:'봉화의 오늘',
+  role:'public', title:'오늘의 봉화',
   searchPlaceholder:'궁금한 일을 검색해 보세요 (예: 축제, 도로, 교육)',
   listTitle:'봉화의 소식은?',   /* 앞에 '오늘' / '이번 주' / '7월 28일(화)' 처럼 기간이 붙는다 */
   publicLabels:true,
@@ -716,7 +718,7 @@ function init(){
   const card=document.getElementById('psearch'); if(!card)return;
   const S=BWUI.api.state, text=card.querySelector('#psText');
   if(S.q){ text.textContent='“'+S.q+'”'; text.classList.add('has'); }
-  else { text.textContent='궁금한 일을 검색해 보세요 (축제, 도로, 교육)'; text.classList.remove('has'); }
+  else { text.textContent='궁금한 일을 검색해 보세요'; text.classList.remove('has'); }
   const input=card.querySelector('#psInput');
   if(document.activeElement!==input && input.value!==(S.q||'')) input.value=S.q||'';
  }
@@ -726,7 +728,7 @@ function init(){
   card.innerHTML=`
     <button type="button" class="ps-bar" id="psBar">
       <svg class="ps-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-      <span class="ps-text" id="psText">궁금한 일을 검색해 보세요 (축제, 도로, 교육)</span>
+      <span class="ps-text" id="psText">궁금한 일을 검색해 보세요</span>
     </button>
     <div class="ps-panel" id="psPanel">
       <input type="search" class="ps-input" id="psInput" enterkeyhint="search" placeholder="예: 은어축제, 도로포장, 어르신 교육">
