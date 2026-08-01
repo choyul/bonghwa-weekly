@@ -129,6 +129,18 @@
     if (S.scope === 'day') {
       return iss.list.some(o => BW.coversDate(o.item, o.week, S.day));
     }
+    /* 직접 고른 기간(S.from~S.to) — 일이 실제로 걸쳐 있으면 걸린다.
+       기재된 기간을 읽을 수 없는 건은 그 주(월~일)를 그 일의 기간으로 본다. */
+    if (S.scope === 'range') {
+      if (!S.from || !S.to) return true;
+      return iss.list.some(o => {
+        const r = BW.parseDateRange(o.item, o.week);
+        let a, b;
+        if (r && r.start) { a = r.start; b = r.end || r.start; }
+        else { a = o.week; b = BW.ymd(new Date(BW.d2(o.week).getTime() + 6 * 864e5)); }
+        return a <= S.to && b >= S.from;      /* 두 기간이 겹치는가 */
+      });
+    }
     return true;
   }
   function matches(iss) {
