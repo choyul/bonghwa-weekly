@@ -151,6 +151,9 @@ button,input,select,textarea{font:inherit}
 /* ── 카드 목록 ── */
 .cards{display:grid;grid-template-columns:1fr;gap:9px}
 @media(min-width:760px){.cards{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}}
+/* 카드 목록 뒤에 이어 붙는 묶음(지금도 진행 중 · 고시공고)은 격자 칸 하나가 아니라
+   한 줄 전체를 쓴다 — 안 그러면 넓은 화면에서 카드 옆에 끼어 들어가 옆 카드가 늘어난다 */
+#bwCards>#bwOngoing,#bwCards>#ntSection{grid-column:1/-1}
 .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px;
   transition:box-shadow var(--bh-dur,180ms) var(--bh-ease,ease)}
 .card:hover{box-shadow:var(--bh-shadow-1,0 1px 2px rgba(0,0,0,.06))}
