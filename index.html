@@ -77,6 +77,14 @@ footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decorat
 .wstrip .calday{position:relative;min-height:62px}
 /* 1개월 모드: 요일 달력만 숨김(화살표는 남겨 달 이동) / 전체 기간: 화살표도 숨김
    — 어느 모드든 타이틀·버튼 사이 간격(ws-nav의 margin-bottom)은 그대로 유지한다 */
+/* ── 삼성 인터넷 등에서 '데스크톱 사이트로 보기'가 켜져 있으면 viewport 설정이 무시돼
+      화면 폭이 PC처럼 잡힌다(글씨가 깨알같이 작아지고 카드가 2단으로 깔림).
+      휴대폰인데 폭이 넓으면 한 줄 배치로 되돌려 최소한 읽을 수 있게 한다. ── */
+body.wide-phone .bw-wrap{max-width:820px}
+body.wide-phone .cards,body.wide-phone .ev-list,body.wide-phone .evm-list{grid-template-columns:1fr}
+body.wide-phone .card h3,body.wide-phone .ev-title{font-size:17px}
+body.wide-phone .ev-time{font-size:17px}
+body.wide-phone .modetabs button{font-size:17px;min-height:52px}
 /* ── 맨 위 보기 전환: 주간업무 / 주간행사 ── */
 .modetabs{display:flex;gap:6px;background:var(--bg2,#eceae5);border-radius:13px;padding:5px;margin-bottom:12px}
 .modetabs button{flex:1;min-height:46px;border:none;border-radius:9px;background:transparent;
@@ -110,6 +118,36 @@ body:not(.mode-event) #evView{display:none}
 .ev-badge.org{background:#f0ede7;color:var(--sub)}
 .ev-empty{text-align:center;color:var(--sub);font-size:14px;padding:34px 10px;
  background:var(--paper);border:1px solid var(--line);border-radius:var(--r)}
+.ev-card{cursor:pointer;transition:border-color .15s}
+.ev-card:active{border-color:var(--acc)}
+/* ── 주 / 월 보기 전환 ── */
+.ev-span{display:flex;gap:6px;margin-bottom:10px}
+.ev-span button{flex:1;min-height:40px;border:1px solid var(--line);border-radius:10px;background:var(--paper);
+ color:var(--ink);font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.ev-span button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+/* ── 월간 달력 ── */
+.evm{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-bottom:12px}
+.evm-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.evm-nav .t{flex:1;text-align:center;font-size:15px;font-weight:800;color:var(--ink)}
+.evm-nav button{width:38px;height:38px;flex:none;border:1px solid var(--line);border-radius:10px;
+ background:var(--paper);color:var(--ink);cursor:pointer;font-size:16px;font-family:inherit}
+.evm-nav button:disabled{opacity:.35;cursor:default}
+.evm-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px}
+.evm-dow span{text-align:center;font-size:11.5px;font-weight:700;color:var(--sub)}
+.evm-dow span:nth-child(6){color:#2f6fd0}.evm-dow span:nth-child(7){color:var(--warn,#c0392b)}
+.evm-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.evm-cell{aspect-ratio:1/1;min-height:44px;border:1px solid transparent;border-radius:9px;background:var(--bg);
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+ cursor:pointer;font-family:inherit;padding:0}
+.evm-cell.empty{background:transparent;cursor:default}
+.evm-cell .d{font-size:14px;font-weight:700;color:var(--ink);line-height:1}
+.evm-cell.we .d{color:var(--warn,#c0392b)}
+.evm-cell .n{font-size:10.5px;font-weight:800;color:var(--acc);line-height:1}
+.evm-cell.zero{opacity:.45}
+.evm-cell.zero .n{visibility:hidden}
+.evm-cell.today{border-color:var(--acc)}
+.evm-cell.on{background:var(--acc)}
+.evm-cell.on .d,.evm-cell.on .n{color:#fff}
 .wstrip.no-days .ws-days{display:none}
 .wstrip.no-arrows .ws-arrow{display:none}
 /* ── 기간 직접 고르기 (날짜 옆 달력 아이콘) ── */
@@ -523,6 +561,9 @@ function init(){
  let MODE='work', evKind='';                     /* evKind: ''=전체 '군' '기관' */
  const evOf=day=>EV.filter(e=>e.date===day&&(!evKind||e.kind===evKind));
  const evCntOf=day=>EV.filter(e=>e.date===day&&(!evKind||e.kind===evKind)).length;
+ let evSpan='week';                              /* 'week' 주간 보기 · 'month' 월간 달력 */
+ let EVM=(EV.length?EV[EV.length-1].date:BW.ymd(new Date())).slice(0,7);   /* 달력이 보고 있는 달 */
+ const EV_MONTHS=[...new Set(EV.map(e=>e.date.slice(0,7)))].sort();
  const dLabel=day=>{const d=BW.d2(day);return `${d.getMonth()+1}월 ${d.getDate()}일(${BW.DOW[d.getDay()]})`;};
  const rangeTitle=mon=>{const w=daysOf(mon),a=BW.d2(w[0]),b=BW.d2(w[6]);
    return `${a.getFullYear()}. ${a.getMonth()+1}. ${a.getDate()}.(${BW.DOW[a.getDay()]}) ~ ${b.getMonth()+1}. ${b.getDate()}.(${BW.DOW[b.getDay()]})`;};
@@ -907,6 +948,7 @@ function init(){
    listh.textContent=t;
   }
   renderNoticeSection();   /* 지금 필터에 맞는 고시·공고를 이번 주 소식 아래 이어 붙인다 */
+  if(MODE==='event'&&evSpan==='month')renderMonthCal();   /* 고른 날짜 표시 갱신 */
   renderEvents();          /* 행사 보기일 때 그날 행사 목록 */
  }
 
@@ -1081,6 +1123,7 @@ function init(){
    }
   }
   renderDayPills();                              /* 숫자를 그 모드 기준으로 다시 */
+  applySpanUI(); renderMonthCal();
   syncTopControls();
   window.scrollTo({top:0,behavior:'smooth'});
  }
@@ -1097,6 +1140,19 @@ function init(){
   const wrap=document.querySelector('.bw-wrap'); if(!wrap||document.getElementById('evView'))return;
   const el=document.createElement('div'); el.id='evView';
   el.innerHTML=`
+    <div class="ev-span" id="evSpan">
+      <button type="button" data-s="week" class="on">주간 보기</button>
+      <button type="button" data-s="month">월간 달력</button>
+    </div>
+    <div class="evm" id="evMonth">
+      <div class="evm-nav">
+        <button type="button" id="evmPrev" aria-label="이전 달">‹</button>
+        <div class="t" id="evmTitle"></div>
+        <button type="button" id="evmNext" aria-label="다음 달">›</button>
+      </div>
+      <div class="evm-dow"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div>
+      <div class="evm-grid" id="evmGrid"></div>
+    </div>
     <div class="ev-kinds" id="evKinds">
       <button type="button" data-k="" class="on">전체</button>
       <button type="button" data-k="군">군 행사</button>
@@ -1109,8 +1165,103 @@ function init(){
   el.querySelectorAll('#evKinds button').forEach(b=>b.onclick=()=>{
    evKind=b.dataset.k;
    el.querySelectorAll('#evKinds button').forEach(x=>x.classList.toggle('on',x.dataset.k===evKind));
-   renderDayPills(); renderEvents();
+   renderDayPills(); renderMonthCal(); renderEvents();
   });
+  el.querySelectorAll('#evSpan button').forEach(b=>b.onclick=()=>{
+   evSpan=b.dataset.s;
+   el.querySelectorAll('#evSpan button').forEach(x=>x.classList.toggle('on',x.dataset.s===evSpan));
+   /* 월간 달력으로 오면, 지금 보고 있던 날짜가 든 달을 펼친다 */
+   if(evSpan==='month'){
+    const S=BWUI.api.state;
+    EVM=(S.scope==='day'&&S.day?S.day:VIEW_WEEK).slice(0,7);
+    if(!EV_MONTHS.includes(EVM))EVM=EV_MONTHS[EV_MONTHS.length-1];
+   }
+   applySpanUI(); renderMonthCal(); renderEvents();
+  });
+  el.querySelector('#evmPrev').onclick=()=>stepMonth(-1);
+  el.querySelector('#evmNext').onclick=()=>stepMonth(1);
+  applySpanUI();
+ }
+ /* 주간 보기면 위쪽 주간 달력을, 월간 보기면 달력 격자를 쓴다 */
+ function applySpanUI(){
+  const strip=document.getElementById('wstrip'), m=document.getElementById('evMonth');
+  if(m)m.style.display=(MODE==='event'&&evSpan==='month')?'':'none';
+  if(strip)strip.style.display=(MODE==='event'&&evSpan==='month')?'none':'';
+ }
+ function stepMonth(dir){
+  const i=EV_MONTHS.indexOf(EVM)+dir;
+  if(i<0||i>=EV_MONTHS.length)return;
+  EVM=EV_MONTHS[i]; renderMonthCal(); renderEvents();
+ }
+ function renderMonthCal(){
+  const grid=document.getElementById('evmGrid'); if(!grid)return;
+  const [y,mo]=EVM.split('-').map(Number);
+  document.getElementById('evmTitle').textContent=`${y}년 ${mo}월`;
+  const i=EV_MONTHS.indexOf(EVM);
+  document.getElementById('evmPrev').disabled=i<=0;
+  document.getElementById('evmNext').disabled=i>=EV_MONTHS.length-1;
+  const first=new Date(y,mo-1,1), last=new Date(y,mo,0).getDate();
+  const lead=(first.getDay()+6)%7;                    /* 월요일 시작 */
+  const S=BWUI.api.state, today=BWUI.api.today;
+  let html='';
+  for(let k=0;k<lead;k++)html+='<div class="evm-cell empty"></div>';
+  for(let d=1;d<=last;d++){
+   const day=`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+   const n=evCntOf(day), dow=new Date(y,mo-1,d).getDay(), we=dow===0||dow===6;
+   html+=`<button type="button" class="evm-cell ${we?'we':''} ${n?'':'zero'} ${day===today?'today':''} ${(S.scope==='day'&&S.day===day)?'on':''}" data-day="${day}">
+     <span class="d">${d}</span><span class="n">${n}</span></button>`;
+  }
+  grid.innerHTML=html;
+  grid.querySelectorAll('.evm-cell[data-day]').forEach(b=>b.onclick=()=>setDay(b.dataset.day));
+ }
+ /* 행사 상세 — 원자료(주간행사표)에 있는 항목은 시간·장소·인원이 전부다.
+    대신 여기서 바로 캘린더에 담고 친구에게 보낼 수 있게 한다. */
+ function eventModal(e){
+  let m=document.getElementById('evModal');
+  if(!m){m=document.createElement('div');m.id='evModal';m.className='modal';document.body.appendChild(m)}
+  const d=BW.d2(e.date);
+  const when=`${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.(${BW.DOW[d.getDay()]}) ${e.time}`;
+  m.innerHTML=`<div class="mbox">
+    <h2>${E(e.title)}</h2>
+    <div class="mbody" style="padding:6px 18px 2px">
+     <div class="hint" style="font-size:14px;line-height:1.9;color:var(--ink)">
+      🗓️ ${E(when)}<br>
+      📍 ${E(e.place||'장소 미기재')}<br>
+      👥 ${e.people?E(e.people)+'명':'인원 미기재'}<br>
+      🏷️ ${e.kind==='군'?'군 행사':'읍면·기관단체 행사'}
+     </div>
+     <div class="note" style="padding:10px 0 0">봉화군 주간행사표에 실린 내용입니다. 자세한 사항은 담당 부서로 문의해 주세요.</div>
+    </div>
+    <div style="padding:10px 18px 2px"><button class="callbtn" id="evCal" style="width:100%">📅 캘린더에 담기</button></div>
+    <div style="padding:8px 18px 2px"><button class="callbtn" id="evShare" style="width:100%;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔗 친구에게 공유하기</button></div>
+    <div class="mfoot"><span style="flex:1"></span><button id="evClose">닫기</button></div>
+  </div>`;
+  m.classList.add('open');
+  const close=()=>m.classList.remove('open');
+  m.querySelector('#evClose').onclick=close;
+  m.onclick=ev=>{if(ev.target===m)close()};
+  m.querySelector('#evCal').onclick=()=>{
+   const ics=evICS(e);
+   downloadICS(ics,'봉화행사_'+e.title.replace(/[^가-힣0-9a-zA-Z]/g,'').slice(0,14)+'.ics');
+   BWUI.toast('파일이 열리면 [추가]를 누르면 캘린더에 들어갑니다'); close();
+  };
+  m.querySelector('#evShare').onclick=()=>{
+   const text=`[오늘의 봉화] ${e.title}\n${when} · ${e.place||''}`.trim();
+   nativeShare({title:'오늘의 봉화',text,url:location.href.split('?')[0]},location.href.split('?')[0]);
+  };
+ }
+ function evICS(e){
+  const [h,mi]=e.time.split(':').map(Number);
+  const s=BW.d2(e.date), en=new Date(s.getFullYear(),s.getMonth(),s.getDate(),h+1,mi);
+  const p=n=>String(n).padStart(2,'0');
+  const stamp=icsD(e.date)+'T'+p(h)+p(mi)+'00';
+  const endS=icsD(BW.ymd(en))+'T'+p(en.getHours())+p(en.getMinutes())+'00';
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Bonghwa//events//KO','CALSCALE:GREGORIAN',
+   'BEGIN:VEVENT','UID:bhev'+uidHash(e.date+e.time+e.title)+'@bonghwa','DTSTAMP:'+icsStamp(),
+   'DTSTART:'+stamp,'DTEND:'+endS,'SUMMARY:'+icsEsc(e.title),
+   'LOCATION:'+icsEsc(e.place||''),'DESCRIPTION:'+icsEsc('봉화군 주간행사 안내'),
+   'BEGIN:VALARM','TRIGGER:-PT2H','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(e.title),'END:VALARM',
+   'END:VEVENT','END:VCALENDAR'].join('\r\n');
  }
  function renderEvents(){
   if(MODE!=='event')return;
@@ -1130,13 +1281,14 @@ function init(){
   let lastDate='';
   list.innerHTML=rows.map(e=>{
    const head=(days.length>1&&e.date!==lastDate)?(lastDate=e.date,`<div class="feed-divider" style="grid-column:1/-1">${E(dLabel(e.date))}</div>`):'';
-   return head+`<div class="ev-card">
+   return head+`<div class="ev-card" data-i="${rows.indexOf(e)}">
      <div class="ev-time">${E(e.time)}</div>
      <div class="ev-body">
       <div class="ev-title">${E(e.title)}<span class="ev-badge ${e.kind==='군'?'gun':'org'}">${e.kind==='군'?'군 행사':'읍면·기관'}</span></div>
       <div class="ev-meta">📍 ${E(e.place||'장소 미기재')}${e.people?` · 👥 ${E(e.people)}명`:''}</div>
      </div></div>`;
   }).join('');
+  list.querySelectorAll('.ev-card').forEach(c=>c.onclick=()=>eventModal(rows[+c.dataset.i]));
  }
 
  decorateHeader();
@@ -1179,6 +1331,14 @@ function init(){
  }else{
   setupIntro();   /* 처음 들어왔을 때만 인트로를 보여준다 */
  }
+
+ /* 삼성 인터넷 등에서 '데스크톱 사이트로 보기'가 켜져 있으면 화면 폭이 PC처럼 잡힌다.
+    휴대폰인데 폭이 넓으면 한 줄 배치로 되돌려 글씨가 깨알같이 작아지지 않게 한다. */
+ function fitPhone(){
+  const phone=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  document.body.classList.toggle('wide-phone', phone && window.innerWidth>760);
+ }
+ fitPhone(); window.addEventListener('resize',fitPhone);
 
  document.body.classList.add('ready');   /* 이제 화면이 다 준비됐다 — 푸터도 이제부터 보인다 */
 }
