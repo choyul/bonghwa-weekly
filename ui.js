@@ -16,10 +16,11 @@
              'all'   검색할 때 지난 1년까지
      axis : 화면이 정의하는 분류축(주제·대상·지역 등)의 선택값 */
   const S = {
-    scope: 'week', month: '', day: '', week: '',
-    q: '', status: '', dept: '', type: '', annual: false, custom: '', axis: {}, limit: 60
+    scope: 'week', month: '', day: '', week: '', from: '', to: '',
+    q: '', status: '', dept: '', type: '', annual: false, custom: '', axis: {}, limit: 60,
+    onLimit: 30        /* '지금도 진행 중' 목록에서 한 번에 보여줄 개수 */
   };
-  let curIssue = null, simExpanded = false;
+  let curIssue = null, simExpanded = false, onSig = '';
 
   /* ───────── 토스트 ───────── */
   let toastT;
@@ -143,9 +144,8 @@
     }
     return true;
   }
-  function matches(iss) {
-    if (!inRange(iss)) return false;
-    /* 화면이 정의한 분류축 (달력·주제·대상·지역 …) */
+  /* 날짜를 뺀 나머지 조건 (주제·대상·지역·검색어 …) — '계속 진행 중' 목록도 이 조건은 똑같이 따른다 */
+  function matchesExceptRange(iss) {
     for (const ax of (CFG.axes || [])) {
       const v = S.axis[ax.key];
       if (v && !ax.match(iss, v)) return false;
@@ -157,6 +157,39 @@
     if (S.custom && CFG.customFilters && CFG.customFilters[S.custom] && !CFG.customFilters[S.custom].fn(iss)) return false;
     if (S.q && !iss._text.includes(S.q.toLowerCase())) return false;
     return true;
+  }
+  function matches(iss) {
+    return inRange(iss) && matchesExceptRange(iss);
+  }
+
+  /* ── 지금 고른 기간을 실제 날짜 구간으로 — '계속 진행 중' 판단에 쓴다 ── */
+  function periodBounds() {
+    if (S.scope === 'all') return null;                      /* 전체 기간이면 이미 다 보인다 */
+    if (S.scope === 'day') return [S.day, S.day];
+    if (S.scope === 'range') return (S.from && S.to) ? [S.from, S.to] : null;
+    if (S.scope === 'month') {
+      const [y, m] = S.month.split('-').map(Number);
+      return [S.month + '-01', BW.ymd(new Date(y, m, 0))];
+    }
+    const w = S.week || D.weekStart;                          /* week */
+    return [w, BW.ymd(new Date(BW.d2(w).getTime() + 6 * 864e5))];
+  }
+  /* 그 일의 기재 기간이 [from,to] 와 겹치는가 (끝이 없으면 계속 진행으로 본다) */
+  function periodOverlaps(iss, from, to) {
+    const r = iss._range;
+    if (!r || !r.start) return false;
+    const end = r.openEnded ? '9999-12-31' : (r.end || r.start);
+    return r.start <= to && end >= from;
+  }
+  /* 고른 기간의 '주간계획에는 없지만 아직 진행 중'인 일 — 놓치기 쉬운 것들을 이어서 보여준다 */
+  function ongoingExtra(shown) {
+    const b = periodBounds(); if (!b) return [];
+    const seen = new Set(shown.map(i => i._id));
+    const out = ISSUES.filter(i => !seen.has(i._id) && periodOverlaps(i, b[0], b[1]) && matchesExceptRange(i));
+    /* 마감이 가까운 것부터 — 끝나는 날이 없는 상시 사업은 뒤로 */
+    const endOf = i => (i._range && !i._range.openEnded && (i._range.end || i._range.start)) || '9999-12-31';
+    out.sort((a, c) => endOf(a) < endOf(c) ? -1 : endOf(a) > endOf(c) ? 1 : 0);
+    return out;
   }
   function setFilter(k, v) {
     S[k] = (S[k] === v) ? (typeof v === 'boolean' ? false : '') : v;
@@ -432,6 +465,35 @@
         ? `<button class="morebtn">${rows.length - S.limit}건 더 보기</button>` : '';
       const mb = $('#bwMore').querySelector('button');
       if (mb) mb.onclick = () => { S.limit += 120; render(); };
+    }
+    /* ── 주간계획에는 안 실렸지만 아직 진행 중인 일 ──
+       주간계획은 '그 주에 새로 적은 일'만 담기므로, 신청기간이 몇 달씩 이어지는
+       사업(문화누리카드·에너지바우처 등)은 첫 주가 지나면 목록에서 사라진다.
+       이름을 모르는 사람은 영영 못 찾게 되므로, 기간이 겹치면 이어서 계속 보여준다. */
+    if (CFG.ongoingSection) {
+      /* 조건이 바뀌면 '더 보기'로 늘려 둔 개수를 처음으로 되돌린다 */
+      const sig = JSON.stringify([S.scope, S.day, S.month, S.week, S.from, S.to, S.q,
+        S.axis, S.custom, S.dept, S.status, S.type, S.annual]);
+      if (sig !== onSig) { S.onLimit = 30; onSig = sig; }
+      const extra = ongoingExtra(rows);
+      if (extra.length) {
+        /* 위 목록이 0건이면 '없습니다' 안내는 지운다 — 아래에 보여 줄 게 있으니 */
+        if (!rows.length) box.innerHTML = '';
+        const sec = document.createElement('div'); sec.id = 'bwOngoing';
+        const dv = document.createElement('div'); dv.className = 'feed-divider';
+        dv.textContent = `⏳ 지금도 신청·진행 중이에요 ${extra.length}건`;
+        sec.appendChild(dv);
+        const list = document.createElement('div'); list.className = 'cards';
+        extra.slice(0, S.onLimit).forEach(iss => list.appendChild(cardEl(iss)));
+        sec.appendChild(list);
+        if (extra.length > S.onLimit) {
+          const more = document.createElement('button'); more.className = 'morebtn';
+          more.textContent = `${extra.length - S.onLimit}건 더 보기`;
+          more.onclick = () => { S.onLimit += 60; render(); };
+          sec.appendChild(more);
+        }
+        box.appendChild(sec);
+      }
     }
     /* rows가 0건이어도 onRender는 늘 부른다 — 화면이 이 훅으로 다른 목록(예: 관련 소식)을
        이어 붙이는 경우, 여기서 건너뛰면 그 목록이 갱신되지 않고 멈춰 버린다. */
