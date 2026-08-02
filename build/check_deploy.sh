@@ -42,11 +42,18 @@ if awk '/function nativeShare/,/^ \}/' "$P" | grep -q "canShare"; then
 else ok "군민용: nativeShare 안에 canShare() 사전검사 없음(정상)"; fi
 must "$DEPLOY/mayor.html" "navigator.share" "군수용: 지시 전달 공유 시트"
 
-echo "── 3) 전화 걸기 ──"
+echo "── 3) 주간업무/주간행사 전환 ──"
+must "$P" "modetabs"    "군민용: 맨 위 [주간업무/주간행사] 전환 탭"
+must "$P" "BW_EVENTS"   "군민용: 행사 데이터 읽기"
+must "$P" "events.js"   "군민용: 행사 데이터 로드"
+if [ -s "$DEPLOY/events.js" ]; then ok "events.js 존재($(wc -c < "$DEPLOY/events.js" | tr -d ' ')바이트)"
+else no "events.js 가 없거나 비었습니다 — 행사 탭이 안 뜹니다"; fi
+
+echo "── 4) 전화 걸기 ──"
 must "$DEPLOY/mayor.html" "navigator.contacts" "군수용: 저장된 연락처 선택(안드로이드)"
 must "$DEPLOY/mayor.html" "tel:"               "군수용: 전화 걸기 폴백"
 
-echo "── 4) 한 번 고친 버그가 되살아나지 않았는지 ──"
+echo "── 5) 한 번 고친 버그가 되살아나지 않았는지 ──"
 # (a) data.js 의 builtAt 에 실행시각을 넣으면 내용이 같아도 매일 커밋된다
 if grep -q "builtAt: new Date()" "$DEPLOY/build/build.js"; then
   no "build.js: builtAt 이 실행시각으로 되돌아감 (매일 불필요하게 커밋됨)"
@@ -61,7 +68,7 @@ for f in sw.js build/build.js; do
   else no "$f 가 소스와 배포본에서 다름"; fi
 done
 
-echo "── 5) 개인정보가 섞여 들어가지 않았는지 ──"
+echo "── 6) 개인정보가 섞여 들어가지 않았는지 ──"
 if grep -rlE "01[016789]-[0-9]{3,4}-[0-9]{4}" "$DEPLOY/data.js" "$DEPLOY/md" 2>/dev/null | grep -q .; then
   no "데이터에 휴대폰번호가 들어 있습니다 — 커밋 금지"
 else ok "데이터에 휴대폰번호 없음"; fi

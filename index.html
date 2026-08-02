@@ -77,6 +77,39 @@ footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decorat
 .wstrip .calday{position:relative;min-height:62px}
 /* 1개월 모드: 요일 달력만 숨김(화살표는 남겨 달 이동) / 전체 기간: 화살표도 숨김
    — 어느 모드든 타이틀·버튼 사이 간격(ws-nav의 margin-bottom)은 그대로 유지한다 */
+/* ── 맨 위 보기 전환: 주간업무 / 주간행사 ── */
+.modetabs{display:flex;gap:6px;background:var(--bg2,#eceae5);border-radius:13px;padding:5px;margin-bottom:12px}
+.modetabs button{flex:1;min-height:46px;border:none;border-radius:9px;background:transparent;
+ color:var(--sub);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;
+ display:flex;align-items:center;justify-content:center;gap:6px;transition:background .18s,color .18s}
+.modetabs button.on{background:var(--paper);color:var(--acc);box-shadow:0 1px 4px rgba(0,0,0,.10)}
+/* 행사 보기에서는 업무용 화면 요소를 감춘다 */
+body.mode-event .psearch,body.mode-event #bwTiles,body.mode-event #bwAxes,
+body.mode-event #bwTop,body.mode-event #bwFilters,body.mode-event #bwInfo,
+body.mode-event #bwCards,body.mode-event #bwMore,
+body.mode-event .ws-scopes,body.mode-event .ws-cal,body.mode-event .ws-range{display:none}
+body:not(.mode-event) #evView{display:none}
+/* ── 행사 목록 ── */
+.ev-head{display:flex;align-items:baseline;gap:8px;margin:2px 2px 10px}
+.ev-head h2{font-size:17px;margin:0;color:var(--ink)}
+.ev-head .cnt{font-size:13px;color:var(--sub);font-weight:700}
+.ev-kinds{display:flex;gap:6px;margin-bottom:12px}
+.ev-kinds button{flex:1;min-height:42px;border:1px solid var(--line);border-radius:10px;background:var(--paper);
+ color:var(--ink);font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.ev-kinds button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.ev-list{display:grid;grid-template-columns:1fr;gap:9px}
+@media(min-width:760px){.ev-list{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}}
+.ev-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:13px 14px;
+ display:flex;gap:12px;align-items:flex-start}
+.ev-time{flex:none;min-width:52px;font-size:15px;font-weight:800;color:var(--acc);line-height:1.35}
+.ev-body{flex:1;min-width:0}
+.ev-title{font-size:15px;font-weight:700;color:var(--ink);line-height:1.4;margin-bottom:5px;word-break:keep-all}
+.ev-meta{font-size:13px;color:var(--sub);line-height:1.5}
+.ev-badge{display:inline-block;font-size:11.5px;font-weight:700;border-radius:6px;padding:2px 7px;margin-left:6px;vertical-align:1px}
+.ev-badge.gun{background:var(--acc-soft);color:var(--acc)}
+.ev-badge.org{background:#f0ede7;color:var(--sub)}
+.ev-empty{text-align:center;color:var(--sub);font-size:14px;padding:34px 10px;
+ background:var(--paper);border:1px solid var(--line);border-radius:var(--r)}
 .wstrip.no-days .ws-days{display:none}
 .wstrip.no-arrows .ws-arrow{display:none}
 /* ── 기간 직접 고르기 (날짜 옆 달력 아이콘) ── */
@@ -182,10 +215,15 @@ footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decorat
 <script src="core.js"></script>
 <script src="ui.js"></script>
 <script>
-/* data.js(필수) → notices.js(고시·공고, 실패해도 진행) → init */
+/* data.js(필수) → notices.js(고시·공고) → events.js(주간행사) → init
+   뒤의 둘은 없거나 실패해도 화면은 뜬다 */
 (function(){
  function load(src,cb){const s=document.createElement('script');s.src=src;s.onload=cb;s.onerror=cb;document.head.appendChild(s)}
- load('data.js?v='+Date.now(), function(){ load('notices.js?v='+Date.now(), init); });
+ load('data.js?v='+Date.now(), function(){
+  load('notices.js?v='+Date.now(), function(){
+   load('events.js?v='+Date.now(), init);
+  });
+ });
 })();
 
 function init(){
@@ -478,6 +516,13 @@ function init(){
  let VIEW_WEEK=D.weekStart;                    /* 지금 보고 있는 주(월요일) */
  const daysOf=mon=>{const s=BW.d2(mon),a=[];for(let i=0;i<7;i++){const d=new Date(s);d.setDate(s.getDate()+i);a.push(BW.ymd(d));}return a;};
  const cntOf=day=>BWUI.api.issues.filter(i=>i.list.some(o=>BW.coversDate(o.item,o.week,day))).length;
+ /* ═══ 주간행사 ═══ 주간업무계획과 같은 게시물에 붙는 '주간행사표'(build/fetch_events.py 수집).
+    그날 그 자리에서 열리는 일이라 업무 목록과 섞지 않고 맨 위에서 갈라 놓는다.
+    ※ BWUI.start 가 첫 렌더에서 syncTopControls 를 부르므로, 이 값들은 반드시 그 앞에 선언한다. */
+ const EV=(window.BW_EVENTS&&window.BW_EVENTS.items)||[];
+ let MODE='work', evKind='';                     /* evKind: ''=전체 '군' '기관' */
+ const evOf=day=>EV.filter(e=>e.date===day&&(!evKind||e.kind===evKind));
+ const evCntOf=day=>EV.filter(e=>e.date===day&&(!evKind||e.kind===evKind)).length;
  const dLabel=day=>{const d=BW.d2(day);return `${d.getMonth()+1}월 ${d.getDate()}일(${BW.DOW[d.getDay()]})`;};
  const rangeTitle=mon=>{const w=daysOf(mon),a=BW.d2(w[0]),b=BW.d2(w[6]);
    return `${a.getFullYear()}. ${a.getMonth()+1}. ${a.getDate()}.(${BW.DOW[a.getDay()]}) ~ ${b.getMonth()+1}. ${b.getDate()}.(${BW.DOW[b.getDay()]})`;};
@@ -717,11 +762,13 @@ function init(){
  function renderDayPills(){
   const host=document.getElementById('wsDays'); if(!host)return;
   const today=BWUI.api.today;
-  host.innerHTML=daysOf(VIEW_WEEK).map(day=>{const d=BW.d2(day),we=d.getDay()===0||d.getDay()===6,n=cntOf(day);
+  /* 숫자는 지금 보고 있는 모드 기준 — 행사 보기면 그날 행사 수 */
+  const count=day=>MODE==='event'?evCntOf(day):cntOf(day);
+  host.innerHTML=daysOf(VIEW_WEEK).map(day=>{const d=BW.d2(day),we=d.getDay()===0||d.getDay()===6,n=count(day);
     return `<button type="button" class="calday ${we?'we':''} ${n?'':'zero'}" data-day="${day}">
       <span class="dow">${BW.DOW[d.getDay()]}</span><span class="d">${d.getDate()}</span><span class="cnt">${n}</span>
       ${day===today?'<span class="ws-dot"></span>':''}</button>`;}).join('');
-  host.dataset.week=VIEW_WEEK;
+  host.dataset.week=VIEW_WEEK; host.dataset.mode=MODE;
   host.querySelectorAll('.calday').forEach(b=>b.onclick=()=>setDay(b.dataset.day));
  }
  function buildDayStrip(){
@@ -833,7 +880,8 @@ function init(){
    strip.classList.toggle('no-arrows', S.scope==='all'||S.scope==='range');
    strip.classList.toggle('ranged', S.scope==='range');   /* 달력 아이콘을 켜 둔 상태로 */
    const ti=strip.querySelector('#wsTitle'); if(ti)ti.textContent=calTitle();
-   const host=strip.querySelector('#wsDays'); if(host&&host.dataset.week!==VIEW_WEEK)renderDayPills();
+   const host=strip.querySelector('#wsDays');
+   if(host&&(host.dataset.week!==VIEW_WEEK||host.dataset.mode!==MODE))renderDayPills();
    /* 버튼은 '보기 단위'로 켠다 — 지난 주/달을 넘겨 봐도 그 단위 버튼이 켜진 채 타이틀만 바뀐다 */
    strip.querySelectorAll('#wsScopes button').forEach(b=>{
     const on=(b.dataset.sc==='week'&&(S.scope==='week'||S.scope==='day'))
@@ -859,6 +907,7 @@ function init(){
    listh.textContent=t;
   }
   renderNoticeSection();   /* 지금 필터에 맞는 고시·공고를 이번 주 소식 아래 이어 붙인다 */
+  renderEvents();          /* 행사 보기일 때 그날 행사 목록 */
  }
 
  /* ── 내용 카테고리 규칙 [이름, 아이콘, 정규식] (위에서부터 먼저 맞는 하나) ── */
@@ -1019,9 +1068,82 @@ function init(){
   box.appendChild(sec);
  }
 
+ function setMode(m){
+  MODE=m;
+  document.body.classList.toggle('mode-event',m==='event');
+  document.querySelectorAll('#modetabs button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+  /* 행사는 '그날'만 보는 게 자연스럽다 — 날짜가 안 골라져 있으면 오늘(또는 그 주 첫날)로 */
+  if(m==='event'){
+   const S=BWUI.api.state;
+   if(S.scope!=='day'){
+    const days=daysOf(VIEW_WEEK);
+    setDay(days.includes(BWUI.api.today)?BWUI.api.today:days[0]);
+   }
+  }
+  renderDayPills();                              /* 숫자를 그 모드 기준으로 다시 */
+  syncTopControls();
+  window.scrollTo({top:0,behavior:'smooth'});
+ }
+ function buildModeTabs(){
+  const wrap=document.querySelector('.bw-wrap'); if(!wrap||document.getElementById('modetabs'))return;
+  const el=document.createElement('div'); el.className='modetabs'; el.id='modetabs';
+  el.innerHTML=`
+    <button type="button" data-m="work" class="on">📋 주간업무</button>
+    <button type="button" data-m="event">🎪 주간행사</button>`;
+  wrap.insertBefore(el,wrap.firstChild);
+  el.querySelectorAll('button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+ }
+ function buildEventView(){
+  const wrap=document.querySelector('.bw-wrap'); if(!wrap||document.getElementById('evView'))return;
+  const el=document.createElement('div'); el.id='evView';
+  el.innerHTML=`
+    <div class="ev-kinds" id="evKinds">
+      <button type="button" data-k="" class="on">전체</button>
+      <button type="button" data-k="군">군 행사</button>
+      <button type="button" data-k="기관">읍면·기관단체</button>
+    </div>
+    <div class="ev-head"><h2 id="evTitle"></h2><span class="cnt" id="evCnt"></span></div>
+    <div class="ev-list" id="evList"></div>`;
+  const anchor=document.getElementById('bwInfo')||document.getElementById('bwCards');
+  wrap.insertBefore(el,anchor);
+  el.querySelectorAll('#evKinds button').forEach(b=>b.onclick=()=>{
+   evKind=b.dataset.k;
+   el.querySelectorAll('#evKinds button').forEach(x=>x.classList.toggle('on',x.dataset.k===evKind));
+   renderDayPills(); renderEvents();
+  });
+ }
+ function renderEvents(){
+  if(MODE!=='event')return;
+  const S=BWUI.api.state;
+  const days=S.scope==='day'?[S.day]:daysOf(VIEW_WEEK);
+  const rows=days.flatMap(d=>evOf(d)).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:(a.time<b.time?-1:1));
+  const t=document.getElementById('evTitle'), c=document.getElementById('evCnt'), list=document.getElementById('evList');
+  if(!t)return;
+  t.textContent=(S.scope==='day')
+    ? ((S.day===BWUI.api.today?'오늘':dLabel(S.day))+' 행사')
+    : (weekLabel(VIEW_WEEK)+' 행사');
+  c.textContent=rows.length?rows.length+'건':'';
+  if(!rows.length){
+   list.innerHTML=`<div class="ev-empty">이 날은 예정된 행사가 없어요<br><span style="font-size:12.5px">위 달력에서 다른 날짜를 눌러 보세요</span></div>`;
+   return;
+  }
+  let lastDate='';
+  list.innerHTML=rows.map(e=>{
+   const head=(days.length>1&&e.date!==lastDate)?(lastDate=e.date,`<div class="feed-divider" style="grid-column:1/-1">${E(dLabel(e.date))}</div>`):'';
+   return head+`<div class="ev-card">
+     <div class="ev-time">${E(e.time)}</div>
+     <div class="ev-body">
+      <div class="ev-title">${E(e.title)}<span class="ev-badge ${e.kind==='군'?'gun':'org'}">${e.kind==='군'?'군 행사':'읍면·기관'}</span></div>
+      <div class="ev-meta">📍 ${E(e.place||'장소 미기재')}${e.people?` · 👥 ${E(e.people)}명`:''}</div>
+     </div></div>`;
+  }).join('');
+ }
+
  decorateHeader();
  buildSearchCard();
  buildDayStrip();
+ if(EV.length)buildModeTabs();
+ buildEventView();
  buildNotices();
  /* 기본: 오늘이 이번 자료 주간이면 '오늘 소식'부터, 아니면 이번 주 전체 */
  if(daysOf(D.weekStart).includes(BWUI.api.today)) setDay(BWUI.api.today); else setScope('week');

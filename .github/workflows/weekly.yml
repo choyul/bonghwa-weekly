@@ -3,6 +3,7 @@ name: 오늘의 봉화 자동 갱신
 # 매일 봉화군 홈페이지를 확인한다.
 #  - 주간업무: 새 주차가 올라왔으면 data.js 갱신(대개 목요일에만 바뀜, 없으면 무커밋)
 #  - 고시·공고: 최근 3개월치를 매일 새로 받아 notices.js 갱신
+#  - 주간행사: 새 주차의 주간행사표를 받아 events.js 갱신(이미 받은 주는 건너뜀)
 on:
   schedule:
     - cron: '0 1 * * *'    # UTC 01:00 = 한국시간 매일 오전 10시
@@ -37,12 +38,16 @@ jobs:
         run: python3 build/fetch_gosi.py notices.js 3
         continue-on-error: true   # 게시판 일시 오류가 주간 갱신을 막지 않도록
 
+      - name: 주간행사 최근 2개월 수집 (주간행사계획 첨부 → events.js)
+        run: python3 build/fetch_events.py events.js 2
+        continue-on-error: true   # 첨부 형식이 바뀌어도 주간 갱신을 막지 않도록
+
       - name: 바뀌었으면 커밋·푸시
         run: |
-          if [[ -n "$(git status --porcelain data.js md notices.js)" ]]; then
+          if [[ -n "$(git status --porcelain data.js md notices.js events.js)" ]]; then
             git config user.name "bonghwa-bot"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add data.js md notices.js
+            git add data.js md notices.js events.js
             git commit -m "자동 갱신 ($(date -u +%Y-%m-%d))"
             git push
             echo "갱신 완료"
