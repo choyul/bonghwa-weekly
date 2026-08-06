@@ -125,36 +125,41 @@ footer{max-width:430px}
 .ws-scopes button.on{background:var(--brand);border-color:var(--brand)}
 .psearch{margin:0 14px 12px;border-radius:var(--r);border-width:1.5px}
 
-/* ── 큰글씨 보기 ── 어르신도 편히 보시도록 본문 글씨를 한 단계 키운다.
-   레이아웃은 그대로 두고 글자 크기만 올려, 폭이 넘치거나 버튼이 깨지지 않게 한다. */
-body.bigtext #bwCards .card .top h3{font-size:18px;line-height:1.45}
-body.bigtext #bwCards .card .meta{font-size:14.5px}
-body.bigtext .tag{font-size:13px!important;padding:4px 9px!important}
-body.bigtext .axis .axh{font-size:18px}
-body.bigtext .axcard .lb,body.bigtext .axchip,body.bigtext .rchip{font-size:14.5px!important}
-body.bigtext .axcard .n{font-size:13px}
-body.bigtext #bwInfo .listh{font-size:18px}
-body.bigtext #bwInfo .hint{font-size:15px}
-body.bigtext .h-title{font-size:24px}
-body.bigtext .h-week{font-size:13.5px}
-body.bigtext .h-stat-n{font-size:22px} body.bigtext .h-stat-l{font-size:12.5px}
-body.bigtext .ws-title{font-size:17px}
-body.bigtext .calday .d{font-size:19px} body.bigtext .calday .dow{font-size:12.5px}
-body.bigtext .calday .cnt{font-size:11.5px}
-body.bigtext .ws-scopes button{font-size:15px}
-body.bigtext .ps-text{font-size:17px}
-body.bigtext .ev-title{font-size:17px} body.bigtext .ev-time{font-size:17px}
-body.bigtext .ev-meta{font-size:14.5px}
-body.bigtext .ev-kinds button,body.bigtext .ev-span button{font-size:15px}
-body.bigtext .ev-head h2{font-size:18px}
-body.bigtext .shd h2{font-size:21px}
-body.bigtext .sbd,body.bigtext .glist{font-size:16.5px}
-body.bigtext .glist dt{font-size:14.5px}
-body.bigtext .feed-divider{font-size:14.5px}
-body.bigtext .modetabs button{font-size:16px}
-body.bigtext .tabbar .lb{font-size:11.5px}
-body.bigtext footer{font-size:14px}
-body.bigtext .nrow,body.bigtext .ntbody{font-size:15px}
+/* ── 글씨 크기 ── 어르신도 편히 보시도록 '크게'를 기본으로 두고, 두 단계 더 키울 수 있다.
+   한 곳(--fsx 배율)만 바꾸면 아래 크기들이 함께 커진다. 레이아웃은 그대로라 폭이 넘치지 않는다. */
+:root{--fsx:1}
+body.fs1{--fsx:1.13}
+body.fs2{--fsx:1.26}
+#bwCards .card .top h3{font-size:calc(18px*var(--fsx));line-height:1.45}
+#bwCards .card .meta{font-size:calc(14.5px*var(--fsx))}
+.tag{font-size:calc(13px*var(--fsx))!important;padding:4px 9px!important}
+.axis .axh{font-size:calc(18px*var(--fsx))}
+.axcard .lb,.axchip,.rchip{font-size:calc(14.5px*var(--fsx))!important}
+.axcard .n{font-size:calc(13px*var(--fsx))}
+#bwInfo .listh{font-size:calc(18px*var(--fsx))}
+#bwInfo .hint{font-size:calc(15px*var(--fsx))}
+.h-title{font-size:calc(24px*var(--fsx))}
+.h-week{font-size:calc(13.5px*var(--fsx))}
+.h-stat-n{font-size:calc(22px*var(--fsx))}
+.h-stat-l{font-size:calc(12.5px*var(--fsx))}
+.ws-title{font-size:calc(17px*var(--fsx))}
+.calday .d{font-size:calc(19px*var(--fsx))}
+.calday .dow{font-size:calc(12.5px*var(--fsx))}
+.calday .cnt{font-size:calc(11.5px*var(--fsx))}
+.ws-scopes button{font-size:calc(15px*var(--fsx))}
+.ps-text{font-size:calc(17px*var(--fsx))}
+.ev-title,.ev-time{font-size:calc(17px*var(--fsx))}
+.ev-meta{font-size:calc(14.5px*var(--fsx))}
+.ev-kinds button,.ev-span button{font-size:calc(15px*var(--fsx))}
+.ev-head h2{font-size:calc(18px*var(--fsx))}
+.shd h2{font-size:calc(21px*var(--fsx))}
+.sbd,.glist{font-size:calc(16.5px*var(--fsx))}
+.glist dt{font-size:calc(14.5px*var(--fsx))}
+.feed-divider{font-size:calc(14.5px*var(--fsx))}
+.modetabs button{font-size:calc(16px*var(--fsx))}
+.tabbar .lb{font-size:calc(11.5px*var(--fsx))}
+footer{font-size:calc(14px*var(--fsx))}
+.nrow,.ntbody{font-size:calc(15px*var(--fsx))}
 .bw-head .hbtn.on{background:var(--brand);color:#fff}
 
 /* ── 하단 탭바 ── */
@@ -164,9 +169,16 @@ body.bigtext .nrow,body.bigtext .ntbody{font-size:15px}
 body.ready .tabbar{visibility:visible}
 .tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;
  font-family:inherit;color:var(--sub);cursor:pointer;padding:4px 0}
-.tabbar .ic{font-size:20px;line-height:1}
-.tabbar .lb{font-size:10.5px;font-weight:700}
+.tabbar .ic{font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;
+ width:46px;height:30px;border-radius:100px;transition:background .18s,transform .18s}
+.tabbar .lb{font-size:calc(10.5px*var(--fsx));font-weight:700}
+/* 고른 탭은 한눈에 — 알약 배경 + 진한 글씨 + 위쪽 표시선 */
+.tabbar button{position:relative;transition:color .15s}
 .tabbar button.on{color:var(--brand)}
+.tabbar button.on .ic{background:var(--brand-soft);transform:translateY(-1px)}
+.tabbar button.on .lb{font-weight:800}
+.tabbar button.on::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+ width:30px;height:3px;border-radius:0 0 3px 3px;background:var(--brand)}
 /* 푸터는 body에 정적으로 있지만, 위 화면(헤더·달력·카드)은 data.js를 다 받아야
    JS가 만든다. 그 사이 잠깐 푸터 글이 엉뚱하게 화면 맨 위쪽에 홀로 떠 있다가
    콘텐츠가 채워지며 아래로 밀리는 게 "잔상"처럼 보였다 — 화면이 다 준비된 뒤에만 보이게 한다. */
@@ -1281,18 +1293,23 @@ function init(){
   wrap.insertBefore(el,wrap.firstChild);
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
  }
- /* ── 큰글씨 보기 — 고른 값은 이 기기에 기억해 다음에 열 때도 그대로 ── */
- const BIGKEY='bh.bigtext';
- function applyBig(on){
-  document.body.classList.toggle('bigtext',!!on);
+ /* ── 글씨 크기 3단계 — 기본이 이미 '크게'이고, 두 단계 더 키울 수 있다.
+    고른 값은 이 기기에 기억해 다음에 열 때도 그대로. ── */
+ const BIGKEY='bh.fontsize';
+ const FS_LABEL=['🔍 글씨 크게','🔍 글씨 더크게','🔍 글씨 기본'];   /* 누르면 어떻게 되는지 */
+ const FS_TOAST=['글씨를 기본 크기로 되돌렸어요','글씨를 한 단계 키웠어요','글씨를 가장 크게 키웠어요'];
+ let fsLevel=0;
+ function applyFs(n){
+  fsLevel=Math.max(0,Math.min(2,+n||0));
+  document.body.classList.toggle('fs1',fsLevel===1);
+  document.body.classList.toggle('fs2',fsLevel===2);
   const b=document.querySelector('.bw-head .hbtn');
-  if(b){ b.textContent=on?'🔍 작은글씨':'🔍 큰글씨'; b.classList.toggle('on',!!on); }
+  if(b){ b.textContent=FS_LABEL[fsLevel]; b.classList.toggle('on',fsLevel>0); }
  }
- function toggleBig(){
-  const on=!document.body.classList.contains('bigtext');
-  try{localStorage.setItem(BIGKEY,on?'1':'0')}catch(e){}
-  applyBig(on);
-  BWUI.toast(on?'글씨를 크게 보여드릴게요':'글씨를 원래 크기로 되돌렸어요');
+ function toggleBig(){                      /* 기본 → 더크게 → 가장크게 → 기본 */
+  applyFs((fsLevel+1)%3);
+  try{localStorage.setItem(BIGKEY,String(fsLevel))}catch(e){}
+  BWUI.toast(FS_TOAST[fsLevel]);
  }
 
  /* ── 히어로: 이번 주 요약 (디자인 지정) — 숫자는 실제 데이터에서 센다 ── */
@@ -1332,8 +1349,7 @@ function init(){
     <button data-t="home" class="on"><span class="ic">🏠</span><span class="lb">홈</span></button>
     <button data-t="cal"><span class="ic">📅</span><span class="lb">행사</span></button>
     <button data-t="find"><span class="ic">🔍</span><span class="lb">검색</span></button>
-    <button data-t="fav"><span class="ic">⭐</span><span class="lb">관심</span></button>
-    <button data-t="share"><span class="ic">🔗</span><span class="lb">공유</span></button>`;
+    <button data-t="fav"><span class="ic">⭐</span><span class="lb">관심</span></button>`;
   document.body.appendChild(el);
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>{
    const t=b.dataset.t;
@@ -1344,9 +1360,6 @@ function init(){
    else if(t==='find'){ setMode('work'); const c=document.getElementById('psearch');
      if(c){ c.classList.add('open'); c.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>c.querySelector('#psInput').focus(),300); } }
    else if(t==='fav'){ setMode('work'); BWUI.api.setCustom('fav'); window.scrollTo({top:0,behavior:'smooth'}); }
-   else if(t==='share'){                       /* 이 앱 자체를 친구에게 알리기 */
-     const u=location.origin+location.pathname.replace(/index\.html$/,'');
-     nativeShare({title:'오늘의 봉화',text:'봉화의 이번 주 소식·행사·공고를 한눈에 👇',url:u},u); }
    syncTabBar();
   });
  }
@@ -1515,7 +1528,7 @@ function init(){
  buildSearchCard();
  buildDayStrip();
  if(EV.length)buildModeTabs();
- try{applyBig(localStorage.getItem(BIGKEY)==='1')}catch(e){}   /* 지난번에 켜 뒀으면 그대로 */
+ try{applyFs(localStorage.getItem(BIGKEY)||0)}catch(e){applyFs(0)}   /* 지난번에 고른 글씨 크기 그대로 */
  buildHero();
  buildEventView();
  buildTabBar();
