@@ -118,10 +118,15 @@ def main():
                              re.findall(r'"IDX":"?(\d+)"?', raw)):
             posts[sday] = idx
 
+    # ── 이미 담아 둔 주는 무조건 지킨다 ──
+    # 예전에는 '이번에 훑은 달' 안에 있는 주만 다시 써서, 매일 도는 자동 갱신이
+    # 수집 범위 밖(오래된) 주를 통째로 지워 버렸다. 이력은 그대로 두고 새 주만 더한다.
     items, fetched = [], 0
+    for w in sorted(have):
+        items += have[w]
+
     for sday in sorted(posts):
-        if sday in have:                               # 이미 있는 주는 그대로 재사용
-            items += have[sday]
+        if sday in have:                               # 이미 있는 주는 위에서 이미 넣었다
             continue
         idx = posts[sday]
         html = curl(f'{BASE}/portal/dytWrk/view.do?mid={MID}', f'idx={idx}&goTo={sday}')
@@ -157,6 +162,12 @@ def main():
     shutil.rmtree(work, ignore_errors=True)
     items.sort(key=lambda e: (e['date'], e['time']))
     weeks = sorted({e['week'] for e in items})
+
+    # ── 안전장치: 결과가 기존보다 줄면 쓰지 않는다 ──
+    # 게시판 오류·형식 변경으로 수집이 실패했을 때, 빈 결과가 기존 이력을 덮어쓰는 사고를 막는다.
+    if have and len(weeks) < len(have):
+        print(f'중단: 결과({len(weeks)}주)가 기존({len(have)}주)보다 적어 덮어쓰지 않습니다')
+        return 1
     data = {'builtAt': (weeks[-1] if weeks else ''), 'weeks': weeks, 'items': items}
     with open(out_path, 'w', encoding='utf-8') as f:
         f.write('/* 자동 생성 파일 — build/fetch_events.py 로 재생성. 직접 수정 금지 */\n')
