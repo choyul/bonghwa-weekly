@@ -1332,13 +1332,28 @@ function init(){
   setupIntro();   /* 처음 들어왔을 때만 인트로를 보여준다 */
  }
 
- /* 삼성 인터넷 등에서 '데스크톱 사이트로 보기'가 켜져 있으면 화면 폭이 PC처럼 잡힌다.
-    휴대폰인데 폭이 넓으면 한 줄 배치로 되돌려 글씨가 깨알같이 작아지지 않게 한다. */
+ /* ── 휴대폰인데 화면이 PC처럼 넓게 잡히는 경우 되돌리기 ──
+    삼성 인터넷 등에서 '데스크톱 사이트로 보기'가 켜져 있으면 이 사이트의 viewport 설정이
+    무시되고 레이아웃 폭이 980px 안팎으로 잡힌다. 그 넓은 화면을 기기 화면에 욱여넣어
+    보여주므로 글씨가 깨알같이 작아지고 카드도 PC처럼 2단으로 깔린다.
+    실제 기기 화면(screen.width)보다 레이아웃 폭이 훨씬 넓으면, 그 비율만큼 확대해
+    레이아웃 폭을 기기 화면 폭과 같게 만든다 → 사용자가 설정을 바꾸지 않아도 평소 화면이 된다.
+    (접는 폰처럼 진짜로 넓은 기기는 비율 차이가 없으므로 확대하지 않고, 대신 한 줄로만 깐다) */
  function fitPhone(){
+  const el=document.documentElement;
   const phone=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  document.body.classList.toggle('wide-phone', phone && window.innerWidth>760);
+  let eff=el.clientWidth;                             /* 확대까지 반영한 '실제로 쓰는 폭' */
+  if(phone){
+   el.style.zoom='';                                  /* 원래 폭으로 되돌려 다시 잰다 */
+   const sw=(window.screen&&screen.width)||0, vw=el.clientWidth;
+   if(sw&&vw>sw*1.25){ el.style.zoom=(vw/sw).toFixed(3); eff=sw; }
+   else eff=vw;
+  }
+  document.body.classList.toggle('wide-phone', phone&&eff>760);
  }
- fitPhone(); window.addEventListener('resize',fitPhone);
+ fitPhone();
+ /* 가로·세로를 돌렸을 때만 다시 잰다 — resize 마다 재면 우리가 준 확대가 다시 resize 를 불러 맴돈다 */
+ window.addEventListener('orientationchange',()=>setTimeout(fitPhone,120));
 
  document.body.classList.add('ready');   /* 이제 화면이 다 준비됐다 — 푸터도 이제부터 보인다 */
 }
