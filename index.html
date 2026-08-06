@@ -23,7 +23,118 @@
 <!-- 토큰은 반드시 ui.css보다 먼저 로드한다 -->
 <link rel="stylesheet" href="bonghwa-tokens.css">
 <link rel="stylesheet" href="ui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
+/* ═══════════════════════════════════════════════════════════════
+   리디자인 (project/design_handoff_bonghwa_weekly_redesign)
+   — 밝은 봉화 그린 · 카카오 카드형. 군민용에만 적용하고 기능은 그대로 둔다.
+     (군수·직원용은 ui.css 기본 톤을 그대로 쓰므로 여기서만 덮어쓴다)
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  --bh-primary:#16A34A; --bh-primary-ink:#0F7A38; --bh-primary-soft:#E8F7EE; --bh-primary-tint:#E8F7EE;
+  --bh-accent:#B7830E;  --bh-accent-soft:#FEF4D8;
+  --bh-warn:#EF4444;    --bh-warn-soft:#FEECEC;
+  --bh-ink:#191A1D; --bh-ink-2:#3D4148; --bh-sub:#7A7F87; --bh-sub-2:#7A7F87;
+  --bh-line:#EDEFF3; --bh-line-2:#F1F2F5;
+  --bh-bg:#F7F8FA; --bh-paper:#FFFFFF;
+  --bh-r:16px;
+  --brand:#16A34A; --brand-2:#22C55E; --brand-soft:#E8F7EE; --brand-ink:#0F7A38;
+  --gold:#F4B324; --gold-soft:#FEF4D8; --blue:#3B82F6; --blue-soft:#E7F0FF;
+  --red:#EF4444; --red-soft:#FEECEC;
+  --r-lg:20px;
+  --shadow-1:0 1px 2px rgba(15,20,30,.04);
+  --shadow-2:0 4px 14px rgba(15,20,30,.06);
+  --shadow-3:0 10px 24px -8px rgba(15,20,30,.12);
+}
+html,body{font-family:'Pretendard','Pretendard Variable',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',sans-serif;
+ font-size:15px;line-height:1.5;letter-spacing:-.01em;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+/* 모바일 웹앱 — 컴퓨터에서도 430px 한 컬럼을 가운데 유지한다(디자인 지정) */
+.bw-wrap{max-width:430px;padding:0 0 96px}
+footer{max-width:430px}
+.cards,.ev-list,.evm-list{grid-template-columns:1fr!important}
+
+/* ── 헤더 ── */
+.bw-head{background:var(--paper);color:var(--ink);border-bottom:1px solid var(--line);box-shadow:none}
+.bw-head .in{max-width:430px;padding:14px 18px 12px;gap:10px;align-items:center}
+.bw-head h1{font-size:17px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+.bw-head .wk{display:none}
+.bw-sub{font-size:11.5px;color:var(--sub);font-weight:600;margin-top:1px}
+.bw-today{font-size:11.5px;color:var(--sub);font-weight:600}
+.mascot-head{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--brand-2),var(--brand));
+ align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(22,163,74,.28);padding:5px}
+.bw-head .hbtn{min-height:38px;border-radius:12px;background:var(--bg);border:none;color:var(--ink);font-weight:700;font-size:13px;padding:0 12px}
+
+/* ── 히어로(이번 주 요약) ── */
+.hero{margin:14px 14px 0;padding:20px 20px 18px;border-radius:var(--r-lg);color:#fff;position:relative;overflow:hidden;
+ background:linear-gradient(135deg,#22C55E 0%,#16A34A 100%);box-shadow:0 10px 24px -8px rgba(22,163,74,.45)}
+.hero::after{content:'';position:absolute;right:-30px;top:-30px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.08)}
+.hero::before{content:'';position:absolute;right:40px;bottom:-40px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.06)}
+.h-week{font-size:12.5px;font-weight:600;opacity:.9;margin-bottom:4px;letter-spacing:.02em;position:relative}
+.h-title{font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.3;margin-bottom:14px;position:relative}
+.h-title b{color:#FFF3B8}
+.h-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;position:relative;z-index:1}
+.h-stat{background:rgba(255,255,255,.15);border-radius:12px;padding:11px 8px;text-align:center;color:#fff;
+ border:1px solid rgba(255,255,255,.15);font-family:inherit;cursor:pointer;transition:transform .15s}
+.h-stat:active{transform:scale(.96)}
+.h-stat-n{font-size:20px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.h-stat-l{font-size:11px;opacity:.9;margin-top:3px;font-weight:600}
+
+/* ── 카드 ── */
+.cards{padding:0 14px}
+#bwCards .card,.ev-card,.evm-list .card{border-radius:var(--r);box-shadow:var(--shadow-1);border:none;padding:14px}
+#bwCards .card:active{transform:scale(.98);box-shadow:var(--shadow-2)}
+#bwCards .card .top h3{font-size:15.5px;font-weight:700;line-height:1.4;color:var(--ink);text-wrap:pretty;word-break:keep-all}
+#bwCards .card .meta{font-size:12.5px;font-weight:600;color:var(--sub)}
+.tag{font-size:11.5px!important;font-weight:800!important;padding:3px 8px!important;border-radius:6px!important;border:none!important}
+.tag.st-ongoing{background:var(--brand-soft);color:var(--brand-ink)}
+.tag.st-upcoming{background:var(--gold-soft);color:#B7830E}
+.tag.st-done{background:var(--line-2,#F1F2F5);color:var(--sub)}
+.tag.type{background:var(--blue-soft);color:#1D5DBB}
+.tag.dept{background:#F1F2F5;color:var(--sub)}
+.tag.annual{background:var(--red-soft);color:var(--red)}
+
+/* ── 섹션 제목 ── */
+#bwInfo{margin:22px 18px 10px;padding:0}
+#bwInfo .listh{font-size:16px;font-weight:800;letter-spacing:-.02em}
+#bwInfo .hint{color:var(--brand);font-size:14px;font-weight:800}
+
+/* ── 상세 시트 ── */
+.sheet{border-radius:24px 24px 0 0;max-width:430px}
+.shd h2{font-size:19px;font-weight:800;letter-spacing:-.02em;line-height:1.35}
+.sft{max-width:430px}
+
+/* ── 분류축(무엇을·누구를·어디서) — 군민이 가장 많이 쓰는 부분이라 그대로 두고 톤만 맞춘다 ── */
+#bwAxes{padding:0 14px}
+.axis .axh{font-size:16px;font-weight:800;letter-spacing:-.02em;color:var(--ink);margin:22px 2px 10px}
+.axis:first-child .axh{margin-top:16px}
+.axchip,.rchip{border-radius:100px!important;border:1px solid var(--line)!important;font-weight:700!important;font-size:13px!important}
+.axchip.on,.rchip.on{background:var(--brand)!important;border-color:var(--brand)!important;color:#fff!important}
+/* 아이콘형 축(주제·대상)은 카드 느낌으로 */
+.axcard{border-radius:14px!important;box-shadow:var(--shadow-1);border:1px solid var(--line)!important}
+.axcard.on{border-color:var(--brand)!important;background:var(--brand-soft)!important}
+
+/* ── 주간 달력 ── */
+.wstrip{border:none;border-radius:var(--r);box-shadow:var(--shadow-1);margin:0 14px 12px}
+.ws-title{font-size:15px;font-weight:800}
+.calday{border-radius:12px;min-height:60px}
+.calday .cnt{font-size:10px;font-weight:800;background:var(--gold-soft);color:#B7830E;border-radius:6px;padding:1px 5px;min-width:16px;text-align:center}
+.calday.on{background:var(--brand);border-color:var(--brand)}
+.calday.on .cnt{background:rgba(255,255,255,.28);color:#fff}
+.calday.we .dow,.calday.we .d{color:var(--red)}
+.ws-scopes button{border-radius:10px;font-weight:700}
+.ws-scopes button.on{background:var(--brand);border-color:var(--brand)}
+.psearch{margin:0 14px 12px;border-radius:var(--r);border-width:1.5px}
+
+/* ── 하단 탭바 ── */
+.tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:430px;z-index:30;
+ background:var(--paper);border-top:1px solid var(--line);padding:8px 0 max(10px,env(safe-area-inset-bottom));
+ display:flex;visibility:hidden}
+body.ready .tabbar{visibility:visible}
+.tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;
+ font-family:inherit;color:var(--sub);cursor:pointer;padding:4px 0}
+.tabbar .ic{font-size:20px;line-height:1}
+.tabbar .lb{font-size:10.5px;font-weight:700}
+.tabbar button.on{color:var(--brand)}
 /* 푸터는 body에 정적으로 있지만, 위 화면(헤더·달력·카드)은 data.js를 다 받아야
    JS가 만든다. 그 사이 잠깐 푸터 글이 엉뚱하게 화면 맨 위쪽에 홀로 떠 있다가
    콘텐츠가 채워지며 아래로 밀리는 게 "잔상"처럼 보였다 — 화면이 다 준비된 뒤에만 보이게 한다. */
@@ -950,6 +1061,7 @@ function init(){
   renderNoticeSection();   /* 지금 필터에 맞는 고시·공고를 이번 주 소식 아래 이어 붙인다 */
   if(MODE==='event'&&evSpan==='month')renderMonthCal();   /* 고른 날짜 표시 갱신 */
   renderEvents();          /* 행사 보기일 때 그날 행사 목록 */
+  syncHero(); syncTabBar();   /* 이번 주 요약 숫자·하단 탭 상태 */
  }
 
  /* ── 내용 카테고리 규칙 [이름, 아이콘, 정규식] (위에서부터 먼저 맞는 하나) ── */
@@ -1136,6 +1248,65 @@ function init(){
   wrap.insertBefore(el,wrap.firstChild);
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
  }
+ /* ── 히어로: 이번 주 요약 (디자인 지정) — 숫자는 실제 데이터에서 센다 ── */
+ function buildHero(){
+  const wrap=document.querySelector('.bw-wrap'); if(!wrap||document.getElementById('hero'))return;
+  const el=document.createElement('div'); el.className='hero'; el.id='hero';
+  const tabs=document.getElementById('modetabs');
+  wrap.insertBefore(el, tabs?tabs.nextSibling:wrap.firstChild);
+  el.onclick=e=>{
+   const b=e.target.closest('.h-stat'); if(!b)return;
+   if(b.dataset.k==='ev'){ if(EV.length)setMode('event'); }
+   else { setMode('work'); if(b.dataset.k==='nt'){const s=document.getElementById('ntSection'); if(s)s.scrollIntoView({behavior:'smooth',block:'start'});} }
+  };
+  syncHero();
+ }
+ function syncHero(){
+  const el=document.getElementById('hero'); if(!el)return;
+  const days=daysOf(VIEW_WEEK), a=BW.d2(days[0]), b=BW.d2(days[6]);
+  const f=d=>`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+  const nEv=EV.filter(e=>days.includes(e.date)).length;
+  const nWork=BWUI.api.issues.filter(i=>i.list.some(o=>o.week===VIEW_WEEK)).length;
+  const nNt=(NOTICES||[]).filter(n=>days.includes(n.date)).length;
+  el.innerHTML=`
+    <div class="h-week">${f(a)} → ${f(b).slice(5)}</div>
+    <div class="h-title">이번 주,<br>봉화에는 <b>${nEv+nWork+nNt}개</b> 소식이 있어요</div>
+    <div class="h-stats">
+      <button class="h-stat" data-k="ev"><div class="h-stat-n">${nEv}</div><div class="h-stat-l">🎪 행사</div></button>
+      <button class="h-stat" data-k="wk"><div class="h-stat-n">${nWork}</div><div class="h-stat-l">📋 업무</div></button>
+      <button class="h-stat" data-k="nt"><div class="h-stat-n">${nNt}</div><div class="h-stat-l">📢 공고</div></button>
+    </div>`;
+ }
+ /* ── 하단 탭바 — 디자인의 5개 탭을 이 앱에 실제로 있는 기능에 이어 붙인다 ── */
+ function buildTabBar(){
+  if(document.getElementById('tabbar'))return;
+  const el=document.createElement('nav'); el.className='tabbar'; el.id='tabbar';
+  el.innerHTML=`
+    <button data-t="home" class="on"><span class="ic">🏠</span><span class="lb">홈</span></button>
+    <button data-t="cal"><span class="ic">📅</span><span class="lb">행사</span></button>
+    <button data-t="find"><span class="ic">🔍</span><span class="lb">검색</span></button>
+    <button data-t="fav"><span class="ic">⭐</span><span class="lb">관심</span></button>
+    <button data-t="share"><span class="ic">🔗</span><span class="lb">공유</span></button>`;
+  document.body.appendChild(el);
+  el.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+   const t=b.dataset.t;
+   if(t==='home'){ setMode('work'); window.scrollTo({top:0,behavior:'smooth'}); }
+   else if(t==='cal'){ if(EV.length)setMode('event'); else BWUI.toast('행사 자료를 아직 받지 못했어요'); }
+   else if(t==='find'){ setMode('work'); const c=document.getElementById('psearch');
+     if(c){ c.classList.add('open'); c.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>c.querySelector('#psInput').focus(),300); } }
+   else if(t==='fav'){ setMode('work'); BWUI.api.setCustom('fav'); window.scrollTo({top:0,behavior:'smooth'}); }
+   else if(t==='share'){                       /* 이 앱 자체를 친구에게 알리기 */
+     const u=location.origin+location.pathname.replace(/index\.html$/,'');
+     nativeShare({title:'오늘의 봉화',text:'봉화의 이번 주 소식·행사·공고를 한눈에 👇',url:u},u); }
+   syncTabBar();
+  });
+ }
+ function syncTabBar(){
+  const el=document.getElementById('tabbar'); if(!el)return;
+  const S=BWUI.api.state;
+  const cur = MODE==='event' ? 'cal' : (S.custom==='fav' ? 'fav' : 'home');
+  el.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===cur));
+ }
  function buildEventView(){
   const wrap=document.querySelector('.bw-wrap'); if(!wrap||document.getElementById('evView'))return;
   const el=document.createElement('div'); el.id='evView';
@@ -1295,7 +1466,9 @@ function init(){
  buildSearchCard();
  buildDayStrip();
  if(EV.length)buildModeTabs();
+ buildHero();
  buildEventView();
+ buildTabBar();
  buildNotices();
  /* 기본: 오늘이 이번 자료 주간이면 '오늘 소식'부터, 아니면 이번 주 전체 */
  if(daysOf(D.weekStart).includes(BWUI.api.today)) setDay(BWUI.api.today); else setScope('week');
