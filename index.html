@@ -125,6 +125,38 @@ footer{max-width:430px}
 .ws-scopes button.on{background:var(--brand);border-color:var(--brand)}
 .psearch{margin:0 14px 12px;border-radius:var(--r);border-width:1.5px}
 
+/* ── 큰글씨 보기 ── 어르신도 편히 보시도록 본문 글씨를 한 단계 키운다.
+   레이아웃은 그대로 두고 글자 크기만 올려, 폭이 넘치거나 버튼이 깨지지 않게 한다. */
+body.bigtext #bwCards .card .top h3{font-size:18px;line-height:1.45}
+body.bigtext #bwCards .card .meta{font-size:14.5px}
+body.bigtext .tag{font-size:13px!important;padding:4px 9px!important}
+body.bigtext .axis .axh{font-size:18px}
+body.bigtext .axcard .lb,body.bigtext .axchip,body.bigtext .rchip{font-size:14.5px!important}
+body.bigtext .axcard .n{font-size:13px}
+body.bigtext #bwInfo .listh{font-size:18px}
+body.bigtext #bwInfo .hint{font-size:15px}
+body.bigtext .h-title{font-size:24px}
+body.bigtext .h-week{font-size:13.5px}
+body.bigtext .h-stat-n{font-size:22px} body.bigtext .h-stat-l{font-size:12.5px}
+body.bigtext .ws-title{font-size:17px}
+body.bigtext .calday .d{font-size:19px} body.bigtext .calday .dow{font-size:12.5px}
+body.bigtext .calday .cnt{font-size:11.5px}
+body.bigtext .ws-scopes button{font-size:15px}
+body.bigtext .ps-text{font-size:17px}
+body.bigtext .ev-title{font-size:17px} body.bigtext .ev-time{font-size:17px}
+body.bigtext .ev-meta{font-size:14.5px}
+body.bigtext .ev-kinds button,body.bigtext .ev-span button{font-size:15px}
+body.bigtext .ev-head h2{font-size:18px}
+body.bigtext .shd h2{font-size:21px}
+body.bigtext .sbd,body.bigtext .glist{font-size:16.5px}
+body.bigtext .glist dt{font-size:14.5px}
+body.bigtext .feed-divider{font-size:14.5px}
+body.bigtext .modetabs button{font-size:16px}
+body.bigtext .tabbar .lb{font-size:11.5px}
+body.bigtext footer{font-size:14px}
+body.bigtext .nrow,body.bigtext .ntbody{font-size:15px}
+.bw-head .hbtn.on{background:var(--brand);color:#fff}
+
 /* ── 하단 탭바 ── */
 .tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:430px;z-index:30;
  background:var(--paper);border-top:1px solid var(--line);padding:8px 0 max(10px,env(safe-area-inset-bottom));
@@ -737,8 +769,9 @@ function init(){
   /* 군민이 참여할 수 있는 일부터 위로 */
   sortWith:(a,b)=>tag(b).score-tag(a).score,
 
+  /* 헤더에는 '큰글씨 보기'만 둔다 — 관심 모아보기는 아래 탭바에서 연다(중복 제거) */
   headerButtons:[
-   {label:'⭐ 관심',on(){BWUI.api.setCustom('fav')}}
+   {label:'🔍 큰글씨',on(){toggleBig()}}
   ],
   customFilters:{fav:{label:'관심 업무만',fn:iss=>!!fav[iss._id]}},
 
@@ -1248,6 +1281,20 @@ function init(){
   wrap.insertBefore(el,wrap.firstChild);
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
  }
+ /* ── 큰글씨 보기 — 고른 값은 이 기기에 기억해 다음에 열 때도 그대로 ── */
+ const BIGKEY='bh.bigtext';
+ function applyBig(on){
+  document.body.classList.toggle('bigtext',!!on);
+  const b=document.querySelector('.bw-head .hbtn');
+  if(b){ b.textContent=on?'🔍 작은글씨':'🔍 큰글씨'; b.classList.toggle('on',!!on); }
+ }
+ function toggleBig(){
+  const on=!document.body.classList.contains('bigtext');
+  try{localStorage.setItem(BIGKEY,on?'1':'0')}catch(e){}
+  applyBig(on);
+  BWUI.toast(on?'글씨를 크게 보여드릴게요':'글씨를 원래 크기로 되돌렸어요');
+ }
+
  /* ── 히어로: 이번 주 요약 (디자인 지정) — 숫자는 실제 데이터에서 센다 ── */
  function buildHero(){
   const wrap=document.querySelector('.bw-wrap'); if(!wrap||document.getElementById('hero'))return;
@@ -1290,7 +1337,9 @@ function init(){
   document.body.appendChild(el);
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>{
    const t=b.dataset.t;
-   if(t==='home'){ setMode('work'); window.scrollTo({top:0,behavior:'smooth'}); }
+   if(t==='home'){ setMode('work');
+     if(BWUI.api.state.custom==='fav')BWUI.api.setCustom('fav');   /* 관심만 보기였다면 풀고 전체로 */
+     window.scrollTo({top:0,behavior:'smooth'}); }
    else if(t==='cal'){ if(EV.length)setMode('event'); else BWUI.toast('행사 자료를 아직 받지 못했어요'); }
    else if(t==='find'){ setMode('work'); const c=document.getElementById('psearch');
      if(c){ c.classList.add('open'); c.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>c.querySelector('#psInput').focus(),300); } }
@@ -1466,6 +1515,7 @@ function init(){
  buildSearchCard();
  buildDayStrip();
  if(EV.length)buildModeTabs();
+ try{applyBig(localStorage.getItem(BIGKEY)==='1')}catch(e){}   /* 지난번에 켜 뒀으면 그대로 */
  buildHero();
  buildEventView();
  buildTabBar();
