@@ -49,7 +49,7 @@
 html,body{font-family:'Pretendard','Pretendard Variable',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',sans-serif;
  font-size:15px;line-height:1.5;letter-spacing:-.01em;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 /* 모바일 웹앱 — 컴퓨터에서도 430px 한 컬럼을 가운데 유지한다(디자인 지정) */
-.bw-wrap{max-width:430px;padding:0 0 96px}
+.bw-wrap{max-width:430px;padding:14px 0 96px}
 footer{max-width:430px}
 .cards,.ev-list,.evm-list{grid-template-columns:1fr!important}
 
@@ -67,7 +67,7 @@ footer{max-width:430px}
 .bw-head h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ── 히어로(이번 주 요약) ── */
-.hero{margin:14px 14px 0;padding:20px 20px 18px;border-radius:var(--r-lg);color:#fff;position:relative;overflow:hidden;
+.hero{margin:14px 14px 14px;padding:20px 20px 18px;border-radius:var(--r-lg);color:#fff;position:relative;overflow:hidden;
  background:linear-gradient(135deg,#22C55E 0%,#16A34A 100%);box-shadow:0 10px 24px -8px rgba(22,163,74,.45)}
 .hero::after{content:'';position:absolute;right:-30px;top:-30px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.08)}
 .hero::before{content:'';position:absolute;right:40px;bottom:-40px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.06)}
@@ -96,7 +96,7 @@ footer{max-width:430px}
 .tag.annual{background:var(--red-soft);color:var(--red)}
 
 /* ── 섹션 제목 ── */
-#bwInfo{margin:22px 18px 10px;padding:0}
+#bwInfo{margin:22px 14px 10px;padding:0}
 #bwInfo .listh{font-size:16px;font-weight:800;letter-spacing:-.02em}
 #bwInfo .hint{color:var(--brand);font-size:14px;font-weight:800}
 
@@ -116,7 +116,7 @@ footer{max-width:430px}
 .axcard.on{border-color:var(--brand)!important;background:var(--brand-soft)!important}
 
 /* ── 주간 달력 ── */
-.wstrip{border:none;border-radius:var(--r);box-shadow:var(--shadow-1);margin:0 14px 12px}
+.wstrip{border:none;border-radius:var(--r);box-shadow:var(--shadow-1);margin:0 14px 14px}
 .ws-title{font-size:15px;font-weight:800}
 .calday{border-radius:12px;min-height:60px}
 .calday .cnt{font-size:10px;font-weight:800;background:var(--gold-soft);color:#B7830E;border-radius:6px;padding:1px 5px;min-width:16px;text-align:center}
@@ -126,7 +126,7 @@ footer{max-width:430px}
 .calday.sat .dow,.calday.sat .d{color:var(--blue)}
 .ws-scopes button{border-radius:10px;font-weight:700}
 .ws-scopes button.on{background:var(--brand);border-color:var(--brand)}
-.psearch{margin:0 14px 12px;border-radius:var(--r);border-width:1.5px}
+.psearch{margin:0 14px 14px;border-radius:var(--r);border-width:1.5px}
 
 /* ── 글씨 크기 ── 어르신도 편히 보시도록 '크게'를 기본으로 두고, 두 단계 더 키울 수 있다.
    한 곳(--fsx 배율)만 바꾸면 아래 크기들이 함께 커진다. 레이아웃은 그대로라 폭이 넘치지 않는다. */
@@ -244,7 +244,7 @@ footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decorat
 .bw-head .wk{display:none}
 
 /* ── 상단 주간 달력 (데이 스트립) + 주 네비게이터 + 기간 버튼 ── */
-.wstrip{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:12px 12px 10px;margin-bottom:12px}
+.wstrip{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:12px 12px 10px;margin-bottom:14px}
 .ws-scopes{display:flex;gap:6px;margin-bottom:12px}
 .ws-scopes button{flex:1;min-height:42px;border:1px solid var(--line);border-radius:10px;background:var(--paper);
  color:var(--ink);font-size:14px;font-weight:600;cursor:pointer;transition:all var(--bh-dur,180ms) var(--bh-ease,ease)}
@@ -271,7 +271,7 @@ body.wide-phone .card h3,body.wide-phone .ev-title{font-size:17px}
 body.wide-phone .ev-time{font-size:17px}
 body.wide-phone .modetabs button{font-size:17px;min-height:52px}
 /* ── 맨 위 보기 전환: 주간업무 / 주간행사 ── */
-.modetabs{display:flex;gap:6px;background:var(--bg2,#eceae5);border-radius:13px;padding:5px;margin-bottom:12px}
+.modetabs{display:flex;gap:6px;background:var(--bg2,#eceae5);border-radius:13px;padding:5px;margin:0 14px 14px}
 .modetabs button{flex:1;min-height:46px;border:none;border-radius:9px;background:transparent;
  color:var(--sub);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;
  display:flex;align-items:center;justify-content:center;gap:6px;transition:background .18s,color .18s}
@@ -283,14 +283,14 @@ body.mode-event #bwCards,body.mode-event #bwMore,
 body.mode-event .ws-scopes,body.mode-event .ws-cal,body.mode-event .ws-range{display:none}
 body:not(.mode-event) #evView{display:none}
 /* ── 행사 목록 ── */
-.ev-head{display:flex;align-items:baseline;gap:8px;margin:2px 2px 10px}
+.ev-head{display:flex;align-items:baseline;gap:8px;margin:22px 14px 10px}
 .ev-head h2{font-size:17px;margin:0;color:var(--ink)}
 .ev-head .cnt{font-size:13px;color:var(--sub);font-weight:700}
-.ev-kinds{display:flex;gap:6px;margin-bottom:12px}
+.ev-kinds{display:flex;gap:6px;margin:0 14px 14px}
 .ev-kinds button{flex:1;min-height:42px;border:1px solid var(--line);border-radius:10px;background:var(--paper);
  color:var(--ink);font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit}
 .ev-kinds button.on{background:var(--acc);border-color:var(--acc);color:#fff}
-.ev-list{display:grid;grid-template-columns:1fr;gap:9px}
+.ev-list{display:grid;grid-template-columns:1fr;gap:9px;padding:0 14px}
 @media(min-width:760px){.ev-list{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}}
 .ev-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:13px 14px;
  display:flex;gap:12px;align-items:flex-start}
@@ -306,12 +306,12 @@ body:not(.mode-event) #evView{display:none}
 .ev-card{cursor:pointer;transition:border-color .15s}
 .ev-card:active{border-color:var(--acc)}
 /* ── 주 / 월 보기 전환 ── */
-.ev-span{display:flex;gap:6px;margin-bottom:10px}
+.ev-span{display:flex;gap:6px;margin:0 14px 14px}
 .ev-span button{flex:1;min-height:40px;border:1px solid var(--line);border-radius:10px;background:var(--paper);
  color:var(--ink);font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit}
 .ev-span button.on{background:var(--acc);border-color:var(--acc);color:#fff}
 /* ── 월간 달력 ── */
-.evm{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-bottom:12px}
+.evm{background:var(--paper);border:none;box-shadow:var(--shadow-1);border-radius:var(--r);padding:12px;margin:0 14px 14px}
 .evm-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .evm-nav .t{flex:1;text-align:center;font-size:15px;font-weight:800;color:var(--ink)}
 .evm-nav button{width:38px;height:38px;flex:none;border:1px solid var(--line);border-radius:10px;
@@ -365,7 +365,7 @@ body:not(.mode-event) #evView{display:none}
 /* 검색은 이 화면에서 가장 많이 쓰는 기능이라, 다른 카드보다 확실히 도드라지게 둔다 —
    테두리를 굵고 진하게, 살짝 띄우고, 글씨도 한 단계 크게. */
 .psearch{border:2px solid var(--acc);border-radius:14px;background:var(--paper);
- margin-bottom:12px;overflow:hidden;transition:border-color .2s,box-shadow .2s;
+ margin-bottom:14px;overflow:hidden;transition:border-color .2s,box-shadow .2s;
  box-shadow:0 2px 10px rgba(31,75,63,.13)}
 .psearch.open{box-shadow:0 0 0 4px var(--bh-primary-tint,var(--acc-soft))}
 .ps-bar{width:100%;display:flex;align-items:center;gap:10px;min-height:60px;padding:15px;
