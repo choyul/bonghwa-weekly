@@ -17,28 +17,43 @@ def build(day):
   <clipPath id="round"><rect width="512" height="512" rx="112"/></clipPath>
  </defs>
  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+ <!-- 배경: 해와 산 (종 뒤로 살짝) -->
  <g clip-path="url(#round)">
-  <circle cx="94" cy="132" r="38" fill="#F4B324"/>
-  <path d="M-20 306 L56 232 L118 288 L188 220 L258 306 L258 392 L-20 392Z" fill="#0F7A38" opacity=".45"/>
-  <path d="M-20 348 L44 296 L106 344 L170 294 L240 356 L240 412 L-20 412Z" fill="#0F7A38" opacity=".3"/>
+  <circle cx="62" cy="68" r="30" fill="#F4B324"/>
+  <path d="M-20 330 L44 262 L100 314 L160 258 L226 330 L226 420 L-20 420Z" fill="#0F7A38" opacity=".42"/>
+  <path d="M-20 372 L36 322 L92 366 L146 320 L210 378 L210 430 L-20 430Z" fill="#0F7A38" opacity=".28"/>
  </g>
- <g stroke="#F4B324" stroke-width="21" stroke-linecap="round">
-  <path d="M398 100 L384 144"/><path d="M454 136 L416 172"/><path d="M476 202 L430 214"/>
+
+ <!-- 반짝임 -->
+ <g stroke="#F4B324" stroke-width="19" stroke-linecap="round">
+  <path d="M446 74 L436 112"/><path d="M488 116 L456 144"/>
  </g>
- <rect x="242" y="96" width="28" height="34" rx="14" fill="#fff"/>
- <path d="M256 124c-66 0-100 72-106 138-6 66-19 118-34 152-5 12 2 25 16 25h248c14 0 21-13 16-25-15-34-28-86-34-152-6-66-40-138-106-138Z" fill="#fff"/>
- <text x="256" y="322" font-family="-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif"
-       font-size="116" font-weight="800" fill="#16A34A" text-anchor="middle" letter-spacing="-3">봉화</text>
- <path d="M214 434h84c0 25-19 43-42 43s-42-18-42-43Z" fill="#F4B324"/>
+
+ <!-- 종 (봉화 글씨를 넉넉히 감싸도록 크게) -->
+ <rect x="240" y="58" width="32" height="38" rx="16" fill="#fff"/>
+ <path d="M256 84c-84 0-124 92-132 186-4 44-14 70-28 92h320c-14-22-24-48-28-92-8-94-48-186-132-186Z" fill="#fff"/>
+ <!-- 종 입(테두리) — 넓게 벌어진 아가리 -->
+ <rect x="72" y="358" width="368" height="48" rx="24" fill="#fff"/>
+ <!-- 몸통과 아가리 경계선 — 이게 있어야 종으로 보인다 -->
+ <path d="M100 360H412" stroke="#16A34A" stroke-width="7" stroke-linecap="round" opacity=".22"/>
+ <!-- 달랑거리는 추 (아가리 아래로 완전히 내려온다) -->
+ <rect x="248" y="400" width="16" height="34" rx="8" fill="#F4B324"/>
+ <circle cx="256" cy="458" r="30" fill="#F4B324"/>
+
+ <text x="256" y="318" font-family="-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif"
+       font-size="132" font-weight="800" fill="#16A34A" text-anchor="middle" letter-spacing="-6">봉화</text>
+
+ <!-- 오늘 날짜 -->
  <g>
-  <rect x="312" y="360" width="158" height="140" rx="24" fill="#fff"/>
-  <path d="M312 384a24 24 0 0 1 24-24h110a24 24 0 0 1 24 24v31H312Z" fill="#F4B324"/>
-  <rect x="346" y="342" width="16" height="38" rx="8" fill="#0F7A38"/>
-  <rect x="420" y="342" width="16" height="38" rx="8" fill="#0F7A38"/>
-  <text x="391" y="406" font-family="-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif"
-        font-size="28" font-weight="800" fill="#fff" text-anchor="middle">오늘</text>
-  <text x="391" y="476" font-family="-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif"
-        font-size="64" font-weight="800" fill="#16A34A" text-anchor="middle">{day}</text>
+  <rect x="336" y="374" width="140" height="124" rx="22" fill="#fff"/>
+  <path d="M336 396a22 22 0 0 1 22-22h96a22 22 0 0 1 22 22v28H336Z" fill="#F4B324"/>
+  <rect x="366" y="358" width="15" height="34" rx="7" fill="#0F7A38"/>
+  <rect x="431" y="358" width="15" height="34" rx="7" fill="#0F7A38"/>
+  <text x="406" y="415" font-family="-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif"
+        font-size="25" font-weight="800" fill="#fff" text-anchor="middle">오늘</text>
+  <text x="406" y="478" font-family="-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif"
+        font-size="58" font-weight="800" fill="#16A34A" text-anchor="middle">{day}</text>
  </g>
 </svg>
 '''
