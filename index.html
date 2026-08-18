@@ -122,7 +122,8 @@ footer{max-width:430px}
 .calday .cnt{font-size:10px;font-weight:800;background:var(--gold-soft);color:#B7830E;border-radius:6px;padding:1px 5px;min-width:16px;text-align:center}
 .calday.on{background:var(--brand);border-color:var(--brand)}
 .calday.on .cnt{background:rgba(255,255,255,.28);color:#fff}
-.calday.we .dow,.calday.we .d{color:var(--red)}
+.calday.sun .dow,.calday.sun .d{color:var(--red)}
+.calday.sat .dow,.calday.sat .d{color:var(--blue)}
 .ws-scopes button{border-radius:10px;font-weight:700}
 .ws-scopes button.on{background:var(--brand);border-color:var(--brand)}
 .psearch{margin:0 14px 12px;border-radius:var(--r);border-width:1.5px}
@@ -181,6 +182,15 @@ body.standalone .bw-head [data-hb="0"]{display:none}
 #profModal .mbox{max-height:86vh;overflow-y:auto}
 /* 맞춤이 켜져 있으면 설정 단추를 눈에 띄게 */
 body.profon .bw-head [data-hb="2"]{background:var(--brand);color:#fff}
+
+/* ── 검색 결과가 어느 기간인지 ── */
+.ps-scope{display:none}
+.ps-scope.on{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+ padding:0 15px 13px;margin-top:-4px}
+.ps-scope .pss-t{font-size:calc(12.5px*var(--fsx));color:var(--sub);font-weight:600}
+.ps-scope button{border:1px solid var(--brand);background:var(--brand-soft);color:var(--brand-ink);
+ border-radius:100px;padding:6px 12px;min-height:34px;font-size:calc(12.5px*var(--fsx));font-weight:800;
+ cursor:pointer;font-family:inherit}
 
 /* ── 하단 탭바 ── */
 .tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:430px;z-index:30;
@@ -316,7 +326,8 @@ body:not(.mode-event) #evView{display:none}
  cursor:pointer;font-family:inherit;padding:0}
 .evm-cell.empty{background:transparent;cursor:default}
 .evm-cell .d{font-size:14px;font-weight:700;color:var(--ink);line-height:1}
-.evm-cell.we .d{color:var(--warn,#c0392b)}
+.evm-cell.sun .d{color:var(--red)}
+.evm-cell.sat .d{color:var(--blue)}
 .evm-cell .n{font-size:10.5px;font-weight:800;color:var(--acc);line-height:1}
 .evm-cell.zero{opacity:.45}
 .evm-cell.zero .n{visibility:hidden}
@@ -1048,8 +1059,8 @@ function init(){
   const today=BWUI.api.today;
   /* 숫자는 지금 보고 있는 모드 기준 — 행사 보기면 그날 행사 수 */
   const count=day=>MODE==='event'?evCntOf(day):cntOf(day);
-  host.innerHTML=daysOf(VIEW_WEEK).map(day=>{const d=BW.d2(day),we=d.getDay()===0||d.getDay()===6,n=count(day);
-    return `<button type="button" class="calday ${we?'we':''} ${n?'':'zero'}" data-day="${day}">
+  host.innerHTML=daysOf(VIEW_WEEK).map(day=>{const d=BW.d2(day),g=d.getDay(),we=(g===0?'sun':g===6?'sat':''),n=count(day);
+    return `<button type="button" class="calday ${we} ${n?'':'zero'}" data-day="${day}">
       <span class="dow">${BW.DOW[d.getDay()]}</span><span class="d">${d.getDate()}</span><span class="cnt">${n}</span>
       ${day===today?'<span class="ws-dot"></span>':''}</button>`;}).join('');
   host.dataset.week=VIEW_WEEK; host.dataset.mode=MODE;
@@ -1128,6 +1139,16 @@ function init(){
   else { text.textContent='궁금한 일을 검색해 보세요'; text.classList.remove('has'); }
   const input=card.querySelector('#psInput');
   if(document.activeElement!==input && input.value!==(S.q||'')) input.value=S.q||'';
+  /* 검색은 '지금 고른 기간 안에서'만 찾는다 — 어느 기간을 봤는지 몰라 헷갈리지 않게 여기서 알려 주고,
+     아래로 내려가지 않고도 전체 기간으로 넓힐 수 있게 단추를 붙인다. */
+  const sc=card.querySelector('#psScope'); if(!sc)return;
+  if(!S.q){ sc.innerHTML=''; sc.classList.remove('on'); return; }
+  sc.classList.add('on');
+  const n=document.querySelectorAll('#bwCards > .card').length;
+  sc.innerHTML=`<span class="pss-t">${S.scope==='all'?'전체 기간에서':E(calTitle())+' 안에서'} 찾았어요</span>`
+   +(S.scope==='all'?'':`<button type="button" id="psAll">전체 기간에서 찾기</button>`);
+  const b=sc.querySelector('#psAll');
+  if(b)b.onclick=()=>{ setScope('all'); window.scrollTo({top:0,behavior:'smooth'}); };
  }
  function buildSearchCard(){
   const wrap=document.querySelector('.bw-wrap'); if(!wrap||document.getElementById('psearch'))return;
@@ -1137,6 +1158,7 @@ function init(){
       <svg class="ps-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <span class="ps-text" id="psText">궁금한 일을 검색해 보세요</span>
     </button>
+    <div class="ps-scope" id="psScope"></div>
     <div class="ps-panel" id="psPanel">
       <input type="search" class="ps-input" id="psInput" enterkeyhint="search" placeholder="예: 은어축제, 도로포장, 어르신 교육">
       <div class="ps-actions">
@@ -1620,8 +1642,8 @@ function init(){
   for(let k=0;k<lead;k++)html+='<div class="evm-cell empty"></div>';
   for(let d=1;d<=last;d++){
    const day=`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-   const n=evCntOf(day), dow=new Date(y,mo-1,d).getDay(), we=dow===0||dow===6;
-   html+=`<button type="button" class="evm-cell ${we?'we':''} ${n?'':'zero'} ${day===today?'today':''} ${(S.scope==='day'&&S.day===day)?'on':''}" data-day="${day}">
+   const n=evCntOf(day), dow=new Date(y,mo-1,d).getDay(), we=(dow===0?'sun':dow===6?'sat':'');
+   html+=`<button type="button" class="evm-cell ${we} ${n?'':'zero'} ${day===today?'today':''} ${(S.scope==='day'&&S.day===day)?'on':''}" data-day="${day}">
      <span class="d">${d}</span><span class="n">${n}</span></button>`;
   }
   grid.innerHTML=html;
@@ -1705,8 +1727,8 @@ function init(){
  }
 
  decorateHeader();
- buildSearchCard();
  buildDayStrip();
+ buildSearchCard();   /* 검색을 기간 카드보다 위에 둔다 — 검색 전에 기간부터 고르러 올라가지 않도록 */
  if(EV.length)buildModeTabs();
  if(isStandalone())document.body.classList.add('standalone');
  document.body.classList.toggle('profon',profOn());
