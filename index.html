@@ -383,7 +383,10 @@ body:not(.mode-event) #evView{display:none}
  font-weight:800;line-height:1.55;color:var(--ink);letter-spacing:-.02em;
  animation:introUp .6s ease .15s both;transition:opacity .3s ease}
 #intro .intro-text b{color:var(--acc)}
-#intro .intro-sub{position:relative;margin-top:10px;font-size:14px;color:var(--sub);
+#intro .is-week{font-size:14px;font-weight:700;color:var(--ink)}
+#intro .is-cnt{margin-top:7px;font-size:14px;font-weight:800;color:var(--acc);
+ background:var(--brand-soft,#E8F7EE);border-radius:100px;padding:7px 15px;display:inline-block}
+#intro .intro-sub{position:relative;margin-top:12px;font-size:14px;color:var(--sub);
  animation:introUp .6s ease .25s both;transition:opacity .3s ease}
 #intro .intro-btn{position:relative;margin-top:34px;padding:16px 46px;border:none;
  border-radius:var(--bh-r-xl,20px);background:var(--acc);color:#fff;font-size:17px;font-weight:800;
@@ -678,6 +681,21 @@ function init(){
  </svg>`;
 
  /* ── 첫 화면 인트로: 인사 → [시작하기] → 마스코트가 헤더로 날아가고 본문이 드러남 ── */
+ /* 인트로 아래 한 줄 요약 — 언제 자료인지, 이번 주에 무엇이 몇 건인지 */
+ function introSummary(){
+  const days=daysOf(D.weekStart), a=BW.d2(days[0]), b=BW.d2(days[6]);
+  const f=d=>`${d.getMonth()+1}. ${d.getDate()}.`;
+  const nEv=EV.filter(e=>days.includes(e.date)).length;
+  const nWork=BWUI.api.issues.filter(i=>i.list.some(o=>o.week===D.weekStart)).length;
+  const nNt=(NOTICES||[]).filter(n=>days.includes(n.date)).length;
+  const bits=[];
+  if(nWork)bits.push(`📋 업무 ${nWork}`);
+  if(nEv)bits.push(`🎪 행사 ${nEv}`);
+  if(nNt)bits.push(`📢 공고 ${nNt}`);
+  return `<div class="is-week">${a.getFullYear()}. ${f(a)}(${BW.DOW[a.getDay()]}) ~ ${f(b)}(${BW.DOW[b.getDay()]}) 주간소식</div>
+    <div class="is-cnt">${bits.length?bits.join(' · '):'이번 주 소식을 준비 중이에요'}</div>`;
+ }
+
  function setupIntro(){
   const head=document.querySelector('.bw-head .in')||document.querySelector('.bw-head');
   if(!head)return;
@@ -689,7 +707,7 @@ function init(){
   intro.innerHTML=`<div class="ibg"></div>
     <div class="intro-mascot">${MASCOT}</div>
     <div class="intro-text">안녕하세요<br><b>오늘의 봉화</b>가<br>이번 주 소식을 알려드립니다</div>
-    <div class="intro-sub">봉화군 주간 소식 · ${D.weekStart} 기준</div>
+    <div class="intro-sub">${introSummary()}</div>
     <button class="intro-btn" id="introGo">시작하기</button>`;
   document.body.appendChild(intro);
   document.documentElement.style.overflow='hidden';   /* 인트로 동안 스크롤 잠금 */
