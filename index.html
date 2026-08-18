@@ -298,7 +298,7 @@ body:not(.mode-event) #evView{display:none}
 .evm-nav button:disabled{opacity:.35;cursor:default}
 .evm-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px}
 .evm-dow span{text-align:center;font-size:11.5px;font-weight:700;color:var(--sub)}
-.evm-dow span:nth-child(6){color:#2f6fd0}.evm-dow span:nth-child(7){color:var(--warn,#c0392b)}
+.evm-dow span:nth-child(1){color:var(--warn,#c0392b)}.evm-dow span:nth-child(7){color:#2f6fd0}
 .evm-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 .evm-cell{aspect-ratio:1/1;min-height:44px;border:1px solid transparent;border-radius:9px;background:var(--bg);
  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
@@ -750,7 +750,10 @@ function init(){
  const WEEKS=D.weeks.slice();                 /* 자료가 있는 주차(월요일) 목록 */
  const MONTHS=[...new Set(D.weeks.map(w=>w.slice(0,7)))].sort();   /* 자료가 있는 달 목록 */
  let VIEW_WEEK=D.weekStart;                    /* 지금 보고 있는 주(월요일) */
- const daysOf=mon=>{const s=BW.d2(mon),a=[];for(let i=0;i<7;i++){const d=new Date(s);d.setDate(s.getDate()+i);a.push(BW.ymd(d));}return a;};
+ /* 달력처럼 일요일부터 토요일까지 7일. 자료의 주차 키(월요일)가 들어오면
+    그 월요일이 속한 달력 주의 일요일부터 센다. */
+ const daysOf=mon=>{const s=BW.d2(mon);s.setDate(s.getDate()-s.getDay());   /* 그 주의 일요일로 */
+   const a=[];for(let i=0;i<7;i++){const d=new Date(s);d.setDate(s.getDate()+i);a.push(BW.ymd(d));}return a;};
  const cntOf=day=>BWUI.api.issues.filter(i=>i.list.some(o=>BW.coversDate(o.item,o.week,day))).length;
  /* ═══ 주간행사 ═══ 주간업무계획과 같은 게시물에 붙는 '주간행사표'(build/fetch_events.py 수집).
     그날 그 자리에서 열리는 일이라 업무 목록과 섞지 않고 맨 위에서 갈라 놓는다.
@@ -804,6 +807,8 @@ function init(){
 
  BWUI.start({
   role:'public', title:'오늘의 봉화',
+  /* 1주 = 달력 주(일~토). 주간계획은 월~일 단위로 실리지만, 군민에게는 달력이 익숙하다 */
+  weekWindow(){ const w=daysOf(VIEW_WEEK); return [w[0],w[6]]; },
   /* 주간계획에 안 실린 주라도 신청·접수가 아직 열려 있으면 계속 보여 준다 —
      이름을 모르면 검색으로도 못 찾기 때문에, 놓치지 않게 목록 아래에 이어 붙인다 */
   ongoingSection:true,
@@ -1483,7 +1488,7 @@ function init(){
         <div class="t" id="evmTitle"></div>
         <button type="button" id="evmNext" aria-label="다음 달">›</button>
       </div>
-      <div class="evm-dow"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div>
+      <div class="evm-dow"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
       <div class="evm-grid" id="evmGrid"></div>
     </div>
     <div class="ev-kinds" id="evKinds">
@@ -1534,7 +1539,7 @@ function init(){
   document.getElementById('evmPrev').disabled=i<=0;
   document.getElementById('evmNext').disabled=i>=EV_MONTHS.length-1;
   const first=new Date(y,mo-1,1), last=new Date(y,mo,0).getDate();
-  const lead=(first.getDay()+6)%7;                    /* 월요일 시작 */
+  const lead=first.getDay();                          /* 일요일 시작 */
   const S=BWUI.api.state, today=BWUI.api.today;
   let html='';
   for(let k=0;k<lead;k++)html+='<div class="evm-cell empty"></div>';

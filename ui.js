@@ -123,8 +123,21 @@
   }
 
   /* ───────── 필터 ───────── */
+  /* 어떤 일이 [from,to] 와 겹치는가 — 기재된 기간을 못 읽으면 그 주(월~일)를 그 일의 기간으로 본다 */
+  function overlapsDates(iss, from, to) {
+    return iss.list.some(o => {
+      const r = BW.parseDateRange(o.item, o.week);
+      let a, b;
+      if (r && r.start) { a = r.start; b = r.end || r.start; }
+      else { a = o.week; b = BW.ymd(new Date(BW.d2(o.week).getTime() + 6 * 864e5)); }
+      return a <= to && b >= from;
+    });
+  }
   function inRange(iss) {
     if (S.scope === 'all') return true;
+    /* 화면이 '이번 주'를 달력 주(일~토)처럼 따로 정해 주면 그 날짜 창으로 거른다.
+       (안 정하면 예전처럼 주간계획이 실린 주 단위로 — 군수·직원용은 그대로) */
+    if (S.scope === 'week' && CFG.weekWindow) { const w = CFG.weekWindow(); return overlapsDates(iss, w[0], w[1]); }
     if (S.scope === 'week') return iss.list.some(o => o.week === (S.week || D.weekStart));
     if (S.scope === 'month') return iss.list.some(o => o.week.slice(0, 7) === S.month);
     if (S.scope === 'day') {
@@ -134,13 +147,7 @@
        기재된 기간을 읽을 수 없는 건은 그 주(월~일)를 그 일의 기간으로 본다. */
     if (S.scope === 'range') {
       if (!S.from || !S.to) return true;
-      return iss.list.some(o => {
-        const r = BW.parseDateRange(o.item, o.week);
-        let a, b;
-        if (r && r.start) { a = r.start; b = r.end || r.start; }
-        else { a = o.week; b = BW.ymd(new Date(BW.d2(o.week).getTime() + 6 * 864e5)); }
-        return a <= S.to && b >= S.from;      /* 두 기간이 겹치는가 */
-      });
+      return overlapsDates(iss, S.from, S.to);
     }
     return true;
   }
@@ -171,6 +178,7 @@
       const [y, m] = S.month.split('-').map(Number);
       return [S.month + '-01', BW.ymd(new Date(y, m, 0))];
     }
+    if (CFG.weekWindow) return CFG.weekWindow();              /* 화면이 정한 달력 주 */
     const w = S.week || D.weekStart;                          /* week */
     return [w, BW.ymd(new Date(BW.d2(w).getTime() + 6 * 864e5))];
   }
