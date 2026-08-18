@@ -1,16 +1,17 @@
 {
  "name": "오늘의 봉화",
  "short_name": "오늘의 봉화",
+ "description": "봉화의 이번 주 소식·행사·고시공고를 한눈에",
  "display": "standalone",
- "background_color": "#F7F6F1",
- "theme_color": "#1F4B3F",
+ "background_color": "#F7F8FA",
+ "theme_color": "#16A34A",
+ "lang": "ko",
+ "scope": "./",
+ "start_url": "./",
  "icons": [
-  {
-   "src": "icon.svg",
-   "sizes": "any",
-   "type": "image/svg+xml",
-   "purpose": "any maskable"
-  }
- ],
- "start_url": "./public.html"
+  { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+  { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+  { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+  { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+ ]
 }

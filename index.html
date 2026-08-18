@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1F4B3F">
+<meta name="theme-color" content="#16A34A">
 <title>오늘의 봉화</title>
 <meta name="description" content="봉화의 이모저모를 알려드립니다 — 오늘·이번 주 행사·모집·공사·민원을 한눈에">
 <!-- 카카오톡·문자·SNS 링크 미리보기(마스코트 카드) -->
@@ -19,7 +19,7 @@
 <link rel="manifest" href="public.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-192.png">
 <!-- 토큰은 반드시 ui.css보다 먼저 로드한다 -->
 <link rel="stylesheet" href="bonghwa-tokens.css">
 <link rel="stylesheet" href="ui.css">
@@ -62,7 +62,9 @@ footer{max-width:430px}
 .bw-today{font-size:11.5px;color:var(--sub);font-weight:600}
 .mascot-head{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--brand-2),var(--brand));
  align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(22,163,74,.28);padding:5px}
-.bw-head .hbtn{min-height:38px;border-radius:12px;background:var(--bg);border:none;color:var(--ink);font-weight:700;font-size:13px;padding:0 12px}
+.bw-head .hbtn{width:38px;height:38px;min-height:38px;flex:none;border-radius:12px;background:var(--bg);border:none;
+ color:var(--ink);font-weight:800;font-size:16px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.bw-head h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ── 히어로(이번 주 요약) ── */
 .hero{margin:14px 14px 0;padding:20px 20px 18px;border-radius:var(--r-lg);color:#fff;position:relative;overflow:hidden;
@@ -161,6 +163,13 @@ body.fs2{--fsx:1.26}
 footer{font-size:calc(14px*var(--fsx))}
 .nrow,.ntbody{font-size:calc(15px*var(--fsx))}
 .bw-head .hbtn.on{background:var(--brand);color:#fff}
+
+/* ── 바탕화면 바로가기 안내 ── */
+.a2-steps{margin:2px 0 6px;padding:0 18px 0 38px;font-size:calc(15px*var(--fsx));line-height:1.85;color:var(--ink)}
+.a2-steps li{margin-bottom:4px}
+.a2-ic{display:inline-block;padding:0 2px}
+/* 바탕화면에서 연 상태면 바로가기 버튼은 필요 없다 */
+body.standalone .bw-head [data-hb="0"]{display:none}
 
 /* ── 하단 탭바 ── */
 .tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:430px;z-index:30;
@@ -395,6 +404,13 @@ body:not(.mode-event) #evView{display:none}
  #intro .intro-mascot,#intro .intro-text,#intro .intro-sub,#intro .intro-btn{animation:none}
 }
 </style>
+<script>
+/* 안드로이드 계열은 '바탕화면에 추가' 안내를 페이지가 뜨자마자 한 번 보낸다.
+   그때 잡아 두지 않으면 나중에 버튼을 눌러도 띄울 수 없어, 여기서 미리 받아 둔다. */
+window.__installPrompt=null;
+addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__installPrompt=e;});
+addEventListener('appinstalled',function(){window.__installPrompt=null;});
+</script>
 </head>
 <body>
 <footer>
@@ -781,9 +797,10 @@ function init(){
   /* 군민이 참여할 수 있는 일부터 위로 */
   sortWith:(a,b)=>tag(b).score-tag(a).score,
 
-  /* 헤더에는 '큰글씨 보기'만 둔다 — 관심 모아보기는 아래 탭바에서 연다(중복 제거) */
+  /* 헤더: 바탕화면 바로가기 + 글씨 크기 (관심 모아보기는 아래 탭바에서) */
   headerButtons:[
-   {label:'🔍 큰글씨',on(){toggleBig()}}
+   {label:'📲',on(){addToHome()}},
+   {label:'🔍 글씨 크게',on(){toggleBig()}}
   ],
   customFilters:{fav:{label:'관심 업무만',fn:iss=>!!fav[iss._id]}},
 
@@ -1293,17 +1310,62 @@ function init(){
   wrap.insertBefore(el,wrap.firstChild);
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
  }
+ /* ── 바탕화면 바로가기 ──
+    안드로이드 계열은 브라우저가 '설치' 창을 띄워 줄 수 있고(미리 받아 둔 __installPrompt),
+    아이폰 사파리는 그런 기능이 없어 직접 누르는 방법을 그림처럼 알려 주는 수밖에 없다.
+    이미 바탕화면에서 연 상태(standalone)면 버튼을 숨긴다. */
+ const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+ const isiOS=/iPhone|iPad|iPod/i.test(UA);
+ function howToModal(){
+  let m=document.getElementById('a2hs');
+  if(!m){m=document.createElement('div');m.id='a2hs';m.className='modal';document.body.appendChild(m)}
+  const steps = isiOS
+   ? `<li>아래 가운데 <b>공유 <span class="a2-ic">⬆️</span></b> 단추를 누르세요</li>
+      <li>목록을 내려 <b>홈 화면에 추가</b>를 누르세요</li>
+      <li>오른쪽 위 <b>추가</b>를 누르면 끝!</li>`
+   : `<li>오른쪽 위 <b>⋮ 메뉴</b>를 누르세요</li>
+      <li><b>홈 화면에 추가</b>(또는 앱 설치)를 누르세요</li>
+      <li><b>추가</b>를 누르면 끝!</li>`;
+  m.innerHTML=`<div class="mbox">
+    <h2>바탕화면에 바로가기 만들기</h2>
+    <div class="note">한 번 만들어 두면 다음부터는 <b>바탕화면 아이콘</b>만 눌러 바로 들어올 수 있어요.</div>
+    <ol class="a2-steps">${steps}</ol>
+    ${isKakao?`<div class="note" style="color:var(--warn)">카카오톡 안에서는 만들 수 없어요. 아래 [기본 브라우저로 열기]를 누른 뒤 다시 해 주세요.</div>
+      <div style="padding:4px 18px 0"><button class="callbtn" id="a2Ext" style="width:100%">🌐 기본 브라우저로 열기</button></div>`:''}
+    <div class="mfoot"><span style="flex:1"></span><button id="a2Close">닫기</button></div>
+  </div>`;
+  m.classList.add('open');
+  const close=()=>m.classList.remove('open');
+  m.querySelector('#a2Close').onclick=close;
+  m.onclick=e=>{if(e.target===m)close()};
+  const ext=m.querySelector('#a2Ext');
+  if(ext)ext.onclick=()=>{ const u=location.origin+location.pathname.replace(/index\.html$/,'');
+    location.href='kakaotalk://web/openExternal?url='+encodeURIComponent(u); };
+ }
+ async function addToHome(){
+  if(isStandalone()){ BWUI.toast('이미 바탕화면에서 열고 있어요'); return; }
+  const p=window.__installPrompt;
+  if(p){                                   /* 브라우저가 직접 설치창을 띄워 준다 */
+   try{ p.prompt(); const r=await p.userChoice;
+     window.__installPrompt=null;
+     BWUI.toast(r&&r.outcome==='accepted'?'바탕화면에 추가했어요':'취소했어요 — 필요하면 다시 눌러 주세요');
+     return;
+   }catch(e){}
+  }
+  howToModal();                            /* 아이폰 등은 방법을 안내 */
+ }
+
  /* ── 글씨 크기 3단계 — 기본이 이미 '크게'이고, 두 단계 더 키울 수 있다.
     고른 값은 이 기기에 기억해 다음에 열 때도 그대로. ── */
  const BIGKEY='bh.fontsize';
- const FS_LABEL=['🔍 글씨 크게','🔍 글씨 더크게','🔍 글씨 기본'];   /* 누르면 어떻게 되는지 */
+ const FS_LABEL=['가','가⁺','가⁺⁺'];        /* 지금 글씨 크기 단계 */
  const FS_TOAST=['글씨를 기본 크기로 되돌렸어요','글씨를 한 단계 키웠어요','글씨를 가장 크게 키웠어요'];
  let fsLevel=0;
  function applyFs(n){
   fsLevel=Math.max(0,Math.min(2,+n||0));
   document.body.classList.toggle('fs1',fsLevel===1);
   document.body.classList.toggle('fs2',fsLevel===2);
-  const b=document.querySelector('.bw-head .hbtn');
+  const b=document.querySelector('.bw-head [data-hb="1"]');   /* 두 번째 = 글씨 버튼 */
   if(b){ b.textContent=FS_LABEL[fsLevel]; b.classList.toggle('on',fsLevel>0); }
  }
  function toggleBig(){                      /* 기본 → 더크게 → 가장크게 → 기본 */
@@ -1528,6 +1590,7 @@ function init(){
  buildSearchCard();
  buildDayStrip();
  if(EV.length)buildModeTabs();
+ if(isStandalone())document.body.classList.add('standalone');
  try{applyFs(localStorage.getItem(BIGKEY)||0)}catch(e){applyFs(0)}   /* 지난번에 고른 글씨 크기 그대로 */
  buildHero();
  buildEventView();
