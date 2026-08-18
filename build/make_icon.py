@@ -44,16 +44,16 @@ def build(day):
  <text x="256" y="318" font-family="-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif"
        font-size="132" font-weight="800" fill="#16A34A" text-anchor="middle" letter-spacing="-6">봉화</text>
 
- <!-- 오늘 날짜 -->
+ <!-- 오늘 날짜 — 작아서 안 보이던 숫자를 크게 (봉화 글씨와 겹쳐도 됨) -->
  <g>
-  <rect x="336" y="374" width="140" height="124" rx="22" fill="#fff"/>
-  <path d="M336 396a22 22 0 0 1 22-22h96a22 22 0 0 1 22 22v28H336Z" fill="#F4B324"/>
-  <rect x="366" y="358" width="15" height="34" rx="7" fill="#0F7A38"/>
-  <rect x="431" y="358" width="15" height="34" rx="7" fill="#0F7A38"/>
-  <text x="406" y="415" font-family="-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif"
-        font-size="25" font-weight="800" fill="#fff" text-anchor="middle">오늘</text>
-  <text x="406" y="478" font-family="-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif"
-        font-size="58" font-weight="800" fill="#16A34A" text-anchor="middle">{day}</text>
+  <rect x="286" y="310" width="202" height="180" rx="28" fill="#fff"/>
+  <path d="M286 338a28 28 0 0 1 28-28h146a28 28 0 0 1 28 28v34H286Z" fill="#F4B324"/>
+  <rect x="330" y="290" width="17" height="38" rx="8" fill="#0F7A38"/>
+  <rect x="427" y="290" width="17" height="38" rx="8" fill="#0F7A38"/>
+  <text x="387" y="362" font-family="-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif"
+        font-size="30" font-weight="800" fill="#fff" text-anchor="middle">오늘</text>
+  <text x="387" y="462" font-family="-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif"
+        font-size="94" font-weight="800" fill="#16A34A" text-anchor="middle">{day}</text>
  </g>
 </svg>
 '''
