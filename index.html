@@ -1402,6 +1402,21 @@ function init(){
   wrap.insertBefore(el,wrap.firstChild);
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
  }
+ /* ── 파비콘(브라우저 탭 아이콘)은 매일 오늘 날짜로 다시 그린다 ──
+    바탕화면에 만든 바로가기는 OS가 만든 그때의 그림을 계속 쓰므로 날짜가 고정된다.
+    화면 안에서 쓰는 이 아이콘만이라도 오늘 날짜를 보여 준다. */
+ function paintFavicon(){
+  const d=BW.d2(BWUI.api.today).getDate();
+  fetch('icon.svg').then(r=>r.text()).then(svg=>{
+   /* 달력 숫자만 오늘 날짜로 바꿔 끼운다 */
+   const out=svg.replace(/(text-anchor="middle">)(\d{1,2})(<\/text>)\s*<\/g>/, `$1${d}$3</g>`);
+   const url='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(out);
+   let l=document.querySelector('link[rel="icon"]');
+   if(!l){ l=document.createElement('link'); l.rel='icon'; document.head.appendChild(l); }
+   l.type='image/svg+xml'; l.href=url;
+  }).catch(()=>{});
+ }
+
  /* ── 바탕화면 바로가기 ──
     안드로이드 계열은 브라우저가 '설치' 창을 띄워 줄 수 있고(미리 받아 둔 __installPrompt),
     아이폰 사파리는 그런 기능이 없어 직접 누르는 방법을 그림처럼 알려 주는 수밖에 없다.
@@ -1731,6 +1746,7 @@ function init(){
  buildSearchCard();   /* 검색을 기간 카드보다 위에 둔다 — 검색 전에 기간부터 고르러 올라가지 않도록 */
  if(EV.length)buildModeTabs();
  if(isStandalone())document.body.classList.add('standalone');
+ paintFavicon();
  document.body.classList.toggle('profon',profOn());
  try{applyFs(localStorage.getItem(BIGKEY)||0)}catch(e){applyFs(0)}   /* 지난번에 고른 글씨 크기 그대로 */
  buildHero();

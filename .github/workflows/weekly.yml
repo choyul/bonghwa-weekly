@@ -42,12 +42,16 @@ jobs:
         run: python3 build/fetch_events.py events.js 2
         continue-on-error: true   # 첨부 형식이 바뀌어도 주간 갱신을 막지 않도록
 
+      - name: 아이콘 날짜 갱신 (달력 숫자 = 오늘)
+        run: python3 build/make_icon.py icon.svg
+        continue-on-error: true
+
       - name: 바뀌었으면 커밋·푸시
         run: |
-          if [[ -n "$(git status --porcelain data.js md notices.js events.js)" ]]; then
+          if [[ -n "$(git status --porcelain data.js md notices.js events.js icon.svg)" ]]; then
             git config user.name "bonghwa-bot"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add data.js md notices.js events.js
+            git add data.js md notices.js events.js icon.svg
             git commit -m "자동 갱신 ($(date -u +%Y-%m-%d))"
             git push
             echo "갱신 완료"
