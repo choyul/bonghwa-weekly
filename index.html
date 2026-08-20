@@ -1471,7 +1471,7 @@ function init(){
   });
   const ext=m.querySelector('#a2Ext');
   if(ext)ext.onclick=()=>{ const u=location.origin+location.pathname.replace(/index\.html$/,'');
-    location.href='kakaotalk://web/openExternal?url='+encodeURIComponent(u); };
+    location.href='kakaotalk://web/openExternal?url='+encodeURIComponent(u+'?add=1'); };
  }
  /* 설치창이 아직 안 왔으면 잠깐(최대 1.2초) 기다렸다 받는다 — 눌렀는데 안내창으로 새지 않도록 */
  function waitInstall(ms){
@@ -1491,6 +1491,29 @@ function init(){
     BWUI.toast(r&&r.outcome==='accepted'?'바탕화면에 추가했어요':'취소했어요 — 필요하면 다시 눌러 주세요');
     return true;
   }catch(e){ return false; }
+ }
+ /* 카카오톡에서 넘어오자마자 뜨는 '한 번 누르면 추가' 창.
+    설치창(prompt)은 사용자가 직접 누른 순간에만 열 수 있어서, 자동으로 띄울 수는 없다.
+    그래서 버튼 하나만 크게 띄워 탭 한 번으로 끝나게 한다. */
+ function installSheet(){
+  if(isStandalone())return;
+  let m=document.getElementById('a2go');
+  if(!m){m=document.createElement('div');m.id='a2go';m.className='modal';document.body.appendChild(m)}
+  m.innerHTML=`<div class="mbox">
+    <h2>바탕화면에 추가</h2>
+    <div class="note">아래를 한 번 누르면 <b>오늘의 봉화</b>가 바탕화면에 만들어집니다.</div>
+    <div style="padding:8px 18px 2px"><button class="callbtn" id="a2Now" style="width:100%">📲 바탕화면에 추가</button></div>
+    <div class="mfoot"><span style="flex:1"></span><button id="a2NoNow">나중에</button></div>
+  </div>`;
+  m.classList.add('open');
+  const close=()=>m.classList.remove('open');
+  m.querySelector('#a2NoNow').onclick=close;
+  m.onclick=e=>{if(e.target===m)close()};
+  m.querySelector('#a2Now').onclick=async()=>{
+   const p=window.__installPrompt||await waitInstall(3000);
+   close();
+   if(p)await runInstall(p); else howToModal();
+  };
  }
  async function addToHome(){
   if(isStandalone()){ BWUI.toast('이미 바탕화면에서 열고 있어요'); return; }
@@ -1811,12 +1834,18 @@ function init(){
    if(wantShare)setTimeout(()=>BWUI.toast('이제 아래 [친구에게 공유하기]를 누르면 카카오톡·문자를 고를 수 있어요'),400);
   }
   else{ BWUI.toast('공유된 소식을 찾지 못했어요 — 지난주 자료이거나 정보가 바뀌었을 수 있어요'); }
- }else if(!isStandalone()){
+ }else if(!isStandalone() && params.get('add')!=='1'){   /* 설치하러 넘어온 경우도 인사 화면은 건너뛴다 */
   /* 바탕화면 아이콘으로 열었으면 인트로를 건너뛴다 —
      아이콘을 눌러 들어온 사람에게 같은 그림을 또 보여 주고 [시작하기]까지 누르게 하면 단계만 늘어난다.
      브라우저에서 주소로 처음 들어온 경우에만 인사 화면을 보여 준다. */
   setupIntro();
  }
+ /* 카카오톡에서 '기본 브라우저로 열기'로 넘어온 경우 — 바로 추가 창을 띄운다 */
+ if(params.get('add')==='1'){
+  history.replaceState(null,'',location.pathname);
+  setTimeout(installSheet,700);
+ }
+
  /* 인트로를 건너뛴 모든 경우(바탕화면·공유링크) — 헤더 마스코트는 바로 보여 준다 */
  if(!document.getElementById('intro'))putHeadMascot(true);
 
