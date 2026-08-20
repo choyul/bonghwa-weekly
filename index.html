@@ -1444,7 +1444,8 @@ function init(){
       <li><b>추가</b>를 누르면 끝!</li>`;
   m.innerHTML=`<div class="mbox">
     <h2>바탕화면에 바로가기 만들기</h2>
-    <div class="note">한 번 만들어 두면 다음부터는 <b>바탕화면 아이콘</b>만 눌러 바로 들어올 수 있어요.</div>
+    <div class="note">한 번 만들어 두면 다음부터는 <b>바탕화면 아이콘</b>만 눌러 바로 들어올 수 있어요.
+      ${isiOS?'':'<br><span style="color:var(--sub)">이미 만들어 두셨다면 바탕화면에서 아이콘을 찾아 주세요.</span>'}</div>
     <ol class="a2-steps">${steps}</ol>
     ${isKakao?`<div class="note" style="color:var(--warn)">카카오톡 안에서는 만들 수 없어요. 아래 [기본 브라우저로 열기]를 누른 뒤 다시 해 주세요.</div>
       <div style="padding:4px 18px 0"><button class="callbtn" id="a2Ext" style="width:100%">🌐 기본 브라우저로 열기</button></div>`:''}
@@ -1454,6 +1455,20 @@ function init(){
   const close=()=>m.classList.remove('open');
   m.querySelector('#a2Close').onclick=close;
   m.onclick=e=>{if(e.target===m)close()};
+  /* 설치 신호가 늦게 도착하면 안내를 접고 '한 번에 추가' 단추로 바꾼다 */
+  if(!isiOS)window.__installWaiters.push(()=>{
+   if(!m.classList.contains('open'))return;
+   const box=m.querySelector('.mbox');
+   box.innerHTML=`<h2>바탕화면에 바로가기 만들기</h2>
+     <div class="note">준비됐어요. 아래를 누르면 바로 추가됩니다.</div>
+     <div style="padding:8px 18px 2px"><button class="callbtn" id="a2Go" style="width:100%">📲 바탕화면에 추가</button></div>
+     <div class="mfoot"><span style="flex:1"></span><button id="a2Close2">닫기</button></div>`;
+   box.querySelector('#a2Close2').onclick=close;
+   box.querySelector('#a2Go').onclick=async()=>{
+    const p=window.__installPrompt; if(!p)return;
+    close(); await runInstall(p);
+   };
+  });
   const ext=m.querySelector('#a2Ext');
   if(ext)ext.onclick=()=>{ const u=location.origin+location.pathname.replace(/index\.html$/,'');
     location.href='kakaotalk://web/openExternal?url='+encodeURIComponent(u); };
@@ -1469,17 +1484,20 @@ function init(){
    setTimeout(()=>{ if(!done){done=true;res(window.__installPrompt||null)} },ms);
   });
  }
+ /* 설치창을 실제로 띄운다 */
+ async function runInstall(p){
+  try{ p.prompt(); const r=await p.userChoice;
+    window.__installPrompt=null;
+    BWUI.toast(r&&r.outcome==='accepted'?'바탕화면에 추가했어요':'취소했어요 — 필요하면 다시 눌러 주세요');
+    return true;
+  }catch(e){ return false; }
+ }
  async function addToHome(){
   if(isStandalone()){ BWUI.toast('이미 바탕화면에서 열고 있어요'); return; }
-  const p=await waitInstall(1200);
-  if(p){                                   /* 브라우저가 바로 설치창을 띄운다 */
-   try{ p.prompt(); const r=await p.userChoice;
-     window.__installPrompt=null;
-     BWUI.toast(r&&r.outcome==='accepted'?'바탕화면에 추가했어요':'취소했어요 — 필요하면 다시 눌러 주세요');
-     return;
-   }catch(e){}
-  }
-  howToModal();                            /* 아이폰 등 설치창이 없는 기기는 방법을 안내 */
+  /* 설치 신호는 서비스워커 등록 뒤에 오므로 조금 넉넉히 기다린다 */
+  const p=await waitInstall(2500);
+  if(p && await runInstall(p))return;
+  howToModal();                            /* 그래도 없으면(아이폰 등) 방법을 안내 */
  }
 
  function profModal(){
