@@ -7,7 +7,8 @@
 #   통과하면 exit 0, 하나라도 어긋나면 exit 1 (배포 중단)
 # ═══════════════════════════════════════════════════════════════
 SRC="$(cd "$(dirname "$0")/.." && pwd)"
-DEPLOY="$HOME/bonghwa-weekly"
+# 배포 폴더. 시험 삼아 다른 폴더로 점검하고 싶으면 BW_DEPLOY 로 바꿀 수 있다.
+DEPLOY="${BW_DEPLOY:-$HOME/bonghwa-weekly}"
 FAIL=0
 
 ok(){ echo "  ✅ $1"; }
@@ -72,7 +73,28 @@ for f in sw.js build/build.js; do
   else no "$f 가 소스와 배포본에서 다름"; fi
 done
 
-echo "── 6) 개인정보가 섞여 들어가지 않았는지 ──"
+echo "── 6) 이용 통계가 살아 있는지 ──"
+# 통계는 눈에 안 보여서, 빠져도 한참 뒤에야 안다 — 그래서 여기서 붙잡는다.
+if [ ! -s "$DEPLOY/analytics.js" ]; then no "analytics.js 가 배포 폴더에 없습니다"
+elif ! diff -q "$SRC/analytics.js" "$DEPLOY/analytics.js" >/dev/null 2>&1; then no "analytics.js 가 소스와 배포본에서 다름"
+else ok "analytics.js 소스=배포본"; fi
+must "$P" 'src="analytics.js"'   "군민용: 수집기 로드"
+must "$P" "const AV=(n,k,t)=>"   "군민용: 통계 호출 도우미(화면)"
+must "$P" "const AA=(n,k,t)=>"   "군민용: 통계 호출 도우미(누름)"
+must "$P" "AV('소식상세'"        "군민용: 소식 상세 기록"
+must "$P" "AA('공유_누름'"       "군민용: 공유 기록"
+must "$P" "function trackState"  "군민용: 검색·필터·기간 기록"
+must "$P" "AA('공유_대체창')"    "군민용: 공유 대체창 기록(카톡 인앱 비율 판단)"
+# 수집 주소가 비어 있으면 통계가 아예 안 쌓인다 — 막지는 않고 알려만 준다(주소 없이도 앱은 정상)
+if grep -q "PUT-WORKER-URL-HERE" "$DEPLOY/analytics.js" 2>/dev/null; then
+  echo "  ⚠️  수집 주소가 아직 비어 있어 통계가 쌓이지 않습니다 — analytics/setup.sh 를 먼저 실행하세요(앱 동작에는 지장 없음)"
+else ok "수집 주소가 채워져 있음"; fi
+# 통계에 개인을 알아볼 값이 섞이면 안 된다
+if grep -qE "localStorage.getItem\('bh\.(fav|prof)" "$DEPLOY/analytics.js" 2>/dev/null; then
+  no "analytics.js 가 개인 저장분(관심·맞춤설정)을 읽고 있습니다"
+else ok "analytics.js 가 개인 저장분을 건드리지 않음"; fi
+
+echo "── 7) 개인정보가 섞여 들어가지 않았는지 ──"
 if grep -rlE "01[016789]-[0-9]{3,4}-[0-9]{4}" "$DEPLOY/data.js" "$DEPLOY/md" 2>/dev/null | grep -q .; then
   no "데이터에 휴대폰번호가 들어 있습니다 — 커밋 금지"
 else ok "데이터에 휴대폰번호 없음"; fi

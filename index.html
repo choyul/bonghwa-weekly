@@ -453,8 +453,12 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
  이 정보는 봉화군 홈페이지에 공개된 주간업무 계획을 바탕으로 합니다.
  계획 단계의 내용이므로 실제 일정과 장소가 달라질 수 있습니다.
  참여하시기 전에 담당 부서로 한 번 확인해 주세요.<br><br>
- <a href="https://www.bonghwa.go.kr/main.do" target="_blank" rel="noopener">🔗 봉화군청 홈페이지 바로가기</a>
+ <a href="https://www.bonghwa.go.kr/main.do" target="_blank" rel="noopener">🔗 봉화군청 홈페이지 바로가기</a><br><br>
+ <span style="opacity:.85">어떤 소식이 도움이 되는지 알아보려고 <b>익명 이용 기록</b>을 모읍니다.
+ 이름·전화번호·아이피는 저장하지 않습니다.
+ 원치 않으시면 <a href="?nostat=1">여기를 누르세요</a> — 이 기기에서는 모으지 않습니다.</span>
 </footer>
+<script src="analytics.js"></script>
 <script src="core.js"></script>
 <script src="ui.js"></script>
 <script>
@@ -471,6 +475,12 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 
 function init(){
  const D=window.BW_DATA, E=BW.escH;
+
+ /* ── 이용 통계(analytics.js) 호출 도우미 ──
+    analytics.js 가 안 받아졌거나 통계를 꺼 둔 기기에서도 앱은 그대로 돌아야 하므로
+    반드시 window.BWA 가 있는지 보고 부른다. 화면(view)과 누름(act) 두 가지만 남긴다. */
+ const AV=(n,k,t)=>{ if(window.BWA)try{BWA.view(n,k,t)}catch(e){} };
+ const AA=(n,k,t)=>{ if(window.BWA)try{BWA.act(n,k,t)}catch(e){} };
  const FKEY='bh.fav';
  let fav={};try{fav=JSON.parse(localStorage.getItem(FKEY))||{}}catch(e){}
  const saveFav=()=>localStorage.setItem(FKEY,JSON.stringify(fav));
@@ -536,6 +546,7 @@ function init(){
   return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Bonghwa//weekly//KO','CALSCALE:GREGORIAN',...evs,'END:VCALENDAR'].join('\r\n');
  }
  function downloadICS(text,name){
+  AA('캘린더담기','',name);
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([text],{type:'text/calendar;charset=utf-8'}));
   a.download=name;document.body.appendChild(a);a.click();a.remove();
@@ -549,6 +560,7 @@ function init(){
  const isKakao=/KAKAOTALK/i.test(UA);
 
  function calModal(list,base){
+  AV('알림받기','', list.length===1?list[0].title:(list.length+'건'));
   const events=list.map(icsEvent).filter(Boolean);
   if(!events.length){BWUI.toast('알림 받을 일정이 없어요 — 날짜가 지났거나 정해지지 않았습니다');return}
   const ics=buildICS(list), fname=base+'.ics';
@@ -627,6 +639,7 @@ function init(){
       그래서 카카오톡에서는 그 버튼을 가장 크게 두고, 다른 곳에서는 링크 복사를 안내한다. */
  const isPhone=/iPhone|iPad|iPod|Android/i.test(UA);
  function shareModal(url,text){
+  AA('공유_대체창');
   const body=(text?text+'\n':'')+url;                       /* 문자 본문 — 제목·날짜까지 함께 */
   const sep=/iPhone|iPad|iPod/i.test(UA)?'&':'?';           /* iOS는 '&', 안드로이드는 '?' */
   const smsHref=`sms:${sep}body=${encodeURIComponent(body)}`;
@@ -651,15 +664,18 @@ function init(){
   m.querySelector('#shareClose').onclick=close;
   m.onclick=e=>{if(e.target===m)close()};
   const inp=m.querySelector('#shareUrl'); inp.onclick=()=>{inp.focus();inp.select()};
+  const sms=m.querySelector('#shareSms'); if(sms)sms.addEventListener('click',()=>AA('공유_문자'));
   /* 기본 브라우저로 넘길 때, 공유하려던 그 소식(?i=)과 '공유하러 왔음'(&s=1)을 함께 실어 보낸다.
      새 브라우저에서 자동으로 공유 시트를 띄울 수는 없다(사용자가 직접 눌러야만 열린다) —
      그래서 해당 소식을 펼쳐 두고 안내 문구만 띄운다. */
   const ext=m.querySelector('#shareExt');
   if(ext)ext.onclick=()=>{
+   AA('공유_브라우저전환');
    const u=new URL(url); u.searchParams.set('s','1');
    location.href='kakaotalk://web/openExternal?url='+encodeURIComponent(u.href);
   };
   m.querySelector('#shareCopy').onclick=()=>{
+   AA('공유_링크복사');
    copyText(url).then(ok=>{ BWUI.toast(ok?'링크를 복사했어요 — 대화창에 붙여넣어 보내세요':'아래 링크를 길게 눌러 복사해 주세요'); if(ok)close(); });
   };
  }
@@ -674,16 +690,18 @@ function init(){
   try{ p=navigator.share(data); }
   catch(e){ shareModal(url,data.text); return; }               /* 부르자마자 튕기는 브라우저 */
   if(!p||typeof p.catch!=='function'){ shareModal(url,data.text); return; }
+  p.then(()=>AA('공유_시트완료'),()=>{});
   p.catch(err=>{
    /* 삼성 인터넷 등 일부는 '실패'를 사용자가 취소한 것(AbortError)처럼 알려 준다.
       시트가 뜰 새도 없이(0.4초 안에) 돌아왔다면 사람이 닫은 게 아니라 실패한 것이므로,
       조용히 넘어가지 말고 대신 보낼 수 있는 창을 띄운다. */
    const quick=Date.now()-t0<400;
-   if(err&&err.name==='AbortError'&&!quick)return;             /* 진짜로 사용자가 닫음 */
+   if(err&&err.name==='AbortError'&&!quick){ AA('공유_시트취소'); return; }   /* 진짜로 사용자가 닫음 */
    shareModal(url,data.text);
   });
  }
  function shareIssue(iss){
+  AA('공유_누름','소식:'+uidHash(iss._id),iss.title);
   const url=shareUrlOf(iss);
   const r=BW.parseDateRange(tag(iss).item,tag(iss).week);
   let when='';
@@ -751,6 +769,7 @@ function init(){
 
   const finish=()=>{ intro.remove(); document.documentElement.style.overflow=''; };
   document.getElementById('introGo').onclick=()=>{
+   AA('인트로_시작하기'); AV('홈');
    const im=intro.querySelector('.intro-mascot');
    const src=im.getBoundingClientRect(), dst=hm.getBoundingClientRect();
    const sc=dst.width/src.width;
@@ -866,6 +885,37 @@ function init(){
  /* 고시·공고 목록 상태 — onRender가 BWUI.start 안에서 첫 렌더 때 바로 참조하므로 미리 선언해 둔다 */
  let NOTICES=null, ntLimit=30, ntSig='';
 
+ /* ── 이용 통계: 목록 화면의 상태 변화 ──
+    렌더는 아주 자주 일어나므로, 직전과 값이 달라진 것만 한 줄씩 남긴다.
+    (BWUI 안쪽을 고치지 않고도 검색어·필터·기간 변경을 그대로 잡을 수 있다) */
+ let AS_q='', AS_f='', AS_c='', AS_s='', AS_first=true;
+ function trackState(){
+  if(!window.BWA)return;
+  const S=BWUI.api.state;
+  /* 첫 렌더는 사용자가 무엇을 바꾼 게 아니라 처음 그려진 것뿐이다 —
+     기준값만 적어 두고 넘어간다(안 그러면 방문마다 '기간바꾸기'가 한 번씩 헛집힌다) */
+  if(AS_first){
+   AS_first=false;
+   AS_q=(S.q||'').trim();
+   const a0=S.axis||{}; AS_f=[a0.topic||'',a0.aud||'',a0.region||''].join('|');
+   AS_c=S.custom||''; AS_s=S.scope||'';
+   return;
+  }
+  const q=(S.q||'').trim();
+  if(q!==AS_q){ AS_q=q; if(q.length>=2)AA('검색',q); }
+  const ax=S.axis||{};
+  const f=[ax.topic||'',ax.aud||'',ax.region||''].join('|');
+  if(f!==AS_f){
+   const prev=AS_f.split('|'); AS_f=f;
+   [['주제',0],['대상',1],['지역',2]].forEach(([lb,i])=>{
+    const v=f.split('|')[i];
+    if(v&&v!==prev[i])AA('걸러보기_'+lb,v);
+   });
+  }
+  if((S.custom||'')!==AS_c){ AS_c=S.custom||''; if(AS_c==='fav')AV('관심목록'); }
+  if((S.scope||'')!==AS_s){ AS_s=S.scope||''; AA('기간바꾸기',AS_s); }
+ }
+
  BWUI.start({
   role:'public', title:'오늘의 봉화',
   /* 1주 = 달력 주(일~토). 주간계획은 월~일 단위로 실리지만, 군민에게는 달력이 익숙하다 */
@@ -882,7 +932,7 @@ function init(){
   showHistory:false,
   hideTiles:true,            /* '언제'는 상단 주간 달력이 맡는다 */
   showCalendar:false,        /* 공용 월 달력 대신 위쪽 커스텀 주간 데이 스트립을 쓴다 */
-  onRender(){ syncTopControls(); },   /* 필터가 바뀔 때마다 상단 달력·검색·제목을 맞춘다 */
+  onRender(){ syncTopControls(); trackState(); },   /* 필터가 바뀔 때마다 상단 달력·검색·제목을 맞춘다 */
   hideDeptTag:true,          /* 군민은 어느 과인지로 고르지 않는다 — 문의할 때만 필요 */
   /* 카드 태그는 고시·공고와 합친 분류 이름으로 보여준다(원래 분류 키를 합친 이름으로 바꿔서) */
   typeTag:iss=>{const m=W2M_TOPIC[tag(iss).topics[0]]||tag(iss).topics[0];return {v:m,label:m,axis:'topic'};},
@@ -921,7 +971,8 @@ function init(){
 
   cardActions:iss=>[{
    icon:fav[iss._id]?'★':'☆', title:'관심 업무', active:!!fav[iss._id],
-   on(i){ if(fav[i._id])delete fav[i._id]; else fav[i._id]={at:BW.ymd(new Date())}; saveFav(); }
+   on(i){ AA(fav[i._id]?'관심빼기':'관심담기','소식:'+uidHash(i._id),i.title);
+          if(fav[i._id])delete fav[i._id]; else fav[i._id]={at:BW.ymd(new Date())}; saveFav(); }
   }],
 
   /* 카드 한 줄에 언제·어디서·누구 */
@@ -942,12 +993,14 @@ function init(){
   /* 제목 옆 ⭐ — 본문에 같은 체크박스를 또 두지 않는다 */
   sheetActions:iss=>[{
    icon:fav[iss._id]?'★':'☆', title:'관심 업무', active:!!fav[iss._id],
-   on(i){ if(fav[i._id])delete fav[i._id]; else fav[i._id]={at:BW.ymd(new Date())};
+   on(i){ AA(fav[i._id]?'관심빼기':'관심담기','소식:'+uidHash(i._id),i.title);
+          if(fav[i._id])delete fav[i._id]; else fav[i._id]={at:BW.ymd(new Date())};
           saveFav(); BWUI.toast(fav[i._id]?'관심 업무에 담았습니다':'관심 업무에서 뺐습니다'); BWUI.api.render(); }
   }],
 
   /* ── 상세 맨 위: 판단에 필요한 것만 ── */
   detailTop(iss,body){
+   AV('소식상세','소식:'+uidHash(iss._id),iss.title);
    const c=tag(iss);
    const strip=t=>t.replace(/^[^:：]*[:：]\s*/,'').trim();
    const line=re=>{const l=c.item.lines.find(x=>re.test(x.txt));return l?strip(l.txt):''};
@@ -1270,6 +1323,7 @@ function init(){
  /* ── 고시·공고 상세 모달 — 이번 주 소식 상세와 같은 구성
     (⭐는 제목 옆, 🔔 알림 받기 + 📞 문의, 🔗 공유, 📄 원문 보기) ── */
  function noticeModal(n,viewBase){
+  AV('고시공고상세','고시:'+n.id,n.title);
   const url=viewBase+'?notAncmtMgtNo='+n.id+'&mid=0201030000';
   const nIss=noticeAsIssue(n);
   const canRemind=!!buildICS([nIss]);
@@ -1306,6 +1360,7 @@ function init(){
   /* 알림받기는 헤더가 아니라 여기, 본문을 보는 자리에서 — 관심에 담으면 목록에서도 ★로 표시된다 */
   m.querySelector('#ntFav').onclick=()=>{
    const key='n:'+n.id;
+   AA(fav[key]?'관심빼기':'관심담기','고시:'+n.id,n.title);
    if(fav[key])delete fav[key]; else fav[key]={at:BW.ymd(new Date())};
    saveFav(); noticeModal(n,viewBase); renderNoticeSection();
   };
@@ -1315,6 +1370,7 @@ function init(){
    calModal([nIss],'봉화군_'+n.title.replace(/[^가-힣0-9a-zA-Z]/g,'').slice(0,14));
   };
   m.querySelector('#ntShare').onclick=()=>{
+   AA('공유_누름','고시:'+n.id,n.title);
    const text=`[봉화군 ${n.kind}] ${n.title}`;
    nativeShare({title:'봉화군 '+n.kind,text,url},url);
   };
@@ -1392,6 +1448,7 @@ function init(){
  }
 
  function setMode(m){
+  if(m!==MODE)AV(m==='event'?'주간행사':'주간업무');
   MODE=m;
   document.body.classList.toggle('mode-event',m==='event');
   document.querySelectorAll('#modetabs button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
@@ -1439,6 +1496,7 @@ function init(){
  const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
  const isiOS=/iPhone|iPad|iPod/i.test(UA);
  function howToModal(){
+  AV('사용안내');
   let m=document.getElementById('a2hs');
   if(!m){m=document.createElement('div');m.id='a2hs';m.className='modal';document.body.appendChild(m)}
   const steps = isiOS
@@ -1502,6 +1560,7 @@ function init(){
     설치창(prompt)은 사용자가 직접 누른 순간에만 열 수 있어서, 자동으로 띄울 수는 없다.
     그래서 버튼 하나만 크게 띄워 탭 한 번으로 끝나게 한다. */
  function installSheet(){
+  AV('설치안내');
   if(isStandalone())return;
   let m=document.getElementById('a2go');
   if(!m){m=document.createElement('div');m.id='a2go';m.className='modal';document.body.appendChild(m)}
@@ -1530,6 +1589,7 @@ function init(){
  }
 
  function profModal(){
+  AV('맞춤설정');
   let m=document.getElementById('profModal');
   if(!m){m=document.createElement('div');m.id='profModal';m.className='modal';document.body.appendChild(m)}
   const auds=MERGED_AUD.map(x=>x[0]).filter(x=>x!=='주민 누구나');
@@ -1626,6 +1686,8 @@ function init(){
   document.body.appendChild(el);
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>{
    const t=b.dataset.t;
+   AA('탭바',t);
+   if(t==='find')AV('검색창');
    if(t==='home'){ setMode('work');
      if(BWUI.api.state.custom==='fav')BWUI.api.setCustom('fav');   /* 관심만 보기였다면 풀고 전체로 */
      window.scrollTo({top:0,behavior:'smooth'}); }
@@ -1723,6 +1785,7 @@ function init(){
  /* 행사 상세 — 원자료(주간행사표)에 있는 항목은 시간·장소·인원이 전부다.
     대신 여기서 바로 캘린더에 담고 친구에게 보낼 수 있게 한다. */
  function eventModal(e){
+  AV('행사상세','행사:'+e.date+'|'+e.title,e.title);
   let m=document.getElementById('evModal');
   if(!m){m=document.createElement('div');m.id='evModal';m.className='modal';document.body.appendChild(m)}
   const d=BW.d2(e.date);
@@ -1752,6 +1815,7 @@ function init(){
    BWUI.toast('파일이 열리면 [추가]를 누르면 캘린더에 들어갑니다'); close();
   };
   m.querySelector('#evShare').onclick=()=>{
+   AA('공유_누름','행사:'+e.date+'|'+e.title,e.title);
    const text=`[오늘의 봉화] ${e.title}\n${when} · ${e.place||''}`.trim();
    nativeShare({title:'오늘의 봉화',text,url:location.href.split('?')[0]},location.href.split('?')[0]);
   };
@@ -1877,6 +1941,8 @@ function init(){
  fitPhone();
  /* 가로·세로를 돌렸을 때만 다시 잰다 — resize 마다 재면 우리가 준 확대가 다시 resize 를 불러 맴돈다 */
  window.addEventListener('orientationchange',()=>setTimeout(fitPhone,120));
+
+ AV(document.getElementById('intro')?'인트로':'홈');   /* 이번 방문의 첫 화면 */
 
  document.body.classList.add('ready');   /* 이제 화면이 다 준비됐다 — 푸터도 이제부터 보인다 */
 }
