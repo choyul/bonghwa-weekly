@@ -33,6 +33,10 @@ must "$P" "navigator.share"        "군민용: OS 공유 시트 호출부"
 must "$P" "function nativeShare"   "군민용: 공유 공통 함수"
 must "$P" "shareModal(url,data.text)" "군민용: 공유 실패 시 대체 모달 연결"
 must "$P" "shareSms"               "군민용: 공유 시트 못 쓸 때 '문자로 보내기'"
+# 공유가 실패했는데 아무 일도 안 일어나면 사용자는 '고장'으로 느낀다 — 세 구멍을 다 막았는지 확인
+must "$P" "try{ p=navigator.share(data); }" "군민용: 공유 호출이 바로 튕겨도 대체창"
+must "$P" "typeof p.catch"        "군민용: 공유가 프로미스를 안 줘도 대체창"
+must "$P" "const quick=Date.now()-t0<400" "군민용: 즉시 AbortError(실패)를 취소로 오해하지 않음"
 must "$P" "shareExt"               "군민용: 카카오톡에서 '기본 브라우저로 열기'(선택지, 작은 링크)"
 must "$P" "openExternal"           "군민용: 카카오톡 → 기본 브라우저 전환 스킴"
 # nativeShare 안에서의 canShare 사전검사는 오탐으로 공유 시트가 죽는 원인 — 되살아나면 실패.

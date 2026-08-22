@@ -668,14 +668,20 @@ function init(){
     미리 걸러내지 않고, navigator.share가 있으면 일단 시도부터 한다 — 카카오톡·문자 등이 뜨는
     휴대폰 OS 공유 시트는 이렇게 해야 가장 안정적으로 뜬다. 실패하면 그때 링크 복사로 넘어간다. */
  function nativeShare(data,url){
-  if(navigator.share){
-   navigator.share(data).catch(err=>{
-    if(err&&err.name==='AbortError')return;   /* 사용자가 시트를 닫음 — 조용히 */
-    shareModal(url,data.text);                /* 공유가 실패한 경우 대체 모달로 */
-   });
-   return;
-  }
-  shareModal(url,data.text);   /* navigator.share 자체가 없으면(카카오톡 인앱 등) 바로 대체 모달 */
+  if(!navigator.share){ shareModal(url,data.text); return; }   /* 기능 자체가 없음(카톡 인앱 등) */
+  const t0=Date.now();
+  let p;
+  try{ p=navigator.share(data); }
+  catch(e){ shareModal(url,data.text); return; }               /* 부르자마자 튕기는 브라우저 */
+  if(!p||typeof p.catch!=='function'){ shareModal(url,data.text); return; }
+  p.catch(err=>{
+   /* 삼성 인터넷 등 일부는 '실패'를 사용자가 취소한 것(AbortError)처럼 알려 준다.
+      시트가 뜰 새도 없이(0.4초 안에) 돌아왔다면 사람이 닫은 게 아니라 실패한 것이므로,
+      조용히 넘어가지 말고 대신 보낼 수 있는 창을 띄운다. */
+   const quick=Date.now()-t0<400;
+   if(err&&err.name==='AbortError'&&!quick)return;             /* 진짜로 사용자가 닫음 */
+   shareModal(url,data.text);
+  });
  }
  function shareIssue(iss){
   const url=shareUrlOf(iss);
