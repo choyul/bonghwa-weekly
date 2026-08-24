@@ -47,6 +47,10 @@ if awk '/function nativeShare/,/^ \}/' "$P" | grep -q "canShare"; then
 else ok "군민용: nativeShare 안에 canShare() 사전검사 없음(정상)"; fi
 must "$DEPLOY/mayor.html" "navigator.share" "군수용: 지시 전달 공유 시트"
 
+# 안드로이드 뒤로가기로 앱이 꺼지지 않게 하는 처리
+must "$P" "backClosesOverlay"  "군민용: 뒤로가기가 팝업만 닫고 앱이 꺼지지 않음"
+must "$P" "isSamsung"          "군민용: 삼성 인터넷 전용 설치 안내"
+
 echo "── 3) 주간업무/주간행사 전환 ──"
 must "$P" "modetabs"    "군민용: 맨 위 [주간업무/주간행사] 전환 탭"
 must "$P" "BW_EVENTS"   "군민용: 행사 데이터 읽기"

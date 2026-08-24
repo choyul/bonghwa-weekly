@@ -1474,6 +1474,32 @@ function init(){
   wrap.insertBefore(el,wrap.firstChild);
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
  }
+ /* ═══ 뒤로가기로 팝업만 닫기 ═══
+    안드로이드 뒤로가기는 기본이 '이전 페이지로'라, 상세 팝업을 열어 둔 채 누르면
+    앱이 통째로 꺼져 버린다. 팝업이 열릴 때 방문기록을 한 칸 밀어 넣어 두고,
+    뒤로가기가 오면 그 칸을 소비하며 맨 위 팝업만 닫는다. */
+ (function backClosesOverlay(){
+  const opens=()=>[...document.querySelectorAll('#bwSheet.open, .modal.open')];
+  let pushed=false, byBack=false;
+  function closeTop(){
+   const ms=[...document.querySelectorAll('.modal.open')];
+   if(ms.length){ ms[ms.length-1].classList.remove('open'); return; }   /* 위에 덮인 것부터 */
+   const sh=document.getElementById('bwSheet');
+   if(sh&&sh.classList.contains('open')){
+    const x=document.getElementById('bwShClose');
+    if(x)x.click(); else sh.classList.remove('open');
+   }
+  }
+  new MutationObserver(()=>{
+   const n=opens().length;
+   if(n>0&&!pushed){ pushed=true; history.pushState({bwOverlay:1},''); }
+   else if(n===0&&pushed){ pushed=false; if(!byBack)history.back(); byBack=false; }
+  }).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
+  addEventListener('popstate',()=>{
+   if(opens().length){ pushed=false; byBack=true; closeTop(); }
+  });
+ })();
+
  /* ── 파비콘(브라우저 탭 아이콘)은 매일 오늘 날짜로 다시 그린다 ──
     바탕화면에 만든 바로가기는 OS가 만든 그때의 그림을 계속 쓰므로 날짜가 고정된다.
     화면 안에서 쓰는 이 아이콘만이라도 오늘 날짜를 보여 준다. */
@@ -1495,14 +1521,21 @@ function init(){
     이미 바탕화면에서 연 상태(standalone)면 버튼을 숨긴다. */
  const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
  const isiOS=/iPhone|iPad|iPod/i.test(UA);
+ const isSamsung=/SamsungBrowser/i.test(UA);   /* 설치창을 안 띄우고 메뉴로만 만들 수 있다 */
  function howToModal(){
   AV('사용안내');
   let m=document.getElementById('a2hs');
   if(!m){m=document.createElement('div');m.id='a2hs';m.className='modal';document.body.appendChild(m)}
+  /* 브라우저마다 메뉴 위치·이름이 달라 그대로 알려 줘야 한다.
+     특히 삼성 인터넷은 설치창을 띄우는 기능을 제공하지 않아 메뉴로만 만들 수 있다. */
   const steps = isiOS
    ? `<li>아래 가운데 <b>공유 <span class="a2-ic">⬆️</span></b> 단추를 누르세요</li>
       <li>목록을 내려 <b>홈 화면에 추가</b>를 누르세요</li>
       <li>오른쪽 위 <b>추가</b>를 누르면 끝!</li>`
+   : isSamsung
+   ? `<li>화면 <b>맨 아래 오른쪽 ≡ 메뉴</b>를 누르세요</li>
+      <li><b>현재 페이지 추가</b>를 누르세요</li>
+      <li><b>홈 화면</b>을 고르면 끝!</li>`
    : `<li>오른쪽 위 <b>⋮ 메뉴</b>를 누르세요</li>
       <li><b>홈 화면에 추가</b>(또는 앱 설치)를 누르세요</li>
       <li><b>추가</b>를 누르면 끝!</li>`;
