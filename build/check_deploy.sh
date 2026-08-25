@@ -90,6 +90,20 @@ must "$P" 'data-t="guide"'                "군민용: 하단 탭에 가이드"
 must "$P" "src=\"guide.html\""             "군민용: 안내 문서 연결"
 must "$DEPLOY/guide.html" "guide.html'"   "안내: 복사되는 주소가 공개 주소인지"
 
+echo "── 3-5) 홈 화면 아이콘의 날짜 ──"
+# 홈 화면에 박히는 것은 SVG 가 아니라 manifest 가 가리키는 PNG 세 장이다.
+# 이게 낡으면 오늘 설치한 사람도 옛 날짜를 보게 된다.
+if grep -q "<text" "$DEPLOY/icon.svg"; then
+  no "icon.svg 에 <text> 가 남아 있습니다 — 글꼴 없는 서버에서 네모로 그려집니다"
+else ok "icon.svg 가 글꼴 없이도 그려집니다(글자를 전부 도형으로)"; fi
+for f in icon-m192 icon-m512 icon-mmask512; do
+  if [ ! -s "$DEPLOY/$f.png" ]; then no "$f.png 가 없습니다 — 홈 화면 아이콘이 안 나옵니다"
+  elif [ -n "$(find "$DEPLOY/$f.png" -mtime +2 2>/dev/null)" ]; then
+    echo "  ⚠️  $f.png 가 사흘 넘게 그대로입니다 — 자동 갱신(weekly.yml)이 도는지 확인하세요"
+  else ok "$f.png 최신"; fi
+done
+must "$DEPLOY/build/make_icon_png.sh" "rsvg-convert" "아이콘: PNG 다시 그리기 스크립트"
+
 echo "── 4) 전화 걸기 ──"
 must "$DEPLOY/mayor.html" "navigator.contacts" "군수용: 저장된 연락처 선택(안드로이드)"
 must "$DEPLOY/mayor.html" "tel:"               "군수용: 전화 걸기 폴백"

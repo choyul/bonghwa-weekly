@@ -43,15 +43,22 @@ jobs:
         continue-on-error: true   # 첨부 형식이 바뀌어도 주간 갱신을 막지 않도록
 
       - name: 아이콘 날짜 갱신 (달력 숫자 = 오늘)
-        run: python3 build/make_icon.py icon.svg
+        # 홈 화면에 실제로 박히는 것은 manifest 가 가리키는 PNG 세 장이다.
+        # SVG 만 고쳐 두면 새로 설치하는 사람도 옛 날짜를 보게 되므로 PNG 까지 다시 그린다.
+        # 아이콘의 글자는 전부 도형이라 서버에 한글 글꼴이 없어도 똑같이 나온다.
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq librsvg2-bin
+          python3 build/make_icon.py icon.svg
+          python3 build/make_icon.py icon-maskable.svg --maskable
+          bash build/make_icon_png.sh
         continue-on-error: true
 
       - name: 바뀌었으면 커밋·푸시
         run: |
-          if [[ -n "$(git status --porcelain data.js md notices.js events.js icon.svg)" ]]; then
+          if [[ -n "$(git status --porcelain data.js md notices.js events.js icon.svg icon-maskable.svg icon-m192.png icon-m512.png icon-mmask512.png)" ]]; then
             git config user.name "bonghwa-bot"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add data.js md notices.js events.js icon.svg
+            git add data.js md notices.js events.js icon.svg icon-maskable.svg icon-m192.png icon-m512.png icon-mmask512.png
             git commit -m "자동 갱신 ($(date -u +%Y-%m-%d))"
             git push
             echo "갱신 완료"
