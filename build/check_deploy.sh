@@ -58,6 +58,18 @@ must "$P" "events.js"   "군민용: 행사 데이터 로드"
 if [ -s "$DEPLOY/events.js" ]; then ok "events.js 존재($(wc -c < "$DEPLOY/events.js" | tr -d ' ')바이트)"
 else no "events.js 가 없거나 비었습니다 — 행사 탭이 안 뜹니다"; fi
 
+echo "── 3-2) 계절 마스코트 ──"
+# 그림 파일 하나라도 빠지면 그 계절에 캐릭터 자리가 비어 보인다
+MISS=""
+for m in base s1 s2 s3 f1 f2 f3 w1 w2 w3; do
+  if [ ! -s "$DEPLOY/mascot/$m.webp" ]; then MISS="$MISS $m"
+  elif ! diff -q "$SRC/mascot/$m.webp" "$DEPLOY/mascot/$m.webp" >/dev/null 2>&1; then MISS="$MISS $m(다름)"; fi
+done
+if [ -n "$MISS" ]; then no "마스코트 그림이 빠졌거나 다릅니다:$MISS"
+else ok "마스코트 10장(기본·여름3·가을3·겨울3) 모두 있음"; fi
+must "$P" "MASCOT_SETS"   "군민용: 계절별 마스코트 목록"
+must "$P" "mascot/'+MASCOT_KEY" "군민용: 마스코트 그림 연결"
+
 echo "── 4) 전화 걸기 ──"
 must "$DEPLOY/mayor.html" "navigator.contacts" "군수용: 저장된 연락처 선택(안드로이드)"
 must "$DEPLOY/mayor.html" "tel:"               "군수용: 전화 걸기 폴백"

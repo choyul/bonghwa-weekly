@@ -399,7 +399,7 @@ body:not(.mode-event) #evView{display:none}
 #intro.go .ibg{opacity:0}
 #intro .intro-mascot{position:relative;width:min(46vw,180px);height:min(46vw,180px);
  will-change:transform;animation:introPop .6s cubic-bezier(.2,.9,.3,1.3) both, floaty 3s ease-in-out .6s infinite}
-#intro .intro-mascot svg{width:100%;height:100%;display:block;
+#intro .intro-mascot img{width:100%;height:100%;display:block;object-fit:contain;
  filter:drop-shadow(0 14px 26px rgba(31,75,63,.20))}
 #intro .intro-text{position:relative;margin-top:26px;font-size:clamp(19px,5.4vw,26px);
  font-weight:800;line-height:1.55;color:var(--ink);letter-spacing:-.02em;
@@ -421,10 +421,12 @@ body:not(.mode-event) #evView{display:none}
 @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-11px)}}
 /* 헤더에 자리잡는 마스코트 — 인트로 마스코트가 도착한 뒤에만 나타난다.
    처음부터 보이면 날아오는 마스코트와 겹쳐 '잔상'처럼 보인다. */
-.mascot-head{width:32px;height:32px;flex:none;display:inline-flex;margin-right:2px;
- opacity:0;transition:opacity .22s ease}
+/* 캐릭터 그림 자체가 주인공이므로 앞서 준 초록 배지 배경·그림자는 지운다 */
+.mascot-head{width:calc(40px*var(--fsx));height:calc(40px*var(--fsx));flex:none;
+ display:inline-flex;margin-right:4px;opacity:0;transition:opacity .22s ease;
+ background:none;box-shadow:none;border-radius:0;padding:0}
 .mascot-head.show{opacity:1}
-.mascot-head svg{width:100%;height:100%;display:block}
+.mascot-head img{width:100%;height:100%;display:block;object-fit:contain}
 @media (prefers-reduced-motion:reduce){
  #intro .intro-mascot,#intro .intro-text,#intro .intro-sub,#intro .intro-btn{animation:none}
 }
@@ -710,21 +712,23 @@ function init(){
   nativeShare({title:'오늘의 봉화',text,url},url);
  }
 
- /* ── 봉화 마스코트 (사과+잎, 반짝이는 눈) — 인트로와 헤더가 함께 쓴다 ── */
- const MASCOT=`<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-   <ellipse cx="88" cy="44" rx="15" ry="27" fill="#4E8A5B" transform="rotate(-24 88 44)"/>
-   <ellipse cx="112" cy="44" rx="15" ry="27" fill="#63A972" transform="rotate(24 112 44)"/>
-   <rect x="96" y="34" width="8" height="26" rx="4" fill="#7a5a3a"/>
-   <path d="M100 56c34 0 52 22 60 44 9 25 3 55-20 72-12 9-27 12-40 12s-28-3-40-12C37 155 31 125 40 100c8-22 26-44 60-44Z" fill="#EF5B3C"/>
-   <path d="M100 56c-34 0-52 22-60 44-4 11-5 23-4 34 6-40 34-58 64-58 30 0 58 18 64 58 1-11 0-23-4-34-8-22-26-44-60-44Z" fill="#ff7a5c" opacity=".55"/>
-   <ellipse cx="78" cy="120" rx="12" ry="15" fill="#2b2320"/>
-   <ellipse cx="122" cy="120" rx="12" ry="15" fill="#2b2320"/>
-   <path d="M74 111l3 6 6 3-6 3-3 6-3-6-6-3 6-3z" fill="#fff"/>
-   <path d="M118 111l3 6 6 3-6 3-3 6-3-6-6-3 6-3z" fill="#fff"/>
-   <ellipse cx="63" cy="140" rx="8" ry="5" fill="#ff9a7d" opacity=".7"/>
-   <ellipse cx="137" cy="140" rx="8" ry="5" fill="#ff9a7d" opacity=".7"/>
-   <path d="M87 146q13 12 26 0" stroke="#2b2320" stroke-width="5" fill="none" stroke-linecap="round"/>
- </svg>`;
+ /* ── 봉화 마스코트 — 인트로와 헤더가 함께 쓴다 ──
+    계절마다 옷이 바뀐다. 그 계절 것 중 하나를 무작위로 고르고,
+    계절 옷이 없는 봄(3~5월)에는 기본 캐릭터가 나온다. */
+ const MASCOT_SETS={ 여름:['s1','s2','s3'], 가을:['f1','f2','f3'], 겨울:['w1','w2','w3'] };
+ function mascotSeason(d){
+  const m=(d||new Date()).getMonth()+1;
+  if(m>=6&&m<=8)return '여름';
+  if(m>=9&&m<=11)return '가을';
+  if(m===12||m<=2)return '겨울';
+  return '';                      /* 봄 — 계절 캐릭터 없음 */
+ }
+ const MASCOT_KEY=(()=>{
+  const set=MASCOT_SETS[mascotSeason()];
+  return set? set[Math.floor(Math.random()*set.length)] : 'base';
+ })();
+ const MASCOT_SRC='mascot/'+MASCOT_KEY+'.webp';
+ const MASCOT=`<img src="${MASCOT_SRC}" alt="" aria-hidden="true" decoding="async">`;
 
  /* ── 첫 화면 인트로: 인사 → [시작하기] → 마스코트가 헤더로 날아가고 본문이 드러남 ── */
  /* 인트로 아래 한 줄 요약 — 언제 자료인지, 이번 주에 무엇이 몇 건인지 */
@@ -776,7 +780,7 @@ function init(){
    const tx=(dst.left+dst.width/2)-(src.left+src.width/2);
    const ty=(dst.top+dst.height/2)-(src.top+src.height/2);
    im.style.animation='none';                          /* floaty 정지 후 비행 */
-   im.querySelector('svg').style.filter='none';         /* 그림자 필터는 축소 중 흐려 보여 끈다 */
+   im.firstElementChild.style.filter='none';         /* 그림자 필터는 축소 중 흐려 보여 끈다 */
    /* floaty가 멈춘 그 자리 그대로 트랜지션 없이 고정해 둔다.
       (transition과 transform을 같은 프레임에서 같이 걸면 브라우저가
        전환을 건너뛰고 바로 순간이동해 버려 잔상처럼 보인다) */
