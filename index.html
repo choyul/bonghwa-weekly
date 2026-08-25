@@ -213,6 +213,17 @@ body.ready .tabbar{visibility:visible}
  width:46px;height:30px;border-radius:100px;transition:background .18s,transform .18s}
 .tabbar .lb{font-size:calc(10.5px*var(--fsx));font-weight:700}
 /* 고른 탭은 한눈에 — 알약 배경 + 진한 글씨 + 위쪽 표시선 */
+/* ── 사용 안내(가이드) — 화면을 덮고 문서처럼 읽는다 ── */
+#guideModal{align-items:stretch;justify-content:center;background:rgba(0,0,0,.42)}
+#guideModal .gd{display:flex;flex-direction:column;width:100%;max-width:430px;height:100%;
+ background:var(--card,#fff)}
+#guideModal .gd-top{flex:none;display:flex;align-items:center;gap:10px;padding:11px 14px;
+ border-bottom:1px solid var(--line);background:#fff}
+#guideModal .gd-top b{flex:1;font-size:calc(15.5px*var(--fsx));font-weight:800;letter-spacing:-.02em;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#guideModal .gd-top button{flex:none;width:38px;height:38px;border:none;border-radius:12px;
+ background:var(--bg);color:var(--ink);font-size:17px;font-weight:800;line-height:1}
+#guideModal iframe{flex:1;width:100%;border:none;display:block;background:var(--bg)}
 .tabbar button{position:relative;transition:color .15s}
 .tabbar button.on{color:var(--brand)}
 .tabbar button.on .ic{background:var(--brand-soft);transform:translateY(-1px)}
@@ -1729,27 +1740,54 @@ function init(){
   el.innerHTML=`
     <button data-t="home" class="on"><span class="ic">🏠</span><span class="lb">홈</span></button>
     <button data-t="cal"><span class="ic">📅</span><span class="lb">행사</span></button>
-    <button data-t="find"><span class="ic">🔍</span><span class="lb">검색</span></button>
+    <button data-t="guide"><span class="ic">📖</span><span class="lb">가이드</span></button>
     <button data-t="fav"><span class="ic">⭐</span><span class="lb">관심</span></button>`;
   document.body.appendChild(el);
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>{
    const t=b.dataset.t;
    AA('탭바',t);
-   if(t==='find')AV('검색창');
+
+
    if(t==='home'){ setMode('work');
      if(BWUI.api.state.custom==='fav')BWUI.api.setCustom('fav');   /* 관심만 보기였다면 풀고 전체로 */
      window.scrollTo({top:0,behavior:'smooth'}); }
    else if(t==='cal'){ if(EV.length)setMode('event'); else BWUI.toast('행사 자료를 아직 받지 못했어요'); }
-   else if(t==='find'){ setMode('work'); const c=document.getElementById('psearch');
-     if(c){ c.classList.add('open'); c.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>c.querySelector('#psInput').focus(),300); } }
+   else if(t==='guide'){ guideModal(); }
    else if(t==='fav'){ setMode('work'); BWUI.api.setCustom('fav'); window.scrollTo({top:0,behavior:'smooth'}); }
    syncTabBar();
   });
  }
+ /* ── 사용 안내 — 앱 안에서 한 편의 문서로 읽는다 (guide.html 을 그대로 불러온다) ── */
+ function guideModal(){
+  let m=document.getElementById('guideModal');
+  if(!m){
+   m=document.createElement('div'); m.id='guideModal'; m.className='modal';
+   m.innerHTML=`<div class="gd">
+     <div class="gd-top"><b>📖 오늘의 봉화 사용 안내</b>
+       <button type="button" id="gdClose" aria-label="닫기">✕</button></div>
+     <iframe id="gdFrame" title="오늘의 봉화 사용 안내" src="guide.html"
+       allow="clipboard-write" loading="lazy"></iframe>
+   </div>`;
+   document.body.appendChild(m);
+   const close=()=>m.classList.remove('open');
+   m.querySelector('#gdClose').onclick=close;
+   m.addEventListener('click',e=>{ if(e.target===m)close(); });   /* 옆의 빈 곳을 눌러도 닫힘 */
+   /* 앱은 밝은 화면뿐이라, 문서도 밝게 맞춰 준다 (휴대폰이 어두운 모드여도) */
+   m.querySelector('#gdFrame').addEventListener('load',function(){
+    try{ this.contentDocument.documentElement.setAttribute('data-theme','light'); }catch(e){}
+   });
+   /* 뒤로가기로 닫혔을 때도 아래 탭 표시가 따라오도록 */
+   new MutationObserver(()=>syncTabBar()).observe(m,{attributes:true,attributeFilter:['class']});
+  }
+  m.classList.add('open');
+  AV('사용안내');
+ }
  function syncTabBar(){
   const el=document.getElementById('tabbar'); if(!el)return;
   const S=BWUI.api.state;
-  const cur = MODE==='event' ? 'cal' : (S.custom==='fav' ? 'fav' : 'home');
+  const g=document.getElementById('guideModal');
+  const cur = (g&&g.classList.contains('open')) ? 'guide'
+            : MODE==='event' ? 'cal' : (S.custom==='fav' ? 'fav' : 'home');
   el.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===cur));
  }
  function buildEventView(){

@@ -85,6 +85,9 @@ if [ ! -s "$DEPLOY/guide.html" ]; then no "guide.html 이 없습니다 — 안�
 elif ! diff -q "$SRC/guide.html" "$DEPLOY/guide.html" >/dev/null 2>&1; then no "guide.html 이 소스와 배포본에서 다름"
 else ok "guide.html 소스=배포본 ($(( $(wc -c < "$DEPLOY/guide.html") / 1024 ))KB)"; fi
 must "$DEPLOY/guide.html" "shareBtn"      "안내: 링크 복사 버튼"
+must "$P" "function guideModal"           "군민용: 하단 [가이드] 로 안내 열기"
+must "$P" 'data-t="guide"'                "군민용: 하단 탭에 가이드"
+must "$P" "src=\"guide.html\""             "군민용: 안내 문서 연결"
 must "$DEPLOY/guide.html" "guide.html'"   "안내: 복사되는 주소가 공개 주소인지"
 
 echo "── 4) 전화 걸기 ──"
