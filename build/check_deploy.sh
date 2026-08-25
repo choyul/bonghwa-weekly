@@ -70,6 +70,16 @@ else ok "마스코트 10장(기본·여름3·가을3·겨울3) 모두 있음"; f
 must "$P" "MASCOT_SETS"   "군민용: 계절별 마스코트 목록"
 must "$P" "mascot/'+MASCOT_KEY" "군민용: 마스코트 그림 연결"
 
+echo "── 3-3) 카카오톡 미리보기(공유 카드) ──"
+# 옛 이름 '봉화의 오늘' 이 그림이나 글에 남으면 공유할 때 그대로 보인다
+must "$P" 'og:title" content="오늘의 봉화"'     "군민용: 미리보기 제목"
+must "$P" 'og:site_name" content="오늘의 봉화"' "군민용: 미리보기 사이트 이름"
+if grep -q "봉화의 오늘" "$P"; then no "군민용: 옛 이름 '봉화의 오늘' 이 남아 있습니다"
+else ok "군민용: 옛 이름 '봉화의 오늘' 없음"; fi
+if [ ! -s "$DEPLOY/og.png" ]; then no "og.png 가 없습니다 — 공유 카드에 그림이 안 뜹니다"
+elif ! diff -q "$SRC/og.png" "$DEPLOY/og.png" >/dev/null 2>&1; then no "og.png 가 소스와 배포본에서 다름"
+else ok "og.png 소스=배포본"; fi
+
 echo "── 4) 전화 걸기 ──"
 must "$DEPLOY/mayor.html" "navigator.contacts" "군수용: 저장된 연락처 선택(안드로이드)"
 must "$DEPLOY/mayor.html" "tel:"               "군수용: 전화 걸기 폴백"
