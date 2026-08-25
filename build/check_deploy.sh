@@ -80,6 +80,13 @@ if [ ! -s "$DEPLOY/og.png" ]; then no "og.png 가 없습니다 — 공유 카드
 elif ! diff -q "$SRC/og.png" "$DEPLOY/og.png" >/dev/null 2>&1; then no "og.png 가 소스와 배포본에서 다름"
 else ok "og.png 소스=배포본"; fi
 
+echo "── 3-4) 안내 브로셔 ──"
+if [ ! -s "$DEPLOY/guide.html" ]; then no "guide.html 이 없습니다 — 안내 주소가 안 열립니다"
+elif ! diff -q "$SRC/guide.html" "$DEPLOY/guide.html" >/dev/null 2>&1; then no "guide.html 이 소스와 배포본에서 다름"
+else ok "guide.html 소스=배포본 ($(( $(wc -c < "$DEPLOY/guide.html") / 1024 ))KB)"; fi
+must "$DEPLOY/guide.html" "shareBtn"      "안내: 링크 복사 버튼"
+must "$DEPLOY/guide.html" "guide.html'"   "안내: 복사되는 주소가 공개 주소인지"
+
 echo "── 4) 전화 걸기 ──"
 must "$DEPLOY/mayor.html" "navigator.contacts" "군수용: 저장된 연락처 선택(안드로이드)"
 must "$DEPLOY/mayor.html" "tel:"               "군수용: 전화 걸기 폴백"
