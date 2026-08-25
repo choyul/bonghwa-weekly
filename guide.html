@@ -225,6 +225,72 @@ footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--line);
 .fcard b{font-weight:600;color:var(--ink)}
 .fcard .chips{margin-top:12px}
 :focus-visible{outline:2px solid var(--deep2);outline-offset:3px;border-radius:3px}
+
+/* ═══════════════════════════════════════════════════════════
+   읽기 쉽게 — '설명하는 글'과 '휴대폰 화면'을 눈으로 갈라 놓는다.
+   캡처는 모두 검은 기기 테두리를 둘러 화면처럼 보이게 하고,
+   설명 글은 흰 종이 위에 얹어 서로 섞이지 않게 한다.
+   ═══════════════════════════════════════════════════════════ */
+:root{ --bezel:#15221C; --bezel-line:rgba(255,255,255,.10); }
+/* 어두운 화면에서는 검은 테두리가 배경에 묻혀 사라진다 — 한 단계 밝은 회색으로 */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bezel:#2B3931; --bezel-line:rgba(255,255,255,.16); }}
+:root[data-theme="dark"]{ --bezel:#2B3931; --bezel-line:rgba(255,255,255,.16); }
+
+/* 캡처 화면 = 휴대폰 테두리 */
+.feat .shot > img,
+.shot.pair img,
+.hl-shot img,
+.trio img,
+.duo img,
+.home-grid img{
+  border:9px solid var(--bezel);
+  border-radius:28px;
+  background:var(--bezel);
+  box-shadow:0 18px 36px -14px rgba(0,0,0,.45), 0 0 0 1px var(--bezel-line) inset;
+  box-sizing:border-box;
+}
+.shot.pair img,.trio img{border-width:7px;border-radius:22px}
+@media(max-width:620px){
+  .feat .shot > img,.hl-shot img,.duo img,.home-grid img{border-width:8px;border-radius:24px}
+}
+
+/* 설명 글은 흰 종이 위에 — 배경과 붙어 흐릿해 보이던 것을 띄운다 */
+.feat .ft{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:26px 26px 28px;
+  box-shadow:var(--sh);
+}
+@media(max-width:620px){.feat .ft{padding:20px 18px 22px}}
+.feat{border-bottom:none;padding:26px 0}
+
+/* 글 자체를 또렷하게 — 가는 글씨(300)는 작은 화면에서 흐리게 보인다 */
+.ft p,.hl p,.fcard p,.bw .bd,.snote{font-weight:400}
+.ft p{font-size:16.5px;line-height:1.8}
+.fcard p{font-size:15.5px;line-height:1.75}
+.duo figcaption,.trio figcaption,.home-grid figcaption,
+.shot.pair figcaption,.hl-shot figcaption{font-weight:400;color:var(--sub)}
+
+/* 가로 카드 — 화면과 글 사이에 여백을 두고 화면에 테두리를 둘러 갈라 놓는다 */
+.fcard{overflow:visible}
+.fcard .cap{
+  width:auto;
+  margin:14px 14px 2px;
+  height:238px;
+  border:8px solid var(--bezel);
+  border-bottom:none;
+  border-radius:24px 24px 0 0;
+  background:var(--bezel);
+  box-shadow:0 -1px 0 var(--bezel-line) inset;
+  box-sizing:border-box;
+}
+.fcards.two .fcard .cap{height:288px}
+@media(max-width:560px){.fcard .cap,.fcards.two .fcard .cap{height:268px}}
+.fcard .bd{padding:16px 19px 20px;border-top:8px solid var(--bezel);
+  margin:0 14px;border-radius:0 0 6px 6px}
+.fcard .bd{margin-bottom:14px}
 </style>
 
 <header class="hero">
