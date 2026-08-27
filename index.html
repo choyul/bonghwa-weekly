@@ -258,6 +258,16 @@ footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decorat
 .grptabs button.on .gn{color:#FFF3B8}
 .grptabs button:active{transform:scale(.98)}
 .grpnote{font-size:calc(12.5px*var(--fsx));color:var(--sub);margin:4px 2px 10px;font-weight:600}
+/* 새로 올라온 것 / 전부터 이어지는 것 — 같은 갈래 안에서 다시 한 번 가른다 */
+.grpsub{display:flex;align-items:center;gap:8px;margin:16px 2px 9px}
+.grpsub:first-of-type{margin-top:6px}
+.grpsub .gsi{font-size:calc(15px*var(--fsx));line-height:1}
+.grpsub .gst{font-size:calc(14px*var(--fsx));font-weight:800;color:var(--ink);letter-spacing:-.02em}
+.grpsub .gsn{font-size:calc(12px*var(--fsx));font-weight:700;color:var(--sub);
+ background:var(--bg);border:1px solid var(--line);border-radius:100px;padding:2px 9px;white-space:nowrap}
+.grpsub::after{content:'';flex:1;height:1px;background:var(--line)}
+/* 맞춤설정이 갈래 탭 바로 밑에 온다 */
+#bwGrpTabs + #bwAxes .calfold{width:100%}
 
 /* ── 목록을 두 구역으로 ──
    '내가 할 수 있는 일' 과 '군청이 하는 일' 은 성격이 아주 다르므로
@@ -601,7 +611,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 </footer>
 <script src="analytics.js?v=884013ee"></script>
 <script src="core.js?v=28380ee5"></script>
-<script src="ui.js?v=c803a3bf"></script>
+<script src="ui.js?v=4722f15a"></script>
 <script>
 /* data.js(필수) → notices.js(고시·공고) → events.js(주간행사) → news.js(봉화 뉴스) → init
    뒤의 셋은 없거나 실패해도 화면은 뜬다 */
@@ -1141,8 +1151,9 @@ function init(){
   noticeTab:{ count:()=>noticeMatches().length, render:host=>renderNoticeSection(host),
     renderRecent:host=>renderNoticeSection(host,'recent') },
   onGroupTab:k=>AA('갈래탭',k),
-  /* 필터 3종(무엇을·누구를·어디서)은 한 줄로 접어 첫 화면을 짧게 */
-  axesOpen:false, axesLabel:'골라 보기',
+  /* 무엇을(목적)·누구를(대상)·어디서 고르는 칸.
+     갈래를 고른 다음에 좁히는 것이라 갈래 탭 아래에 놓고 '맞춤설정'으로 접어 둔다. */
+  axesOpen:false, axesLabel:'맞춤설정',
   searchPlaceholder:'궁금한 일을 검색해 보세요 (예: 축제, 도로, 교육)',
   listTitle:'봉화의 소식은?',   /* 앞에 '오늘' / '이번 주' / '7월 28일(화)' 처럼 기간이 붙는다 */
   publicLabels:true,

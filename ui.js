@@ -18,7 +18,7 @@
   const S = {
     scope: 'week', month: '', day: '', week: '', from: '', to: '',
     q: '', status: '', dept: '', type: '', annual: false, custom: '', axis: {}, limit: 60,
-    onLimit: 30,       /* '지금도 진행 중' 목록에서 한 번에 보여줄 개수 */
+    onLimit: 12,       /* '전부터 이어지는' 묶음에서 한 번에 보여줄 개수 */
     govOpen: false,    /* '군청이 하는 일' 접힘 상태 — 군민용(옛 방식)에서만 쓴다 */
     grpTab: 'apply'    /* 갈래 탭 — apply(신청·참여) | gov(군정 소식) | notice(고시·공고) */
   };
@@ -465,8 +465,9 @@
           : S.scope === 'month' ? (() => { const [y, m] = S.month.split('-'); return `${+y}년 ${+m}월`; })()
             : '지난 1년';
     $('#bwInfo').innerHTML = CFG.groupTabs
-      /* 갈래 탭 화면에서는 건수를 탭이 말한다 — 여기 숫자까지 두면 서로 어긋나 보인다 */
-      ? `<span class="listh">${E(scopeLabel)} ${E(CFG.listTitle || '')}</span>`
+      /* 갈래 탭 화면에는 목록 제목을 두지 않는다 —
+         기간은 위 달력이, 건수와 갈래는 탭이 이미 말하고 있어 한 줄이 더 있으면 겹친다 */
+      ? ''
       : CFG.listTitle
       ? `<span class="listh">${E(scopeLabel)} ${E(CFG.listTitle)}</span> <span class="hint">${rows.length}건</span>`
       : `${E(scopeLabel)} ${rows.length}건 <span class="hint">· 태그를 누르면 그 조건으로 모아 봅니다</span>`;
@@ -487,13 +488,32 @@
         if (!e) return '2~';
         return e >= TODAY ? '0~' + e : '1~' + (99999999 - +e.replace(/-/g, ''));
       };
-      const apply = rows.filter(isApply).concat(extra.filter(isApply));
-      apply.sort((a, c) => { const x = applyKey(a), y = applyKey(c); return x < y ? -1 : x > y ? 1 : 0; });
-      const gov = rows.filter(i => !isApply(i)).concat(extra.filter(i => !isApply(i)));
+      const bySoon = (a, c) => { const x = applyKey(a), y = applyKey(c); return x < y ? -1 : x > y ? 1 : 0; };
+      /* 이번 계획에 새로 실린 것(rows)과, 지난 계획에 실렸지만 아직 기간이 남은 것(extra)을
+         섞지 않고 나눠 둔다 — 마감순으로만 늘어놓으면 몇 달 된 사업이 맨 위로 올라와
+         '이번 주 새 소식'을 보러 온 사람이 헤맨다. */
+      /* 기간·필터·갈래가 바뀌면 '더 보기'로 늘려 둔 개수를 처음으로 되돌린다 */
+      const gsig = JSON.stringify([S.scope, S.day, S.month, S.week, S.from, S.to, S.q,
+        S.axis, S.custom, S.grpTab]);
+      if (gsig !== onSig) { S.limit = 60; S.onLimit = 12; onSig = gsig; }
+      const applyNew = rows.filter(isApply).sort(bySoon);
+      const applyOld = extra.filter(isApply).sort(bySoon);
+      const govNew = rows.filter(i => !isApply(i)).sort(bySoon);
+      const govOld = extra.filter(i => !isApply(i)).sort(bySoon);
       const ntN = CFG.noticeTab ? CFG.noticeTab.count() : 0;
-      GRP_COUNTS = { apply: apply.length, gov: gov.length, notice: ntN };
-      const bar = document.createElement('div'); bar.className = 'grptabs'; bar.id = 'bwGrpTabs';
-      bar.innerHTML = [['apply', '📝', '신청·참여', apply.length], ['gov', '🏛', '군정 소식', gov.length],
+      GRP_COUNTS = { apply: applyNew.length + applyOld.length,
+                     gov: govNew.length + govOld.length, notice: ntN };
+      /* 탭은 #bwCards 밖에 둔다 — 안에 두면 다음 렌더의 innerHTML='' 로 같이 지워지고,
+         맞춤설정(#bwAxes)을 안으로 옮기면 그것까지 사라진다.
+         자리는 맞춤설정 바로 위 — [갈래 탭] → [맞춤설정] → [목록] 차례가 된다. */
+      const axHost = $('#bwAxes');
+      let bar = $('#bwGrpTabs');
+      if (!bar) {
+        bar = document.createElement('div'); bar.className = 'grptabs'; bar.id = 'bwGrpTabs';
+        if (axHost && axHost.parentNode) axHost.parentNode.insertBefore(bar, axHost);
+        else box.parentNode.insertBefore(bar, box);
+      }
+      bar.innerHTML = [['apply', '📝', '신청·참여', GRP_COUNTS.apply], ['gov', '🏛', '군정 소식', GRP_COUNTS.gov],
         ['notice', '📢', '고시·공고', ntN]].map(([k, i, l, n]) =>
           `<button type="button" data-g="${k}" class="${S.grpTab === k ? 'on' : ''}">
              <span class="gi">${i}</span><span class="gl">${l}</span><span class="gn">${n}</span></button>`).join('');
@@ -502,11 +522,14 @@
         S.grpTab = b.dataset.g; S.limit = 60;
         if (CFG.onGroupTab) CFG.onGroupTab(S.grpTab);
         render();
-        /* 탭은 화면 위에 붙어 있으므로, 갈래를 바꾸면 목록 머리로 돌아간다 */
-        const h = $('#bwInfo'); if (h && h.getBoundingClientRect().top < 0) h.scrollIntoView();
+        /* 탭은 화면 위에 붙어 있으므로 자리는 그대로 두고 목록만 바뀐다 */
       });
-      box.appendChild(bar);
       const note = t => { const d = document.createElement('div'); d.className = 'grpnote'; d.textContent = t; box.appendChild(d); };
+      const sub = (icon, text, n) => {
+        const d = document.createElement('div'); d.className = 'grpsub';
+        d.innerHTML = `<span class="gsi">${icon}</span><span class="gst">${E(text)}</span><span class="gsn">${n}건</span>`;
+        box.appendChild(d);
+      };
       $('#bwMore').innerHTML = '';
       if (S.grpTab === 'notice') {
         if (ntN && CFG.noticeTab) CFG.noticeTab.render(box);
@@ -516,20 +539,30 @@
           CFG.noticeTab.renderRecent(box);
         } else note('이 조건에 맞는 고시·공고가 없어요');
       } else {
-        const list = S.grpTab === 'gov' ? gov : apply;
-        if (!list.length) note(S.grpTab === 'gov' ? '이 조건에 맞는 군정 소식이 없어요'
-                                                  : '이 조건으로 신청·참여할 수 있는 일은 없어요');
-        else {
-          note(S.grpTab === 'gov' ? '군청이 진행하는 일이에요 — 신청·참여하는 일은 아니에요'
-                                  : '마감이 가까운 것부터 보여 드려요');
-          list.slice(0, S.limit).forEach(iss => box.appendChild(cardEl(iss)));
-          if (list.length > S.limit) {
-            $('#bwMore').innerHTML = `<button class="morebtn">${list.length - S.limit}건 더 보기</button>`;
-            $('#bwMore').querySelector('button').onclick = () => { S.limit += 120; render(); };
-          }
+        const gov = S.grpTab === 'gov';
+        const fresh = gov ? govNew : applyNew, cont = gov ? govOld : applyOld;
+        if (!fresh.length && !cont.length) {
+          note(gov ? '이 조건에 맞는 군정 소식이 없어요' : '이 조건으로 신청·참여할 수 있는 일은 없어요');
+        } else {
+          /* 두 묶음에 각자 한도를 준다 — 하나로 묶으면 새 소식이 한도를 다 먹어
+             '전부터 이어지는 소식'이 아예 화면에 안 나온다 */
+          const sect = (icon, text, list, key) => {
+            if (!list.length) return;
+            sub(icon, text, list.length);
+            list.slice(0, S[key]).forEach(iss => box.appendChild(cardEl(iss)));
+            if (list.length > S[key]) {
+              const b = document.createElement('button'); b.className = 'morebtn';
+              b.textContent = `${list.length - S[key]}건 더 보기`;
+              b.onclick = () => { S[key] += 60; render(); };
+              box.appendChild(b);
+            }
+          };
+          sect('🆕', gov ? '새로 올라온 일' : '새로 올라온 소식', fresh, 'limit');
+          sect('⏳', gov ? '전부터 이어지는 일' : '전에 올라왔지만 아직 신청할 수 있어요', cont, 'onLimit');
         }
       }
     } else if (!rows.length) {
+      $('#bwGrpTabs')?.remove();
       box.innerHTML = '<div class="empty">해당하는 업무가 없습니다</div>'; $('#bwMore').innerHTML = '';
     } else if (CFG.splitAdmin) {
       /* ── 군민용: '내가 할 수 있는 일' 과 '군청이 하는 일' 을 갈라 놓는다 ──
@@ -591,7 +624,7 @@
       /* 조건이 바뀌면 '더 보기'로 늘려 둔 개수를 처음으로 되돌린다 */
       const sig = JSON.stringify([S.scope, S.day, S.month, S.week, S.from, S.to, S.q,
         S.axis, S.custom, S.dept, S.status, S.type, S.annual]);
-      if (sig !== onSig) { S.onLimit = 30; onSig = sig; }
+      if (sig !== onSig) { S.onLimit = 12; onSig = sig; }
       const extra = ongoingExtra(rows);
       if (extra.length) {
         /* 위 목록이 0건이면 '없습니다' 안내는 지운다 — 아래에 보여 줄 게 있으니 */
