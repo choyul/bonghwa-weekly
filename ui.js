@@ -19,9 +19,11 @@
     scope: 'week', month: '', day: '', week: '', from: '', to: '',
     q: '', status: '', dept: '', type: '', annual: false, custom: '', axis: {}, limit: 60,
     onLimit: 30,       /* '지금도 진행 중' 목록에서 한 번에 보여줄 개수 */
-    govOpen: false     /* '군청이 하는 일' 접힘 상태 — 군민용에서만 쓴다 */
+    govOpen: false,    /* '군청이 하는 일' 접힘 상태 — 군민용(옛 방식)에서만 쓴다 */
+    grpTab: 'apply'    /* 갈래 탭 — apply(신청·참여) | gov(군정 소식) | notice(고시·공고) */
   };
   let curIssue = null, simExpanded = false, onSig = '';
+  let GRP_COUNTS = null;   /* 갈래 탭 건수 — 화면(히어로 등)이 읽어 간다 */
 
   /* ───────── 토스트 ───────── */
   let toastT;
@@ -462,11 +464,72 @@
         : S.scope === 'day' ? (() => { const d = BW.d2(S.day); return `${d.getMonth() + 1}월 ${d.getDate()}일(${BW.DOW[d.getDay()]})`; })()
           : S.scope === 'month' ? (() => { const [y, m] = S.month.split('-'); return `${+y}년 ${+m}월`; })()
             : '지난 1년';
-    $('#bwInfo').innerHTML = CFG.listTitle
+    $('#bwInfo').innerHTML = CFG.groupTabs
+      /* 갈래 탭 화면에서는 건수를 탭이 말한다 — 여기 숫자까지 두면 서로 어긋나 보인다 */
+      ? `<span class="listh">${E(scopeLabel)} ${E(CFG.listTitle || '')}</span>`
+      : CFG.listTitle
       ? `<span class="listh">${E(scopeLabel)} ${E(CFG.listTitle)}</span> <span class="hint">${rows.length}건</span>`
       : `${E(scopeLabel)} ${rows.length}건 <span class="hint">· 태그를 누르면 그 조건으로 모아 봅니다</span>`;
     const box = $('#bwCards'); box.innerHTML = '';
-    if (!rows.length) {
+    /* 갈래 탭 화면은 rows 가 0건이어도 탭을 그려야 한다 —
+       '진행 중'에서 끌어오는 것과 고시·공고는 rows 밖에 있기 때문이다. */
+    if (CFG.groupTabs && CFG.splitAdmin) {
+      /* ── 갈래 탭: 한 번에 한 갈래만 ──
+         예전 화면은 [이번 주 신청 가능] [군청이 하는 일] [지금도 진행 중 172건] [고시·공고]가
+         한 두루마리에 이어져 8화면을 넘겼다. '이번 주 계획서에 실렸나 지난 것에 실렸나'는
+         군청 내부 사정일 뿐이라, 기간 안의 것과 아직 진행 중인 것을 합쳐
+         [신청·참여 | 군정 소식 | 고시·공고] 세 갈래로만 가르고 한 갈래씩 보여 준다. */
+      const extra = CFG.ongoingSection ? ongoingExtra(rows) : [];
+      const isApply = iss => CFG.splitAdmin(iss);
+      const endOf = i => (i._range && !i._range.openEnded && (i._range.end || i._range.start)) || '';
+      /* 마감 가까운 순 — ①앞으로 마감될 것(가까운 순) ②막 끝난 것(최근 순) ③기한 없는 상시 */
+      const applyKey = i => { const e = endOf(i);
+        if (!e) return '2~';
+        return e >= TODAY ? '0~' + e : '1~' + (99999999 - +e.replace(/-/g, ''));
+      };
+      const apply = rows.filter(isApply).concat(extra.filter(isApply));
+      apply.sort((a, c) => { const x = applyKey(a), y = applyKey(c); return x < y ? -1 : x > y ? 1 : 0; });
+      const gov = rows.filter(i => !isApply(i)).concat(extra.filter(i => !isApply(i)));
+      const ntN = CFG.noticeTab ? CFG.noticeTab.count() : 0;
+      GRP_COUNTS = { apply: apply.length, gov: gov.length, notice: ntN };
+      const bar = document.createElement('div'); bar.className = 'grptabs'; bar.id = 'bwGrpTabs';
+      bar.innerHTML = [['apply', '📝', '신청·참여', apply.length], ['gov', '🏛', '군정 소식', gov.length],
+        ['notice', '📢', '고시·공고', ntN]].map(([k, i, l, n]) =>
+          `<button type="button" data-g="${k}" class="${S.grpTab === k ? 'on' : ''}">
+             <span class="gi">${i}</span><span class="gl">${l}</span><span class="gn">${n}</span></button>`).join('');
+      bar.querySelectorAll('button').forEach(b => b.onclick = () => {
+        if (S.grpTab === b.dataset.g) return;
+        S.grpTab = b.dataset.g; S.limit = 60;
+        if (CFG.onGroupTab) CFG.onGroupTab(S.grpTab);
+        render();
+        /* 탭은 화면 위에 붙어 있으므로, 갈래를 바꾸면 목록 머리로 돌아간다 */
+        const h = $('#bwInfo'); if (h && h.getBoundingClientRect().top < 0) h.scrollIntoView();
+      });
+      box.appendChild(bar);
+      const note = t => { const d = document.createElement('div'); d.className = 'grpnote'; d.textContent = t; box.appendChild(d); };
+      $('#bwMore').innerHTML = '';
+      if (S.grpTab === 'notice') {
+        if (ntN && CFG.noticeTab) CFG.noticeTab.render(box);
+        else if (CFG.noticeTab && CFG.noticeTab.renderRecent) {
+          /* 고른 기간(예: 오늘)에 새 공고가 없어도 빈 화면으로 두지 않는다 */
+          note('이 기간에 새로 올라온 고시·공고는 없어요 — 최근 것을 보여 드려요');
+          CFG.noticeTab.renderRecent(box);
+        } else note('이 조건에 맞는 고시·공고가 없어요');
+      } else {
+        const list = S.grpTab === 'gov' ? gov : apply;
+        if (!list.length) note(S.grpTab === 'gov' ? '이 조건에 맞는 군정 소식이 없어요'
+                                                  : '이 조건으로 신청·참여할 수 있는 일은 없어요');
+        else {
+          note(S.grpTab === 'gov' ? '군청이 진행하는 일이에요 — 신청·참여하는 일은 아니에요'
+                                  : '마감이 가까운 것부터 보여 드려요');
+          list.slice(0, S.limit).forEach(iss => box.appendChild(cardEl(iss)));
+          if (list.length > S.limit) {
+            $('#bwMore').innerHTML = `<button class="morebtn">${list.length - S.limit}건 더 보기</button>`;
+            $('#bwMore').querySelector('button').onclick = () => { S.limit += 120; render(); };
+          }
+        }
+      }
+    } else if (!rows.length) {
       box.innerHTML = '<div class="empty">해당하는 업무가 없습니다</div>'; $('#bwMore').innerHTML = '';
     } else if (CFG.splitAdmin) {
       /* ── 군민용: '내가 할 수 있는 일' 과 '군청이 하는 일' 을 갈라 놓는다 ──
@@ -524,7 +587,7 @@
        주간계획은 '그 주에 새로 적은 일'만 담기므로, 신청기간이 몇 달씩 이어지는
        사업(문화누리카드·에너지바우처 등)은 첫 주가 지나면 목록에서 사라진다.
        이름을 모르는 사람은 영영 못 찾게 되므로, 기간이 겹치면 이어서 계속 보여준다. */
-    if (CFG.ongoingSection) {
+    if (CFG.ongoingSection && !CFG.groupTabs) {   /* 갈래 탭 화면에서는 탭이 이 목록을 흡수한다 */
       /* 조건이 바뀌면 '더 보기'로 늘려 둔 개수를 처음으로 되돌린다 */
       const sig = JSON.stringify([S.scope, S.day, S.month, S.week, S.from, S.to, S.q,
         S.axis, S.custom, S.dept, S.status, S.type, S.annual]);
@@ -822,6 +885,7 @@
     openSheet, closeSheet, render, toast, setFilter,
     setCustom(name) { S.custom = S.custom === name ? '' : name; S.limit = 60; render(); },
     get state() { return S },
+    get groupCounts() { return GRP_COUNTS },
     ST_LABEL, typeLabel, E
   };
   global.BWUI = { start, toast, api };

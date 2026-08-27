@@ -197,7 +197,13 @@ echo "── 3-8) 내가 할 수 있는 일 / 군청이 하는 일 ──"
 must "$P" "splitAdmin"            "군민용: 목록을 두 갈래로 나눔"
 must "$DEPLOY/ui.js" "CFG.splitAdmin" "엔진: 두 갈래 렌더"
 must "$DEPLOY/ui.js" "군청이 하는 일" "엔진: 접어 둔 군정 소식 구간"
-must "$P" "grp-head"              "군민용: 두 구역 제목"
+# 갈래 탭 — 목록을 [신청·참여|군정 소식|고시·공고] 세 갈래로, 한 번에 한 갈래만
+must "$P" "groupTabs:true"        "군민용: 갈래 탭 켜짐"
+must "$P" "noticeTab"             "군민용: 고시·공고 갈래 연결"
+must "$P" "axesOpen:false"        "군민용: 필터 3종을 한 줄로 접음"
+must "$DEPLOY/ui.js" "CFG.groupTabs"  "엔진: 갈래 탭 렌더"
+must "$DEPLOY/ui.js" "grptabs"        "엔진: 갈래 탭 화면 요소"
+must "$DEPLOY/ui.js" "마감이 가까운 것부터 보여 드려요" "엔진: 신청·참여 마감순 안내"
 # 대상 캐릭터 그림 — 빠지면 이모지로 돌아가 캐릭터가 안 보인다
 CH_MISS=""
 for f in everyone senior kid family farmer youth shop; do
