@@ -216,7 +216,13 @@ class Bag:
         self.cutoff, self.by_url, self.by_title, self.dropped = cutoff, {}, {}, 0
 
     def add(self, title, url, dt):
-        """담았으면 True. 봉화 기사가 아니거나 오래됐거나 이미 있으면 False."""
+        """담았으면 True. 봉화 기사가 아니거나 오래됐거나 이미 있으면 False.
+
+        같은 기사가 여러 곳에 실렸을 때는 **먼저 보도한 곳**을 남긴다.
+        예전에는 '먼저 훑은 곳'이 이겼는데, 그러면 RSS_FEEDS 배열 첫 줄에 있는
+        매체가 언제나 이긴다 — 우리가 만든 편향이라 고쳤다.
+        수집 순서를 바꿔도 결과가 같아야 한다(그래야 언론사에 떳떳하다).
+        """
         if not title or not url.startswith("http") or dt is None:
             return False
         if dt < self.cutoff:
@@ -225,8 +231,13 @@ class Bag:
             self.dropped += 1
             return False
         nu, tk = norm_url(url), title_key(title)
-        if nu in self.by_url or tk in self.by_title:
-            return False
+        old = self.by_url.get(nu) or self.by_title.get(tk)
+        if old is not None:
+            if int(dt.timestamp()) >= old["ts"]:
+                return False                      # 이미 있는 쪽이 더 먼저 보도했다
+            # 새로 온 것이 더 먼저 보도한 기사 → 옛것을 걷어내고 갈아 끼운다
+            self.by_url = {k: v for k, v in self.by_url.items() if v is not old}
+            self.by_title = {k: v for k, v in self.by_title.items() if v is not old}
         rec = {
             "id": hashlib.sha1(nu.encode("utf-8")).hexdigest()[:12],
             "t": title,

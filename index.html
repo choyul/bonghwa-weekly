@@ -85,6 +85,8 @@ footer{max-width:430px}
  .h-mas{width:94px;height:94px}
 }
 .h-title b{color:#FFF3B8}
+.h-title .h-sub{display:block;font-size:calc(13.5px*var(--fsx));font-weight:600;opacity:.92;
+ margin-top:7px;letter-spacing:-.01em;line-height:1.5}
 .h-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;position:relative;z-index:1}
 .h-stat{background:rgba(255,255,255,.15);border-radius:12px;padding:11px 8px;text-align:center;color:#fff;
  border:1px solid rgba(255,255,255,.15);font-family:inherit;cursor:pointer;transition:transform .15s}
@@ -174,6 +176,14 @@ body.fs2{--fsx:1.26}
 .tabbar .lb{font-size:calc(11.5px*var(--fsx))}
 footer{font-size:calc(14px*var(--fsx))}
 .nrow,.ntbody{font-size:calc(15px*var(--fsx))}
+/* 언론속봉화 — 여기 없으면 [설정]의 글씨 크기가 이 화면에만 안 먹는다 */
+.nw-title{font-size:calc(15px*var(--fsx))}
+.nw-meta{font-size:calc(13px*var(--fsx))}
+.nw-out{font-size:calc(12px*var(--fsx))}
+.nw-badge{font-size:calc(11.5px*var(--fsx))}
+.nw-empty{font-size:calc(14px*var(--fsx))}
+.nw-note{font-size:calc(12.5px*var(--fsx))}
+.nw-search input{font-size:calc(15px*var(--fsx))}
 
 /* ── 바탕화면 바로가기 안내 ── */
 .a2-steps{margin:2px 0 6px;padding:0 18px 0 38px;font-size:calc(15px*var(--fsx));line-height:1.85;color:var(--ink)}
@@ -1849,26 +1859,52 @@ function init(){
   wrap.insertBefore(el, tabs?tabs.nextSibling:wrap.firstChild);
   el.onclick=e=>{
    const b=e.target.closest('.h-stat'); if(!b)return;
-   if(b.dataset.k==='ev'){ if(EV.length)setMode('event'); }
-   else { setMode('work'); if(b.dataset.k==='nt'){const s=document.getElementById('ntSection'); if(s)s.scrollIntoView({behavior:'smooth',block:'start'});} }
+   if(b.dataset.k==='ev'){ if(EV.length)setMode('event'); return; }
+   setMode('work');
+   /* '마감 임박'에는 따로 갈 곳이 없다 — 없는 곳으로 데려가느니 소식 목록으로 보낸다.
+      ('지금도 신청·진행 중' 구간은 이번 주 마감과 다른 목록이라 숫자가 어긋난다) */
+   if(b.dataset.k==='nt')setTimeout(()=>{const s=document.getElementById('ntSection');
+     if(s)s.scrollIntoView({behavior:'smooth',block:'start'});},120);
   };
   syncHero();
+ }
+ /* ── 첫 화면 요약 ──
+    예전에는 '이번 주 93개 소식'이라고 했는데, 그 93은 군청이 한 일의 개수라
+    군민에게는 뜻이 없었다(66건 중 신청·참여할 수 있는 것은 18건뿐).
+    그래서 '내가 할 수 있는 일'과 '언제까지인지'를 말하도록 바꾼다. */
+ function heroNums(days){
+  const wk=BWUI.api.issues.filter(i=>i.list.some(o=>o.week===VIEW_WEEK));
+  const today=BWUI.api.today;
+  let open=0, soon=0;
+  wk.forEach(i=>{
+   const c=tag(i);
+   if(c.score>0)open++;                       /* 군민이 신청·참여할 수 있는 일 */
+   const r=BW.parseDateRange(c.item,c.week);  /* 마감이 이 주 안에 남아 있는 일 */
+   if(r&&r.end&&days.indexOf(r.end)>=0&&r.end>=today)soon++;
+  });
+  return {work:wk.length, open, soon};
  }
  function syncHero(){
   const el=document.getElementById('hero'); if(!el)return;
   const days=daysOf(VIEW_WEEK), a=BW.d2(days[0]), b=BW.d2(days[6]);
   const f=d=>`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
   const nEv=EV.filter(e=>days.includes(e.date)).length;
-  const nWork=BWUI.api.issues.filter(i=>i.list.some(o=>o.week===VIEW_WEEK)).length;
+  const N=heroNums(days), nWork=N.work;
+  /* 신청할 수 있는 일이 하나도 없는 주(지난 주간을 넘겨볼 때 등)에는 예전 문장으로 돌아간다 */
   const nNt=(NOTICES||[]).filter(n=>days.includes(n.date)).length;
+  const title = N.open
+    ? `이번 주,<br>신청할 수 있는 일이<br><b>${N.open}개</b> 있어요` +
+      (N.soon?`<span class="h-sub">${N.soon}개가 이번 주 안에 마감돼요</span>`
+             :`<span class="h-sub">이번 주 마감은 없어요 — 편히 둘러보세요</span>`)
+    : `이번 주,<br>봉화에는 <b>${nEv+nWork+nNt}개</b><br>소식이 있어요`;
   el.innerHTML=`
     <div class="h-week">${f(a)} → ${f(b).slice(5)}</div>
-    <div class="h-title">이번 주,<br>봉화에는 <b>${nEv+nWork+nNt}개</b><br>소식이 있어요</div>
+    <div class="h-title">${title}</div>
     <img class="h-mas" src="${MASCOT_SRC}" alt="" aria-hidden="true" decoding="async">
     <div class="h-stats">
       <button class="h-stat" data-k="ev"><div class="h-stat-n">${nEv}</div><div class="h-stat-l">🎪 행사</div></button>
       <button class="h-stat" data-k="wk"><div class="h-stat-n">${nWork}</div><div class="h-stat-l">📋 업무</div></button>
-      <button class="h-stat" data-k="nt"><div class="h-stat-n">${nNt}</div><div class="h-stat-l">📢 공고</div></button>
+      <button class="h-stat" data-k="on"><div class="h-stat-n">${N.soon}</div><div class="h-stat-l">⏰ 마감 임박</div></button>
     </div>`;
  }
  /* ── 하단 탭바 — 디자인의 5개 탭을 이 앱에 실제로 있는 기능에 이어 붙인다 ── */
