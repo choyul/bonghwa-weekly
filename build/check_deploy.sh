@@ -174,6 +174,13 @@ must "$P" "splitAdmin"            "군민용: 목록을 두 갈래로 나눔"
 must "$DEPLOY/ui.js" "CFG.splitAdmin" "엔진: 두 갈래 렌더"
 must "$DEPLOY/ui.js" "군청이 하는 일" "엔진: 접어 둔 군정 소식 구간"
 must "$P" "grp-head"              "군민용: 두 구역 제목"
+# 대상 캐릭터 그림 — 빠지면 이모지로 돌아가 캐릭터가 안 보인다
+CH_MISS=""
+for f in everyone senior kid family farmer youth shop; do
+  if [ ! -s "$DEPLOY/char/$f.webp" ]; then CH_MISS="$CH_MISS $f"; fi
+done
+if [ -n "$CH_MISS" ]; then no "대상 캐릭터 그림이 빠졌습니다:$CH_MISS"
+else ok "대상 캐릭터 그림 7장 모두 있음"; fi
 must "$DEPLOY/ui.js" "grp-head mine"  "엔진: '신청·참여할 수 있는 일' 제목"
 # 대상은 캐릭터로 그려 둔 일곱 갈래만 — 없앤 갈래가 되살아나면 캐릭터와 어긋난다
 AUDBLK=$(sed -n '/const MERGED_AUD=/,/^ \];/p' "$P")
