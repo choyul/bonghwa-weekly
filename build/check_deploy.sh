@@ -24,7 +24,9 @@ echo "── 1) 소스 ↔ 배포본이 같은지 ──"
 for pair in "public.html:index.html" "mayor.html:mayor.html" "staff.html:staff.html" "ui.js:ui.js" "core.js:core.js" "ui.css:ui.css"; do
   s="${pair%%:*}"; d="${pair##*:}"
   if [ ! -f "$DEPLOY/$d" ]; then no "$d 가 배포 폴더에 없음"; continue; fi
-  if diff -q "$SRC/$s" "$DEPLOY/$d" >/dev/null 2>&1; then ok "$s = $d"
+  # 배포할 때 파일 주소에 버전 도장(?v=…)을 찍으므로 그것만 지우고 견준다
+  if diff -q <(sed -E 's/\?v=[0-9a-f]+//g' "$SRC/$s") <(sed -E 's/\?v=[0-9a-f]+//g' "$DEPLOY/$d") >/dev/null 2>&1; then
+    ok "$s = $d"
   else no "$s 와 $d 가 다름 — 복사가 누락됐습니다"; fi
 done
 
@@ -122,6 +124,29 @@ must "$P" "morePf"              "군민용: 설정 - 내 소식 맞춤 설정"
 if grep -q 'class="bw-sub"' "$P"; then no "군민용: 헤더 부제가 되살아남 — 헤더는 한 줄로 유지"
 else ok "군민용: 헤더가 한 줄(부제 없음)"; fi
 
+echo "── 3-7-2) 언론속봉화 — 고지문·상세안내·형평성 ──"
+# 남의 저작물을 다루는 화면이라, 안내가 사실과 어긋나면 기능이 빠지는 것보다 위험하다.
+# 실제로 수집 방식을 바꾸고 고지문을 안 고쳐서 '네이버로 하루 한 번' 이라는
+# 거짓 문구가 한동안 올라가 있었다 — 그 재발을 여기서 막는다.
+if grep -q "네이버 뉴스 검색으로 하루 한 번" "$P"; then
+  no "군민용: 고지문이 낡은 수집 방식(네이버·하루 한 번)을 말하고 있습니다"
+else ok "군민용: 고지문이 낡은 수집 방식을 말하지 않음"; fi
+must "$P" "각 언론사가 공개해 둔 RSS를"  "군민용: 고지문이 실제 수집 방식을 밝힘"
+must "$P" "사람이 기사를 고르거나 순서를 바꾸지 않습니다" "군민용: 고지문이 사람 개입 없음을 밝힘"
+must "$P" "news-about.html"              "군민용: 상세 안내로 가는 링크"
+if [ ! -s "$DEPLOY/news-about.html" ]; then no "news-about.html 이 배포 폴더에 없습니다 — 안내 링크가 깨집니다"
+elif ! diff -q "$SRC/news-about.html" "$DEPLOY/news-about.html" >/dev/null 2>&1; then
+  no "news-about.html 이 소스와 배포본에서 다름"
+else ok "news-about.html 소스=배포본"; fi
+must "$SRC/news-about.html" "경북신문"    "안내: 빠진 언론사를 실명으로 밝힘"
+must "$SRC/news-about.html" "먼저 보도한 곳" "안내: 중복 처리 기준을 밝힘"
+must "$SRC/news-about.html" "D.feeds"     "안내: 받는 언론사 목록을 news.js 에서 읽음(손으로 안 적음)"
+# 형평성 — 중복 제거가 '먼저 훑은 곳'으로 되돌아가면 배열 첫 매체가 늘 이긴다
+must "$SRC/build/fetch_news.py" "먼저 보도한 곳" "수집: 중복은 먼저 보도한 곳을 남김(순서 무관)"
+must "$SRC/build/fetch_news.py" "RSS_SOURCES"   "수집: 언론사 이름+주소를 한 곳에서 관리"
+# 글씨 크기 — 등록 안 하면 그 화면에만 안 먹는다 (실제로 뉴스 화면이 빠져 있었다)
+must "$P" ".nw-title{font-size:calc"  "군민용: 언론속봉화도 글씨 크기 조절 대상"
+
 echo "── 3-8) 첫 화면 요약 문구 ──"
 # '93개 소식' 은 군청이 한 일의 개수라 군민에게 뜻이 없었다 — 되돌아가면 안 된다
 must "$P" "function heroNums"              "군민용: 신청 가능·마감 임박 세기"
@@ -138,6 +163,13 @@ must "$P" "splitAdmin"            "군민용: 목록을 두 갈래로 나눔"
 must "$DEPLOY/ui.js" "CFG.splitAdmin" "엔진: 두 갈래 렌더"
 must "$DEPLOY/ui.js" "군청이 하는 일" "엔진: 접어 둔 군정 소식 구간"
 must "$P" "gov-toggle"            "군민용: 펼쳐 보기 버튼 모양"
+
+echo "── 3-9) 파일 짝이 어긋나지 않는지 ──"
+# 버전 표시가 없으면 '새 index.html + 옛 ui.js' 가 만들어져 고친 기능이 안 보인다
+for a in ui.js core.js ui.css; do
+  if grep -qE "(src|href)=\"$a\?v=[0-9a-f]+\"" "$P"; then ok "$a 에 버전 도장이 찍힘"
+  else no "$a 에 버전 도장이 없습니다 — 캐시 때문에 고친 것이 안 보일 수 있습니다"; fi
+done
 
 echo "── 4) 전화 걸기 ──"
 must "$DEPLOY/mayor.html" "navigator.contacts" "군수용: 저장된 연락처 선택(안드로이드)"
@@ -163,7 +195,7 @@ echo "── 6) 이용 통계가 살아 있는지 ──"
 if [ ! -s "$DEPLOY/analytics.js" ]; then no "analytics.js 가 배포 폴더에 없습니다"
 elif ! diff -q "$SRC/analytics.js" "$DEPLOY/analytics.js" >/dev/null 2>&1; then no "analytics.js 가 소스와 배포본에서 다름"
 else ok "analytics.js 소스=배포본"; fi
-must "$P" 'src="analytics.js"'   "군민용: 수집기 로드"
+must "$P" 'src="analytics.js'    "군민용: 수집기 로드"
 must "$P" "const AV=(n,k,t)=>"   "군민용: 통계 호출 도우미(화면)"
 must "$P" "const AA=(n,k,t)=>"   "군민용: 통계 호출 도우미(누름)"
 must "$P" "AV('소식상세'"        "군민용: 소식 상세 기록"

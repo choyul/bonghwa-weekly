@@ -22,8 +22,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icon-m192.png">
 <!-- 토큰은 반드시 ui.css보다 먼저 로드한다 -->
-<link rel="stylesheet" href="bonghwa-tokens.css">
-<link rel="stylesheet" href="ui.css">
+<link rel="stylesheet" href="bonghwa-tokens.css?v=b3e2a291">
+<link rel="stylesheet" href="ui.css?v=104d50e4">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
 /* ═══════════════════════════════════════════════════════════════
@@ -146,44 +146,8 @@ footer{max-width:430px}
 :root{--fsx:1}
 body.fs1{--fsx:1.13}
 body.fs2{--fsx:1.26}
-#bwCards .card .top h3{font-size:calc(18px*var(--fsx));line-height:1.45}
-#bwCards .card .meta{font-size:calc(14.5px*var(--fsx))}
-.tag{font-size:calc(13px*var(--fsx))!important;padding:4px 9px!important}
-.axis .axh{font-size:calc(18px*var(--fsx))}
-.axcard .lb,.axchip,.rchip{font-size:calc(14.5px*var(--fsx))!important}
-.axcard .n{font-size:calc(13px*var(--fsx))}
-#bwInfo .listh{font-size:calc(18px*var(--fsx))}
-#bwInfo .hint{font-size:calc(15px*var(--fsx))}
-.h-title{font-size:calc(24px*var(--fsx))}
-.h-week{font-size:calc(13.5px*var(--fsx))}
-.h-stat-n{font-size:calc(22px*var(--fsx))}
-.h-stat-l{font-size:calc(12.5px*var(--fsx))}
-.ws-title{font-size:calc(17px*var(--fsx))}
-.calday .d{font-size:calc(19px*var(--fsx))}
-.calday .dow{font-size:calc(12.5px*var(--fsx))}
-.calday .cnt{font-size:calc(11.5px*var(--fsx))}
-.ws-scopes button{font-size:calc(15px*var(--fsx))}
-.ps-text{font-size:calc(17px*var(--fsx))}
-.ev-title,.ev-time{font-size:calc(17px*var(--fsx))}
-.ev-meta{font-size:calc(14.5px*var(--fsx))}
-.ev-kinds button,.ev-span button{font-size:calc(15px*var(--fsx))}
-.ev-head h2{font-size:calc(18px*var(--fsx))}
-.shd h2{font-size:calc(21px*var(--fsx))}
-.sbd,.glist{font-size:calc(16.5px*var(--fsx))}
-.glist dt{font-size:calc(14.5px*var(--fsx))}
-.feed-divider{font-size:calc(14.5px*var(--fsx))}
-.modetabs button{font-size:calc(16px*var(--fsx))}
-.tabbar .lb{font-size:calc(11.5px*var(--fsx))}
-footer{font-size:calc(14px*var(--fsx))}
-.nrow,.ntbody{font-size:calc(15px*var(--fsx))}
 /* 언론속봉화 — 여기 없으면 [설정]의 글씨 크기가 이 화면에만 안 먹는다 */
-.nw-title{font-size:calc(15px*var(--fsx))}
-.nw-meta{font-size:calc(13px*var(--fsx))}
-.nw-out{font-size:calc(12px*var(--fsx))}
-.nw-badge{font-size:calc(11.5px*var(--fsx))}
-.nw-empty{font-size:calc(14px*var(--fsx))}
-.nw-note{font-size:calc(12.5px*var(--fsx))}
-.nw-search input{font-size:calc(15px*var(--fsx))}
+.nw-more{display:inline-block;margin-top:8px;color:var(--acc);font-weight:800;text-decoration:none}
 
 /* ── 바탕화면 바로가기 안내 ── */
 .a2-steps{margin:2px 0 6px;padding:0 18px 0 38px;font-size:calc(15px*var(--fsx));line-height:1.85;color:var(--ink)}
@@ -520,6 +484,51 @@ body:not(.mode-news) #nwView{display:none}
 @media (prefers-reduced-motion:reduce){
  #intro .intro-mascot,#intro .intro-text,#intro .intro-sub,#intro .intro-btn{animation:none}
 }
+
+/* ── 글씨 크기 실제 적용 ──────────────────────────────────────────
+   이 규칙들은 반드시 **스타일 맨 끝**에 있어야 한다.
+   위쪽에 두면 .nw-title{font-size:15px} 처럼 뒤에 나오는 같은 굵기의 규칙이 이겨서
+   [설정]에서 글씨를 키워도 그 화면만 그대로 남는다.
+   실제로 그렇게 돼서 모드탭·푸터·행사제목·언론속봉화 등 14곳이 안 커지고 있었다.
+   새 화면을 만들면 여기에 한 줄 더한다 — 위가 아니라 여기다. ── */
+#bwCards .card .top h3{font-size:calc(18px*var(--fsx));line-height:1.45}
+#bwCards .card .meta{font-size:calc(14.5px*var(--fsx))}
+.tag{font-size:calc(13px*var(--fsx))!important;padding:4px 9px!important}
+.axis .axh{font-size:calc(18px*var(--fsx))}
+.axcard .lb,.axchip,.rchip{font-size:calc(14.5px*var(--fsx))!important}
+.axcard .n{font-size:calc(13px*var(--fsx))}
+#bwInfo .listh{font-size:calc(18px*var(--fsx))}
+#bwInfo .hint{font-size:calc(15px*var(--fsx))}
+.h-title{font-size:calc(24px*var(--fsx))}
+.h-week{font-size:calc(13.5px*var(--fsx))}
+.h-stat-n{font-size:calc(22px*var(--fsx))}
+.h-stat-l{font-size:calc(12.5px*var(--fsx))}
+.ws-title{font-size:calc(17px*var(--fsx))}
+.calday .d{font-size:calc(19px*var(--fsx))}
+.calday .dow{font-size:calc(12.5px*var(--fsx))}
+.calday .cnt{font-size:calc(11.5px*var(--fsx))}
+.ws-scopes button{font-size:calc(15px*var(--fsx))}
+.ps-text{font-size:calc(17px*var(--fsx))}
+.ev-title,.ev-time{font-size:calc(17px*var(--fsx))}
+.ev-meta{font-size:calc(14.5px*var(--fsx))}
+.ev-kinds button,.ev-span button{font-size:calc(15px*var(--fsx))}
+.ev-head h2{font-size:calc(18px*var(--fsx))}
+.shd h2,.sheet .shd h2{font-size:calc(21px*var(--fsx))}   /* ui.css 의 '.sheet .shd h2' 가 더 구체적이라 함께 적는다 */
+.sbd,.glist{font-size:calc(16.5px*var(--fsx))}
+.glist dt{font-size:calc(14.5px*var(--fsx))}
+.feed-divider{font-size:calc(14.5px*var(--fsx))}
+.modetabs button{font-size:calc(16px*var(--fsx))}
+.tabbar .lb{font-size:calc(11.5px*var(--fsx))}
+footer{font-size:calc(14px*var(--fsx))}
+.nrow,.ntbody{font-size:calc(15px*var(--fsx))}
+.nw-title{font-size:calc(15px*var(--fsx))}
+.nw-meta{font-size:calc(13px*var(--fsx))}
+.nw-out{font-size:calc(12px*var(--fsx))}
+.nw-badge{font-size:calc(11.5px*var(--fsx))}
+.nw-empty{font-size:calc(14px*var(--fsx))}
+.nw-note{font-size:calc(12.5px*var(--fsx))}
+.nw-search input{font-size:calc(15px*var(--fsx))}
+
 </style>
 <script>
 /* 안드로이드 계열은 '바탕화면에 추가' 안내를 페이지가 뜨자마자 한 번 보낸다.
@@ -552,9 +561,9 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
  이름·전화번호·아이피는 저장하지 않습니다.
  원치 않으시면 <a href="?nostat=1">여기를 누르세요</a> — 이 기기에서는 모으지 않습니다.</span>
 </footer>
-<script src="analytics.js"></script>
-<script src="core.js"></script>
-<script src="ui.js"></script>
+<script src="analytics.js?v=884013ee"></script>
+<script src="core.js?v=28380ee5"></script>
+<script src="ui.js?v=3db994b3"></script>
 <script>
 /* data.js(필수) → notices.js(고시·공고) → events.js(주간행사) → news.js(봉화 뉴스) → init
    뒤의 셋은 없거나 실패해도 화면은 뜬다 */
@@ -2163,8 +2172,9 @@ function init(){
       제목을 누르면 <b>그 기사를 쓴 언론사 홈페이지</b>로 새 창이 열립니다.
       이 화면은 제목·언론사·날짜만 모아 두는 곳이고, 기사 내용은 담고 있지 않습니다.
       <b>기사의 저작권은 각 언론사에 있습니다.</b><br>
-      네이버 뉴스 검색으로 하루 한 번 모으며, 봉화군 공식 발표가 아닙니다.
-      빼기를 원하시는 언론사는 봉화군청 도시계획과로 알려 주시면 바로 내리겠습니다.
+      각 언론사가 공개해 둔 RSS를 2시간마다 받아, 제목에 '봉화'가 들어간 것만 자동으로 추립니다.
+      <b>사람이 기사를 고르거나 순서를 바꾸지 않습니다.</b> 봉화군 공식 발표가 아닙니다.
+      <a class="nw-more" href="news-about.html" target="_blank" rel="noopener noreferrer">어떻게 모으나요? ›</a>
     </div>`;
   const anchor=document.getElementById('bwInfo')||document.getElementById('bwCards');
   wrap.insertBefore(el,anchor);

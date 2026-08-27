@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>언론속봉화는 이렇게 모읍니다 — 오늘의 봉화</title>
+<meta name="description" content="'오늘의 봉화'의 언론속봉화 목록이 어떤 방식으로 모이는지, 어떤 언론사가 들어오고 왜 빠지는지 알려 드립니다.">
+<meta name="robots" content="index,follow">
+<meta property="og:title" content="언론속봉화는 이렇게 모읍니다">
+<meta property="og:description" content="제목·언론사·날짜·원문주소만 모읍니다. 기사 내용은 담지 않습니다.">
+<meta property="og:site_name" content="오늘의 봉화">
+<link rel="stylesheet" href="bonghwa-tokens.css">
+<style>
+/* 앱 안이 아니라 혼자 열리는 문서다. 언론사 담당자가 컴퓨터로 볼 수도 있어
+   글자를 넉넉히 두고, 어두운 화면에서도 흰 바탕으로 고정한다. */
+:root{color-scheme:light}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bh-bg,#F7F6F1); color:var(--bh-ink,#1A1D22);
+  font-family:var(--bh-font,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif);
+  line-height:1.75; font-size:16px; word-break:keep-all;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:720px;margin:0 auto;padding:0 18px 60px}
+
+header.top{
+  background:var(--bh-paper,#fff); border-bottom:1px solid var(--bh-line,#E3E2DB);
+  padding:calc(10px + env(safe-area-inset-top)) 18px 10px; margin-bottom:26px;
+}
+header.top .in{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.back{
+  display:inline-flex;align-items:center;gap:5px;text-decoration:none;
+  color:var(--bh-primary,#1F4B3F);font-weight:700;font-size:15px;
+}
+.brand{margin-left:auto;font-size:13px;color:var(--bh-sub,#5B6470);font-weight:700}
+
+h1{font-size:26px;line-height:1.35;margin:22px 0 8px;letter-spacing:-.02em}
+.lead{color:var(--bh-sub,#5B6470);font-size:15.5px;margin:0 0 30px}
+
+section{
+  background:var(--bh-paper,#fff);border:1px solid var(--bh-line,#E3E2DB);
+  border-radius:14px;padding:20px 20px 22px;margin-bottom:16px;
+}
+h2{font-size:18.5px;margin:0 0 12px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+h2 .ic{font-size:20px;line-height:1}
+p{margin:0 0 11px}
+p:last-child{margin-bottom:0}
+ul{margin:0;padding-left:20px}
+li{margin-bottom:7px}
+li:last-child{margin-bottom:0}
+b,strong{font-weight:800}
+.q{color:var(--bh-primary,#1F4B3F)}
+
+/* 담는 것 / 안 담는 것을 한눈에 */
+.two{display:grid;grid-template-columns:1fr;gap:10px;margin-top:4px}
+@media(min-width:560px){.two{grid-template-columns:1fr 1fr}}
+.box{border:1px solid var(--bh-line-2,#EEEDE7);border-radius:11px;padding:13px 15px}
+.box.yes{background:var(--bh-primary-soft,#E8F0EC);border-color:#CFE0D7}
+.box.no{background:var(--bh-warn-soft,#FBEAE7);border-color:#F0D6D1}
+.box .h{font-weight:800;font-size:14.5px;margin-bottom:6px}
+.box.yes .h{color:var(--bh-primary,#1F4B3F)}
+.box.no .h{color:var(--bh-warn,#B23A2F)}
+.box ul{padding-left:17px;font-size:14.5px}
+
+/* 받고 있는 언론사 목록 (news.js 에서 읽어 그린다) */
+#feeds{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+#feeds a{
+  display:inline-block;padding:7px 13px;border-radius:100px;text-decoration:none;
+  background:var(--bh-bg,#F7F6F1);border:1px solid var(--bh-line,#E3E2DB);
+  color:var(--bh-ink-2,#3A414A);font-size:14.5px;font-weight:700;
+}
+#feeds a:hover{background:var(--bh-primary-tint,#F1F6F3);border-color:var(--bh-primary,#1F4B3F)}
+.cnt{font-size:13.5px;color:var(--bh-sub,#5B6470);font-weight:700;margin-left:2px}
+
+.note{
+  font-size:14.5px;color:var(--bh-sub,#5B6470);
+  border-left:3px solid var(--bh-line,#E3E2DB);padding-left:13px;margin-top:13px;
+}
+
+/* 언론사 연락 */
+.contact{background:var(--bh-primary-soft,#E8F0EC);border-color:#CFE0D7}
+.cbtn{
+  display:inline-flex;align-items:center;gap:8px;margin-top:6px;
+  background:var(--bh-primary,#1F4B3F);color:#fff;text-decoration:none;
+  padding:14px 22px;border-radius:12px;font-weight:800;font-size:16px;
+}
+.cbtn:hover{background:var(--bh-primary-ink,#143128)}
+
+footer{margin-top:28px;font-size:13.5px;color:var(--bh-sub-2,#8A929C);text-align:center;line-height:1.8}
+footer a{color:var(--bh-sub,#5B6470)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="in">
+    <a class="back" href="./">‹ 오늘의 봉화로 돌아가기</a>
+    <span class="brand">오늘의 봉화</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+<h1>언론속봉화는<br>이렇게 모읍니다</h1>
+<p class="lead">
+  이 화면은 봉화 관련 기사의 <b>제목과 링크만</b> 모아 두는 곳입니다.
+  어떻게 모으는지, 어떤 언론사가 들어오고 왜 빠지는지 숨김없이 알려 드립니다.
+</p>
+
+<section>
+  <h2><span class="ic">📄</span>무엇을 담나요</h2>
+  <div class="two">
+    <div class="box yes">
+      <div class="h">담는 것</div>
+      <ul>
+        <li>기사 제목</li>
+        <li>언론사 이름</li>
+        <li>보도 날짜</li>
+        <li>원문 주소</li>
+      </ul>
+    </div>
+    <div class="box no">
+      <div class="h">담지 않는 것</div>
+      <ul>
+        <li>기사 본문</li>
+        <li>요약문 · 첫 문단</li>
+        <li>사진 · 그림</li>
+        <li>기자 이름</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note">
+    제목을 누르면 그 기사를 쓴 <b>언론사 홈페이지로 바로 이동</b>합니다.
+    기사를 이 화면 안에서 읽을 수 있게 하지 않습니다.
+    <b>기사의 저작권은 각 언론사에 있습니다.</b>
+  </p>
+</section>
+
+<section>
+  <h2><span class="ic">⚙️</span>어떻게 모으나요</h2>
+  <ul>
+    <li>각 언론사가 <b>누구나 받아 가도록 공개해 둔 RSS</b>를
+        <b id="every">2시간</b>마다 받습니다.</li>
+    <li>언론사 홈페이지를 훑거나 기사를 긁어 오지 <b>않습니다.</b></li>
+    <li>받은 제목 중 <b class="q">'봉화'</b>가 들어간 것만 자동으로 남깁니다.</li>
+    <li><b>사람이 기사를 고르거나 순서를 바꾸지 않습니다.</b> 날짜순으로만 놓습니다.</li>
+    <li>같은 기사가 여러 곳에 실리면 <b>먼저 보도한 곳</b>을 남깁니다.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="ic">📰</span>지금 받고 있는 곳 <span class="cnt" id="feedCnt"></span></h2>
+  <div id="feeds">받아 오는 중…</div>
+  <p class="note">
+    언론사 이름을 누르면 그 언론사의 RSS 주소가 열립니다 — 저희가 무엇을 받아 가는지
+    그대로 확인하실 수 있습니다.
+  </p>
+</section>
+
+<section>
+  <h2><span class="ic">❓</span>왜 어떤 언론사는 안 보이나요</h2>
+  <p>
+    <b>RSS를 공개하지 않은 언론사는 이 목록에 들어올 수 없습니다.</b>
+    자동으로 받아 갈 통로가 없기 때문입니다.
+    저희가 언론사를 고르거나 빼는 것이 아닙니다.
+  </p>
+  <p>
+    봉화 기사를 많이 쓰시는 <b>경북신문</b>도 이 때문에 빠져 있습니다.
+    홈페이지를 긁어 오면 담을 수 있지만, 그렇게 하지 않기로 정했습니다.
+  </p>
+  <p class="note">
+    RSS를 열어 두셨는데 목록에 없다면 알려 주세요. 확인하고 바로 넣겠습니다.
+  </p>
+</section>
+
+<section>
+  <h2><span class="ic">📊</span>왜 어떤 곳이 유독 많아 보이나요</h2>
+  <p>
+    <b>RSS에 담아 두는 기사의 양이 언론사마다 다르기 때문입니다.</b>
+    최근 일주일치를 담아 두는 곳이 있고, 최근 하루치만 담아 두는 곳이 있습니다.
+    많이 담아 두는 곳의 기사가 처음에 더 많이 들어옵니다.
+  </p>
+  <p>
+    <b>보도량이 많아서가 아니라, 받아 올 수 있는 기간이 길어서 생기는 차이입니다.</b>
+    시간이 지나 쌓이면 실제 보도량에 가깝게 맞춰집니다.
+  </p>
+</section>
+
+<section class="contact">
+  <h2><span class="ic">✉️</span>언론사에서 연락 주실 곳</h2>
+  <ul>
+    <li><b>넣어 주기를 원하시면</b> — RSS 주소를 알려 주세요. 확인하고 바로 넣겠습니다.</li>
+    <li><b>빼기를 원하시면</b> — 알려 주세요. 확인 즉시 내리겠습니다. 이유를 여쭙지 않습니다.</li>
+    <li><b>잘못된 내용이 있으면</b> — 제목이 틀렸거나 링크가 엉뚱한 곳으로 가면 알려 주세요.</li>
+  </ul>
+  <p id="cwrap" style="margin-top:14px"></p>
+</section>
+
+<footer>
+  이 화면은 봉화군의 공식 보도자료가 아닙니다.<br>
+  기사의 저작권은 각 언론사에 있습니다.<br>
+  <a href="./">오늘의 봉화</a>
+</footer>
+
+</div>
+
+<script>
+/* ══ 언론사에서 연락 주실 곳 ══════════════════════════════════════════
+   FORM 에 구글 폼 주소를 넣으면 그 단추가 뜬다. 비워 두면 아래 안내 문구만 나온다.
+   ※ 실제로 존재하지 않는 메일 주소(예: 봉화군 도메인의 미개설 주소)를 적지 말 것 —
+     언론사가 보낸 메일이 반송되면 연락 창구가 없는 것보다 나쁘다.           */
+var FORM = '';
+/* ══════════════════════════════════════════════════════════════════ */
+
+(function(){
+  var w = document.getElementById('cwrap');
+  if (FORM) {
+    var a = document.createElement('a');
+    a.className = 'cbtn'; a.href = FORM;
+    a.target = '_blank'; a.rel = 'noopener noreferrer';
+    a.textContent = '✉️ 언론사 요청 보내기';
+    w.appendChild(a);
+    var s = document.createElement('div');
+    s.style.cssText = 'font-size:13.5px;color:#5B6470;margin-top:9px';
+    s.textContent = '매체 이름과 연락처만 남겨 주시면 됩니다. 로그인은 필요 없습니다.';
+    w.appendChild(s);
+  } else {
+    w.innerHTML = '<span style="font-size:14.5px;color:#5B6470">'
+      + '연락 창구를 준비하고 있습니다. 준비되는 대로 이 자리에 올리겠습니다.</span>';
+  }
+})();
+
+/* 받고 있는 언론사 목록은 news.js 가 실어 보낸 것을 그대로 그린다.
+   손으로 두 군데 적으면 반드시 어긋나므로 여기서 만들지 않는다. */
+(function(){
+  var s = document.createElement('script');
+  s.src = 'news.js?v=' + Date.now();
+  s.onload = draw; s.onerror = draw;
+  document.head.appendChild(s);
+
+  function draw(){
+    var box = document.getElementById('feeds'),
+        cnt = document.getElementById('feedCnt'),
+        D = window.BW_NEWS || {},
+        list = D.feeds || [];
+    if (D.everyHours) document.getElementById('every').textContent = D.everyHours + '시간';
+    if (!list.length) {
+      box.textContent = '목록을 불러오지 못했습니다.';
+      return;
+    }
+    cnt.textContent = list.length + '곳';
+    box.innerHTML = '';
+    list.forEach(function(f){
+      var a = document.createElement('a');
+      a.href = f.u; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.textContent = f.p;
+      a.title = f.u;
+      box.appendChild(a);
+    });
+    if (D.naver) {
+      var n = document.createElement('p');
+      n.className = 'note';
+      n.innerHTML = '위 언론사 RSS에 더해 <b>네이버 뉴스 검색</b>으로도 모으고 있습니다. '
+                  + '이때도 담는 것은 제목·언론사·날짜·원문주소뿐입니다.';
+      box.parentNode.appendChild(n);
+    }
+  }
+})();
+</script>
+</body>
+</html>
