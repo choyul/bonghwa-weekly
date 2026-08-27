@@ -146,6 +146,13 @@ must "$SRC/build/fetch_news.py" "먼저 보도한 곳" "수집: 중복은 먼저
 must "$SRC/build/fetch_news.py" "RSS_SOURCES"   "수집: 언론사 이름+주소를 한 곳에서 관리"
 # 글씨 크기 — 등록 안 하면 그 화면에만 안 먹는다 (실제로 뉴스 화면이 빠져 있었다)
 must "$P" ".nw-title{font-size:calc"  "군민용: 언론속봉화도 글씨 크기 조절 대상"
+# 글자크기 규칙이 스타일 위쪽으로 다시 올라가면, 뒤에 나오는 같은 굵기의 규칙이 이겨서
+# 그 화면만 조용히 안 커진다. 실제로 14곳이 그렇게 죽어 있었다 — 맨 끝을 지킨다.
+FSX_LAST=$(grep -n "var(--fsx)" "$P" | tail -1 | cut -d: -f1)
+FIXED_PX=$(grep -nE "^\.(nw|ev|ws|shd|modetabs|tabbar)[a-z0-9 .,>#-]*\{[^}]*font-size:[0-9]" "$P" | tail -1 | cut -d: -f1)
+if [ -n "$FSX_LAST" ] && [ -n "$FIXED_PX" ] && [ "$FSX_LAST" -lt "$FIXED_PX" ]; then
+  no "군민용: 글자크기(--fsx) 규칙이 고정 px 규칙보다 위에 있습니다 — 그 화면만 글씨가 안 커집니다"
+else ok "군민용: 글자크기 규칙이 스타일 맨 끝에 있음"; fi
 
 echo "── 3-8) 첫 화면 요약 문구 ──"
 # '93개 소식' 은 군청이 한 일의 개수라 군민에게 뜻이 없었다 — 되돌아가면 안 된다
