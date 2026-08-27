@@ -141,6 +141,10 @@ else ok "news-about.html 소스=배포본"; fi
 must "$SRC/news-about.html" "경북신문"    "안내: 빠진 언론사를 실명으로 밝힘"
 must "$SRC/news-about.html" "먼저 보도한 곳" "안내: 중복 처리 기준을 밝힘"
 must "$SRC/news-about.html" "D.feeds"     "안내: 받는 언론사 목록을 news.js 에서 읽음(손으로 안 적음)"
+# 언론사 연락 창구가 비어 있으면 "빼 달라"는 요청을 받을 길이 없다 — 저작권 대응 창구라 중요하다
+if grep -q "var FORM = '';" "$SRC/news-about.html"; then
+  no "안내: 언론사 연락 창구(구글 폼) 주소가 비어 있습니다"
+else ok "안내: 언론사 연락 창구(구글 폼) 연결됨"; fi
 # 형평성 — 중복 제거가 '먼저 훑은 곳'으로 되돌아가면 배열 첫 매체가 늘 이긴다
 must "$SRC/build/fetch_news.py" "먼저 보도한 곳" "수집: 중복은 먼저 보도한 곳을 남김(순서 무관)"
 must "$SRC/build/fetch_news.py" "RSS_SOURCES"   "수집: 언론사 이름+주소를 한 곳에서 관리"
