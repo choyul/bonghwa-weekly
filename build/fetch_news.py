@@ -10,7 +10,9 @@ fetch_news.py — 봉화 관련 뉴스 수집 → news.js 생성
   둘 다 켜지면 합쳐서 중복을 지운다. (가)만으로도 화면은 채워진다.
 
   ※ RSS 는 '최근 N건'만 주기 때문에 **자주 받아야 놓치지 않는다.**
-    실측(2026-08-27) — 피드 한 번에 담기는 시간 폭:
+    실측(2026-08-27) — 피드 한 번에 담기는 시간 폭 / 그때 잡힌 봉화 기사:
+      매일신문 1000건=168시간(7일)/9건 ← 가장 값지다 · 씨원뉴스 50건=25시간/6건
+      이로운넷 50건=21시간/2건 · 경북도민일보 50건=18시간/1건 · 대경일보 50건=21시간/1건
       연합뉴스 지역 120건=3.3시간 · 뉴시스 속보 100건=1.7시간
       경북일보 50건=20시간 · 대구일보 50건=46시간 · 한국농어민신문 50건=40시간
       안동데일리 50건=0.7시간(전재 덤프라 사실상 못 따라감 — 넣되 기대하지 말 것)
@@ -83,7 +85,14 @@ QUERIES = ["봉화군", "경북 봉화", "봉화읍", "봉화 청량산", "봉�
 # 언론사가 스스로 열어 둔 공식 RSS. 발행사가 '가져가 읽으라'고 내놓은 것이라
 # 긁는 것(스크래핑)과 성격이 다르다 — 여기 없는 주소를 함부로 늘리지 말 것.
 # 통합 피드라 봉화 기사는 드물게 섞여 나온다. 아래 POS/NEG 로 걸러 쓴다.
+# 어느 매체가 실제로 봉화를 다루는지 조사해서 고른 목록이다(2026-08-27 실측).
+# 앞의 넷이 주력 — 나머지는 가끔 걸리는 보조.
 RSS_FEEDS = (
+    "https://www.imaeil.com/rss",                       # 매일신문 — 1000건=7일치, 봉화 기사가 가장 많다
+    "https://www.c1news.kr/rss/allArticle.xml",         # 씨원뉴스 — 지역 밀착, 봉화 밀도 최고
+    "https://www.hidomin.com/rss/allArticle.xml",       # 경북도민일보
+    "https://www.dkilbo.com/rss/allArticle.xml",        # 대경일보
+    "https://www.eroun.net/rss/allArticle.xml",         # 이로운넷
     "https://www.yna.co.kr/rss/local.xml",              # 연합뉴스 지역
     "https://www.newsis.com/RSS/sokbo.xml",             # 뉴시스 속보
     "https://www.kyongbuk.co.kr/rss/allArticle.xml",    # 경북일보
@@ -91,6 +100,8 @@ RSS_FEEDS = (
     "https://www.andongdaily.com/rss/allArticle.xml",   # 안동데일리
     "https://www.agrinet.co.kr/rss/allArticle.xml",     # 한국농어민신문
 )
+# 봉화를 가장 많이 다루는 곳은 경북신문(kbsm.net)이지만 RSS 를 열어 두지 않았다.
+# 긁는 것은 하지 않기로 했으므로(부정경쟁방지법) 빠져 있다 — 넣지 말 것.
 
 # 제목에 이 말이 있으면 봉화군 기사가 아니다 (봉홧불·다른 지역 봉화산 등)
 NEG = re.compile(
@@ -119,6 +130,9 @@ PRESS = {
     "jtbc.co.kr": "JTBC", "mbn.co.kr": "MBN", "tbc.co.kr": "TBC",
     "andongmbc.co.kr": "안동MBC", "dgmbc.com": "대구MBC",
     "agrinet.co.kr": "한국농어민신문", "nongmin.com": "농민신문",
+    "c1news.kr": "씨원뉴스", "hidomin.com": "경북도민일보", "dkilbo.com": "대경일보",
+    "eroun.net": "이로운넷", "gukjenews.com": "국제뉴스", "newscj.com": "천지일보",
+    "kbsm.net": "경북신문", "newsgb.co.kr": "뉴스경북", "gyeongsangtoday.com": "경상투데이",
     "kwnews.co.kr": "강원일보", "newspim.com": "뉴스핌", "wowtv.co.kr": "한국경제TV",
     "gov.kr": "정책브리핑", "korea.kr": "정책브리핑",
 }
