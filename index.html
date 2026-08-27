@@ -274,6 +274,17 @@ footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decorat
 
 /* ── 고시·공고를 이번 주 소식과 한 목록에 섞어 보여준다(탭 없음) ── */
 .feed-divider{display:flex;align-items:center;gap:8px;margin:18px 2px 10px;color:var(--sub);font-size:13px;font-weight:700}
+/* '군청이 하는 일' — 참여하는 일은 아니지만 궁금할 때 열어 보는 자리 */
+.gov-toggle{display:flex;align-items:center;gap:9px;width:100%;margin:22px 0 10px;padding:13px 15px;
+ background:var(--bg);border:1px solid var(--line);border-radius:14px;color:var(--sub);
+ font-family:inherit;font-size:calc(14px*var(--fsx));font-weight:700;text-align:left;cursor:pointer}
+.gov-toggle:active{transform:scale(.99)}
+.gov-toggle .gt-i{font-size:calc(16px*var(--fsx));line-height:1}
+.gov-toggle .gt-t{flex:1;color:var(--ink)}
+.gov-toggle .gt-t b{color:var(--brand);font-weight:800}
+.gov-toggle .gt-x{font-size:calc(12.5px*var(--fsx));font-weight:700;color:var(--brand);
+ background:var(--brand-soft);border-radius:100px;padding:4px 11px;white-space:nowrap}
+#bwGov .cards{padding:0}
 .feed-divider::after{content:'';flex:1;height:1px;background:var(--line)}
 .nrow{text-align:left;width:100%;background:var(--paper);border:1px solid var(--line);border-radius:12px;
  padding:13px 15px;cursor:pointer;transition:box-shadow var(--bh-dur,180ms) var(--bh-ease,ease);font:inherit}
@@ -1031,6 +1042,10 @@ function init(){
   /* 주간계획에 안 실린 주라도 신청·접수가 아직 열려 있으면 계속 보여 준다 —
      이름을 모르면 검색으로도 못 찾기 때문에, 놓치지 않게 목록 아래에 이어 붙인다 */
   ongoingSection:true,
+  /* 군민이 신청·참여할 수 있는 일만 위에 두고, 나머지 내부 행정은 아래에 접어 둔다.
+     지우지 않는 이유 — 군정이 궁금한 분이 볼 창구는 남겨 두어야 한다. */
+  splitAdmin:iss=>tag(iss).score>0,
+  onGovToggle:(open,n)=>{ if(open)AA('군정소식_펼침',String(n)); },
   searchPlaceholder:'궁금한 일을 검색해 보세요 (예: 축제, 도로, 교육)',
   listTitle:'봉화의 소식은?',   /* 앞에 '오늘' / '이번 주' / '7월 28일(화)' 처럼 기간이 붙는다 */
   publicLabels:true,

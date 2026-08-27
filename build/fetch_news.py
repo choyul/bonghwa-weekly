@@ -87,19 +87,22 @@ QUERIES = ["봉화군", "경북 봉화", "봉화읍", "봉화 청량산", "봉�
 # 통합 피드라 봉화 기사는 드물게 섞여 나온다. 아래 POS/NEG 로 걸러 쓴다.
 # 어느 매체가 실제로 봉화를 다루는지 조사해서 고른 목록이다(2026-08-27 실측).
 # 앞의 넷이 주력 — 나머지는 가끔 걸리는 보조.
-RSS_FEEDS = (
-    "https://www.imaeil.com/rss",                       # 매일신문 — 1000건=7일치, 봉화 기사가 가장 많다
-    "https://www.c1news.kr/rss/allArticle.xml",         # 씨원뉴스 — 지역 밀착, 봉화 밀도 최고
-    "https://www.hidomin.com/rss/allArticle.xml",       # 경북도민일보
-    "https://www.dkilbo.com/rss/allArticle.xml",        # 대경일보
-    "https://www.eroun.net/rss/allArticle.xml",         # 이로운넷
-    "https://www.yna.co.kr/rss/local.xml",              # 연합뉴스 지역
-    "https://www.newsis.com/RSS/sokbo.xml",             # 뉴시스 속보
-    "https://www.kyongbuk.co.kr/rss/allArticle.xml",    # 경북일보
-    "https://www.idaegu.com/rss/allArticle.xml",        # 대구일보
-    "https://www.andongdaily.com/rss/allArticle.xml",   # 안동데일리
-    "https://www.agrinet.co.kr/rss/allArticle.xml",     # 한국농어민신문
+# (언론사 이름, RSS 주소) — 이름은 상세 안내(news-about.html)에 그대로 실린다.
+# 여기만 고치면 안내 페이지의 '지금 받고 있는 곳' 목록도 함께 바뀐다(news.js 에 실어 보낸다).
+RSS_SOURCES = (
+    ("매일신문",     "https://www.imaeil.com/rss"),                     # 1000건=7일치, 봉화 기사가 가장 많다
+    ("씨원뉴스",     "https://www.c1news.kr/rss/allArticle.xml"),       # 지역 밀착, 봉화 밀도 최고
+    ("경북도민일보", "https://www.hidomin.com/rss/allArticle.xml"),
+    ("대경일보",     "https://www.dkilbo.com/rss/allArticle.xml"),
+    ("이로운넷",     "https://www.eroun.net/rss/allArticle.xml"),
+    ("연합뉴스",     "https://www.yna.co.kr/rss/local.xml"),
+    ("뉴시스",       "https://www.newsis.com/RSS/sokbo.xml"),
+    ("경북일보",     "https://www.kyongbuk.co.kr/rss/allArticle.xml"),
+    ("대구일보",     "https://www.idaegu.com/rss/allArticle.xml"),
+    ("안동데일리",   "https://www.andongdaily.com/rss/allArticle.xml"),
+    ("한국농어민신문","https://www.agrinet.co.kr/rss/allArticle.xml"),
 )
+RSS_FEEDS = tuple(u for _, u in RSS_SOURCES)
 # 봉화를 가장 많이 다루는 곳은 경북신문(kbsm.net)이지만 RSS 를 열어 두지 않았다.
 # 긁는 것은 하지 않기로 했으므로(부정경쟁방지법) 빠져 있다 — 넣지 말 것.
 
@@ -393,6 +396,11 @@ def main():
         "builtAt": datetime.now(KST).strftime("%Y-%m-%d"),
         "days": days,
         "source": ("언론사 공식 RSS + 네이버 뉴스 검색" if (CID and CSE) else "언론사 공식 RSS"),
+        # 상세 안내(news-about.html)가 이 둘을 읽어 '지금 받고 있는 곳'을 그린다.
+        # 손으로 두 군데 적으면 반드시 어긋나므로 여기 한 곳에서만 나가게 한다.
+        "everyHours": 2,
+        "feeds": [{"p": name, "u": url} for name, url in RSS_SOURCES],
+        "naver": bool(CID and CSE),
         "items": rows,
     }
     body = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))

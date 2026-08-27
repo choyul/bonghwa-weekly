@@ -18,7 +18,8 @@
   const S = {
     scope: 'week', month: '', day: '', week: '', from: '', to: '',
     q: '', status: '', dept: '', type: '', annual: false, custom: '', axis: {}, limit: 60,
-    onLimit: 30        /* '지금도 진행 중' 목록에서 한 번에 보여줄 개수 */
+    onLimit: 30,       /* '지금도 진행 중' 목록에서 한 번에 보여줄 개수 */
+    govOpen: false     /* '군청이 하는 일' 접힘 상태 — 군민용에서만 쓴다 */
   };
   let curIssue = null, simExpanded = false, onSig = '';
 
@@ -467,6 +468,38 @@
     const box = $('#bwCards'); box.innerHTML = '';
     if (!rows.length) {
       box.innerHTML = '<div class="empty">해당하는 업무가 없습니다</div>'; $('#bwMore').innerHTML = '';
+    } else if (CFG.splitAdmin) {
+      /* ── 군민용: '내가 할 수 있는 일' 과 '군청이 하는 일' 을 갈라 놓는다 ──
+         한 주 업무의 3분의 2 남짓은 회의·점검·정산 같은 내부 행정이라,
+         섞어 두면 신청할 수 있는 일이 그 사이에 묻힌다.
+         그렇다고 지우면 군정이 궁금한 분이 볼 곳이 없어지므로, 접어서 아래에 둔다. */
+      const mine = [], gov = [];
+      rows.forEach(iss => (CFG.splitAdmin(iss) ? mine : gov).push(iss));
+      mine.slice(0, S.limit).forEach(iss => box.appendChild(cardEl(iss)));
+      $('#bwMore').innerHTML = mine.length > S.limit
+        ? `<button class="morebtn">${mine.length - S.limit}건 더 보기</button>` : '';
+      const mb = $('#bwMore').querySelector('button');
+      if (mb) mb.onclick = () => { S.limit += 120; render(); };
+      if (gov.length) {
+        const sec = document.createElement('div'); sec.id = 'bwGov';
+        const dv = document.createElement('button'); dv.type = 'button'; dv.className = 'gov-toggle';
+        const list = document.createElement('div'); list.className = 'cards';
+        const paint = () => {
+          dv.innerHTML = `<span class="gt-i">🏛</span>
+            <span class="gt-t">군청이 하는 일 <b>${gov.length}건</b></span>
+            <span class="gt-x">${S.govOpen ? '접기' : '펼쳐 보기'}</span>`;
+          dv.setAttribute('aria-expanded', S.govOpen ? 'true' : 'false');
+          list.hidden = !S.govOpen;
+          if (S.govOpen && !list.childElementCount)
+            gov.slice(0, 200).forEach(iss => list.appendChild(cardEl(iss)));
+        };
+        dv.onclick = () => { S.govOpen = !S.govOpen; paint(); if (CFG.onGovToggle) CFG.onGovToggle(S.govOpen, gov.length); };
+        paint();
+        sec.appendChild(dv); sec.appendChild(list); box.appendChild(sec);
+      }
+      if (!mine.length && gov.length && !S.govOpen)
+        box.insertBefore(Object.assign(document.createElement('div'),
+          { className: 'empty', textContent: '이 조건으로 신청·참여할 수 있는 일은 없어요' }), box.firstChild);
     } else {
       rows.slice(0, S.limit).forEach(iss => box.appendChild(cardEl(iss)));
       $('#bwMore').innerHTML = rows.length > S.limit

@@ -122,7 +122,7 @@ must "$P" "morePf"              "군민용: 설정 - 내 소식 맞춤 설정"
 if grep -q 'class="bw-sub"' "$P"; then no "군민용: 헤더 부제가 되살아남 — 헤더는 한 줄로 유지"
 else ok "군민용: 헤더가 한 줄(부제 없음)"; fi
 
-echo "── 3-7) 첫 화면 요약 문구 ──"
+echo "── 3-8) 첫 화면 요약 문구 ──"
 # '93개 소식' 은 군청이 한 일의 개수라 군민에게 뜻이 없었다 — 되돌아가면 안 된다
 must "$P" "function heroNums"              "군민용: 신청 가능·마감 임박 세기"
 must "$P" "신청할 수 있는 일이"              "군민용: 첫 화면이 '할 수 있는 일'을 말함"
@@ -131,6 +131,13 @@ if grep -q "봉화에는 <b>\${nEv+nWork+nNt}개</b><br>소식이 있어요" "$P
    && ! grep -q "N.open" "$P"; then
   no "군민용: 첫 화면이 예전 '전체 개수' 문장으로 되돌아갔습니다"
 else ok "군민용: 예전 '전체 개수' 문장으로 되돌아가지 않음"; fi
+
+echo "── 3-8) 내가 할 수 있는 일 / 군청이 하는 일 ──"
+# 내부 행정 업무를 지우면 군정이 궁금한 분이 볼 창구가 없어진다 — 접어서 남겨 둔다
+must "$P" "splitAdmin"            "군민용: 목록을 두 갈래로 나눔"
+must "$DEPLOY/ui.js" "CFG.splitAdmin" "엔진: 두 갈래 렌더"
+must "$DEPLOY/ui.js" "군청이 하는 일" "엔진: 접어 둔 군정 소식 구간"
+must "$P" "gov-toggle"            "군민용: 펼쳐 보기 버튼 모양"
 
 echo "── 4) 전화 걸기 ──"
 must "$DEPLOY/mayor.html" "navigator.contacts" "군수용: 저장된 연락처 선택(안드로이드)"
