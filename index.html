@@ -179,6 +179,11 @@ body.standalone #moreA2{display:none}
 .pf-lab{padding:14px 18px 8px;font-size:calc(14px*var(--fsx));font-weight:800;color:var(--ink)}
 .pf-lab span{font-weight:600;color:var(--sub);font-size:calc(12px*var(--fsx))}
 .pf-grid{display:flex;flex-wrap:wrap;gap:7px;padding:0 18px}
+/* 대상 캐릭터 그림 — 동그라미 칸과 맞춤 설정 단추에서 같은 그림을 쓴다 */
+.circ .ic .charimg{width:100%;height:100%;object-fit:contain;display:block;border-radius:50%}
+.circ .ic:has(.charimg){padding:2px;background:#fff}
+.pf-grid .charimg{width:calc(22px*var(--fsx));height:calc(22px*var(--fsx));object-fit:contain;
+ vertical-align:-5px;margin-right:2px}
 .pf-grid button{min-height:44px;padding:8px 14px;border:1px solid var(--line);border-radius:100px;
  background:var(--paper);color:var(--ink);font-size:calc(14px*var(--fsx));font-weight:700;cursor:pointer;font-family:inherit}
 .pf-grid button.on{background:var(--brand);border-color:var(--brand);color:#fff}
@@ -1005,6 +1010,23 @@ function init(){
  /* 주간소식 카드의 원래 분류 키 → 합친 표시이름 (카드 태그를 누르면 그 합친 축이 켜지도록) */
  const W2M_TOPIC={}; MERGED_TOPICS.forEach(([m,,wk])=>wk.forEach(k=>W2M_TOPIC[k]=m));
  const W2M_AUD={}; MERGED_AUD.forEach(([m,,wk])=>wk.forEach(k=>W2M_AUD[k]=m));
+ /* ── 대상 캐릭터 그림 ──
+    char/ 안에 그림이 있으면 그림을, 없으면 이모지를 쓴다.
+    그림 파일을 넣기만 하면 코드를 고치지 않고도 바뀐다(못 읽으면 스스로 이모지로 돌아간다). */
+ const CHAR_FILE={'주민 누구나':'everyone','어르신':'senior','아이·청소년':'kid',
+   '여성·가족':'family','농업인':'farmer','청년':'youth','소상공인':'shop'};
+ function audIcon(name,emo){
+  const f=CHAR_FILE[name];
+  return f ? `<img class="charimg" src="char/${f}.webp" alt="" data-emo="${emo||''}" decoding="async">`
+           : (emo||'');
+ }
+ /* 그림이 없으면 이모지로 되돌린다 — error 는 위로 안 올라오므로 잡는 단계에서 듣는다 */
+ addEventListener('error',function(e){
+  const t=e.target;
+  if(t&&t.classList&&t.classList.contains('charimg')){
+   const sp=document.createElement('span'); sp.textContent=t.dataset.emo||''; t.replaceWith(sp);
+  }
+ },true);
  /* ═══ 내 소식 (개인화) ═══
     고른 값은 이 기기에만 저장하고 서버로 보내지 않는다 — 공공서비스라 더 그렇다.
     추측으로 분류를 만들지 않고, 이미 확실히 붙어 있는 대상·지역 태그만 쓴다. */
@@ -1110,7 +1132,7 @@ function init(){
 
    {key:'aud', label:'누구를 위한 일인가요?', chipLabel:'대상', render:'circles',
     allLabel:'전체', allIcon:'👪',
-    values:MERGED_AUD.map(([v,icon])=>({v,label:v,icon})),
+    values:MERGED_AUD.map(([v,icon])=>({v,label:v,icon:audIcon(v,icon)})),
     match:(iss,v)=>{const e=MERGED_AUD.find(x=>x[0]===v);return !!e&&e[2].some(k=>tag(iss).auds.includes(k));}},
 
    {key:'region', label:'어디에서 열리나요?', chipLabel:'지역', render:'chips',
@@ -1809,7 +1831,7 @@ function init(){
       해당하는 소식을 목록 위쪽에 올려 드립니다.</div>
     <div class="pf-lab">저는 이런 사람이에요 <span>(여러 개 고를 수 있어요)</span></div>
     <div class="pf-grid" id="pfAud">${auds.map(a=>
-      `<button type="button" data-a="${E(a)}" class="${PROF.aud.includes(a)?'on':''}">${icons[a]||''} ${E(a)}</button>`).join('')}</div>
+      `<button type="button" data-a="${E(a)}" class="${PROF.aud.includes(a)?'on':''}">${audIcon(a,icons[a])} ${E(a)}</button>`).join('')}</div>
     <div class="pf-lab">사는 곳</div>
     <div class="pf-grid" id="pfReg">${['','봉화읍','물야면','봉성면','법전면','춘양면','소천면','석포면','재산면','명호면','상운면']
       .map(r=>`<button type="button" data-r="${E(r)}" class="${PROF.region===r?'on':''}">${r||'선택 안 함'}</button>`).join('')}</div>
