@@ -148,6 +148,11 @@ else ok "안내: 언론사 연락 창구(구글 폼) 연결됨"; fi
 # 형평성 — 중복 제거가 '먼저 훑은 곳'으로 되돌아가면 배열 첫 매체가 늘 이긴다
 must "$SRC/build/fetch_news.py" "먼저 보도한 곳" "수집: 중복은 먼저 보도한 곳을 남김(순서 무관)"
 must "$SRC/build/fetch_news.py" "RSS_SOURCES"   "수집: 언론사 이름+주소를 한 곳에서 관리"
+must "$SRC/build/fetch_news.py" "collapse_similar" "수집: 같은 사안 기사는 먼저 보도한 것만 남김"
+must "$SRC/build/fetch_news.py" "SIMILAR = 0.35"   "수집: 같은 사안 판정 기준값(올리면 중복이 샌다)"
+# 목록을 한 번에 다 그리면 '전체 기간'에서 멎는다 — 10개씩 늘려 보여 준다
+must "$P" "evLimit+=10"  "군민용: 행사 [더 보기] 10개씩"
+must "$P" "nwLimit+=10"  "군민용: 언론속봉화 [더 보기] 10개씩"
 # 글씨 크기 — 등록 안 하면 그 화면에만 안 먹는다 (실제로 뉴스 화면이 빠져 있었다)
 must "$P" ".nw-title{font-size:calc"  "군민용: 언론속봉화도 글씨 크기 조절 대상"
 # 글자크기 규칙이 스타일 위쪽으로 다시 올라가면, 뒤에 나오는 같은 굵기의 규칙이 이겨서
