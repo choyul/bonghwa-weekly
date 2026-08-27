@@ -75,7 +75,7 @@ footer{max-width:430px}
 .hero::before{content:'';position:absolute;right:40px;bottom:-40px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.06)}
 .h-week{font-size:12.5px;font-weight:600;opacity:.9;margin-bottom:4px;letter-spacing:.02em;position:relative;
  padding-right:104px}
-.h-title{font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.3;margin-bottom:14px;position:relative;
+.h-title{font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.3;margin-bottom:0;position:relative;
  padding-right:104px;word-break:keep-all}
 /* 이번 주 소식을 전해 주는 캐릭터 — 오른쪽 빈자리에 선다 */
 .h-mas{position:absolute;right:6px;top:4px;width:112px;height:112px;object-fit:contain;
@@ -85,14 +85,6 @@ footer{max-width:430px}
  .h-mas{width:94px;height:94px}
 }
 .h-title b{color:#FFF3B8}
-.h-title .h-sub{display:block;font-size:calc(13.5px*var(--fsx));font-weight:600;opacity:.92;
- margin-top:7px;letter-spacing:-.01em;line-height:1.5}
-.h-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;position:relative;z-index:1}
-.h-stat{background:rgba(255,255,255,.15);border-radius:12px;padding:11px 8px;text-align:center;color:#fff;
- border:1px solid rgba(255,255,255,.15);font-family:inherit;cursor:pointer;transition:transform .15s}
-.h-stat:active{transform:scale(.96)}
-.h-stat-n{font-size:20px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
-.h-stat-l{font-size:11px;opacity:.9;margin-top:3px;font-weight:600}
 
 /* ── 카드 ── */
 .cards{padding:0 14px}
@@ -533,8 +525,6 @@ body:not(.mode-news) #nwView{display:none}
 #bwInfo .hint{font-size:calc(15px*var(--fsx))}
 .h-title{font-size:calc(24px*var(--fsx))}
 .h-week{font-size:calc(13.5px*var(--fsx))}
-.h-stat-n{font-size:calc(22px*var(--fsx))}
-.h-stat-l{font-size:calc(12.5px*var(--fsx))}
 .ws-title{font-size:calc(17px*var(--fsx))}
 .calday .d{font-size:calc(19px*var(--fsx))}
 .calday .dow{font-size:calc(12.5px*var(--fsx))}
@@ -991,7 +981,8 @@ function init(){
     자세한 것은 build/fetch_news.py 머리말에 적어 두었다. */
  const NEWS=(window.BW_NEWS&&window.BW_NEWS.items)||[];
  const NWKEY='bh.news.seen';                     /* 이 기기가 마지막으로 본 기사 시각 */
- let nwSeen=0, nwMissed=[], nwQ='', nwLimit=40;
+ let nwSeen=0, nwMissed=[], nwQ='', nwLimit=10;   /* 뉴스도 10개씩 */
+ let nwSig='';                                   /* 기간·검색이 바뀌면 상한을 되돌린다 */
  (function initNewsSeen(){
   try{nwSeen=+localStorage.getItem(NWKEY)||0}catch(e){}
   const newest=NEWS.length?NEWS[0].ts:0;
@@ -1001,7 +992,7 @@ function init(){
  })();
  const evOf=day=>EV.filter(e=>e.date===day&&(!evKind||e.kind===evKind));
  const evCntOf=day=>EV.filter(e=>e.date===day&&(!evKind||e.kind===evKind)).length;
- let evLimit=60;                                 /* 행사 목록 한 번에 그리는 수 */
+ let evLimit=10;                                 /* 행사 목록을 10개씩 늘려 보여 준다 */
  let evSig='';                                   /* 기간·검색이 바뀌면 상한을 되돌린다 */
  let evSpan='week';                              /* 'week' 주간 보기 · 'month' 월간 달력 */
  let EVM=(EV.length?EV[EV.length-1].date:BW.ymd(new Date())).slice(0,7);   /* 달력이 보고 있는 달 */
@@ -1972,22 +1963,6 @@ function init(){
   const strip=document.getElementById('wstrip');
   const tabs=document.getElementById('modetabs');
   wrap.insertBefore(el, strip? strip.nextSibling : (tabs?tabs.nextSibling:wrap.firstChild));
-  el.onclick=e=>{
-   const b=e.target.closest('.h-stat'); if(!b)return;
-   const k=b.dataset.k;
-   /* 행사·뉴스 화면의 숫자칸은 그 화면 안에서 좁혀 주는 역할만 한다 */
-   if(k==='evToday'||k==='nwToday'){ setDay(BWUI.api.today); return; }
-   if(k==='evGun'){ evKind='군'; document.querySelectorAll('#evKinds button')
-      .forEach(x=>x.classList.toggle('on',x.dataset.k==='군')); renderEvents(); return; }
-   if(k==='evWeek'||k==='nwWeek'){ setScope('week'); return; }
-   if(k==='nwMiss'){ return; }                  /* 이미 그 화면에 있다 — 움직이지 않는다 */
-   if(k==='ev'){ if(EV.length)setMode('event'); return; }
-   setMode('work');
-   /* '마감 임박'에는 따로 갈 곳이 없다 — 없는 곳으로 데려가느니 소식 목록으로 보낸다.
-      ('지금도 신청·진행 중' 구간은 이번 주 마감과 다른 목록이라 숫자가 어긋난다) */
-   if(b.dataset.k==='nt')setTimeout(()=>{const s=document.getElementById('ntSection');
-     if(s)s.scrollIntoView({behavior:'smooth',block:'start'});},120);
-  };
   syncHero();
  }
  /* ── 첫 화면 요약 ──
@@ -2014,44 +1989,30 @@ function init(){
     기간은 맨 위 공통 UI를 따르므로, 기간을 바꾸면 세 화면의 숫자가 함께 움직인다. */
  function syncHero(){
   const el=document.getElementById('hero'); if(!el)return;
-  const S=BWUI.api.state, today=BWUI.api.today, P=periodWord();
+  const today=BWUI.api.today, P=periodWord();
   const days=daysOf(VIEW_WEEK), a=BW.d2(days[0]), b=BW.d2(days[6]);
   const f=d=>`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
-  const stat=(k,n,l)=>`<button class="h-stat" data-k="${k}"><div class="h-stat-n">${n}</div><div class="h-stat-l">${l}</div></button>`;
-  let head=`${f(a)} → ${f(b).slice(5)}`, title='', stats='';
+  /* 첫 칸은 한 문장으로만 말한다 — 밑에 숫자 칸과 부제를 달아 두면
+     '무엇을 하라'가 아니라 '몇 건이 있다'가 되어 읽는 사람에게 남는 게 없다. */
+  let head=`${f(a)} → ${f(b).slice(5)}`, title='';
 
   if(MODE==='event'){
    const inP=EV.filter(e=>inPeriod(e.date));
-   const nToday=EV.filter(e=>e.date===today).length;
-   const nGun=inP.filter(e=>e.kind==='군').length;
    head=calTitle();
-   const hasToday=inPeriod(today);
    title = inP.length
      ? `${P},<br>가 볼 만한 행사가<br><b>${inP.length}개</b> 있어요`
-       +(!hasToday?`<span class="h-sub">지난 기간을 보고 계세요</span>`
-         :nToday?`<span class="h-sub">오늘 열리는 행사가 ${nToday}개예요</span>`
-                :`<span class="h-sub">오늘은 예정된 행사가 없어요</span>`)
-     : `${P}에는<br>예정된 행사가<br><b>없어요</b><span class="h-sub">위에서 기간을 넓혀 보세요</span>`;
-   const nWk=EV.filter(e=>days.includes(e.date)).length;
-   stats = stat('evToday',nToday,'📅 오늘')+stat('evWeek',nWk,'🎪 이번 주')+stat('evGun',nGun,'🏛️ 군 행사');
+     : `${P}에는<br>예정된 행사가<br><b>없어요</b>`;
 
   }else if(MODE==='news'){
    const inP=NEWS.filter(n=>inPeriod(n.d));
    const nToday=NEWS.filter(n=>n.d===today).length;
-   const nMiss=nwMissed.length;
-   const hasToday=inPeriod(today);      /* 고른 기간이 오늘을 품고 있나 */
+   const hasToday=inPeriod(today);
    head=calTitle();
    title = (hasToday&&nToday)
      ? `오늘,<br>봉화 소식이<br><b>${nToday}개</b> 올라왔어요`
-       +(nMiss?`<span class="h-sub">아직 안 보신 소식이 ${nMiss}개 있어요</span>`
-              :`<span class="h-sub">새 소식은 다 보셨어요</span>`)
      : (inP.length
         ? `${P}에<br>봉화 소식이<br><b>${inP.length}개</b> 있어요`
-          +(hasToday?`<span class="h-sub">오늘 올라온 소식은 아직 없어요</span>`
-                    :`<span class="h-sub">지난 기간을 보고 계세요</span>`)
-        : `${P}에는<br>봉화 소식이<br><b>없어요</b><span class="h-sub">위에서 기간을 넓혀 보세요</span>`);
-   const nWk=NEWS.filter(n=>days.includes(n.d)).length;
-   stats = stat('nwToday',nToday,'📰 오늘')+stat('nwWeek',nWk,'🗓️ 이번 주')+stat('nwMiss',nMiss,'🆕 안 본 것');
+        : `${P}에는<br>봉화 소식이<br><b>없어요</b>`);
 
   }else{
    const nEv=EV.filter(e=>days.includes(e.date)).length;
@@ -2059,22 +2020,16 @@ function init(){
    const nNt=(NOTICES||[]).filter(n=>days.includes(n.date)).length;
    /* 신청할 수 있는 일이 하나도 없는 주(지난 주간을 넘겨볼 때 등)에는 예전 문장으로 돌아간다 */
    title = N.open
-     ? `이번 주,<br>신청할 수 있는 일이<br><b>${N.open}개</b> 있어요` +
-       (N.soon?`<span class="h-sub">${N.soon}개가 이번 주 안에 마감돼요</span>`
-              :`<span class="h-sub">이번 주 마감은 없어요 — 편히 둘러보세요</span>`)
+     ? `이번 주,<br>신청할 수 있는 일이<br><b>${N.open}개</b> 있어요`
      : `이번 주,<br>봉화에는 <b>${nEv+nWork+nNt}개</b><br>소식이 있어요`;
-   /* 새소식 화면에는 숫자 칸을 두지 않는다 — 세어 놓은 숫자를 늘어놓아 봐야
-      무엇을 하라는 것인지가 없어 '93개 소식'과 같은 이야기가 된다.
-      행사는 아래 탭에서, 나머지는 바로 밑 목록에서 본다. */
-   stats = '';
   }
 
   el.innerHTML=`
     <div class="h-week">${head}</div>
     <div class="h-title">${title}</div>
-    <img class="h-mas" src="${MASCOT_SRC}" alt="" aria-hidden="true" decoding="async">
-    ${stats?`<div class="h-stats">${stats}</div>`:''}`;
+    <img class="h-mas" src="${MASCOT_SRC}" alt="" aria-hidden="true" decoding="async">`;
  }
+
  /* ── 하단 탭바 — 디자인의 5개 탭을 이 앱에 실제로 있는 기능에 이어 붙인다 ── */
  function buildTabBar(){
   if(document.getElementById('tabbar'))return;
@@ -2290,7 +2245,7 @@ function init(){
   }
   /* 기간·검색·갈래가 바뀌면 상한을 처음으로 되돌린다 */
   const sig=JSON.stringify([S.scope,S.day,S.month,S.from,S.to,VIEW_WEEK,q,evKind]);
-  if(sig!==evSig){ evSig=sig; evLimit=60; }
+  if(sig!==evSig){ evSig=sig; evLimit=10; }
   const part=rows.slice(0,evLimit);
 
   let lastDate='';
@@ -2307,7 +2262,7 @@ function init(){
      ? `<button class="morebtn" id="evMore" style="grid-column:1/-1">${rows.length-evLimit}건 더 보기</button>`
      : '');
   list.querySelectorAll('.ev-card').forEach(c=>c.onclick=()=>eventModal(part[+c.dataset.i]));
-  const mb=list.querySelector('#evMore'); if(mb)mb.onclick=()=>{evLimit+=60;renderEvents()};
+  const mb=list.querySelector('#evMore'); if(mb)mb.onclick=()=>{evLimit+=10;renderEvents()};
  }
 
  /* ═══ 뉴스 화면 ═══ (원칙은 위 NEWS 선언부의 주석 참고 — 제목·언론사·날짜·링크만) */
@@ -2351,8 +2306,12 @@ function init(){
    </a>`;
 
   /* 기간은 맨 위 공통 UI가 정한다. 검색도 같은 칸(psearch)을 쓴다. */
-  nwQ=(BWUI.api.state.q||'').trim();
+  const St=BWUI.api.state;
+  nwQ=(St.q||'').trim();
   const POOL=NEWS.filter(n=>inPeriod(n.d));
+  /* 기간이나 검색어가 바뀌면 '더 보기'로 펼쳐 둔 것을 처음으로 되돌린다 */
+  const nsig=JSON.stringify([St.scope,St.day,St.month,St.from,St.to,VIEW_WEEK,nwQ]);
+  if(nsig!==nwSig){ nwSig=nsig; nwLimit=10; }
 
   /* 검색 중에는 시기별로 나누지 않고 한 목록으로 — 찾는 사람은 언제 나온 기사인지보다 그 기사를 원한다 */
   if(nwQ){
@@ -2365,7 +2324,7 @@ function init(){
     : `<div class="ev-head"><h2>‘${E(nwQ)}’ 검색 결과</h2></div>
        <div class="nw-list"><div class="nw-empty">찾으시는 뉴스가 없어요<br>
         <span style="font-size:12.5px">다른 낱말로 찾아보시거나, 위에서 기간을 넓혀 보세요</span></div></div>`;
-   const mb=document.getElementById('nwMore'); if(mb)mb.onclick=()=>{nwLimit+=60;renderNews()};
+   const mb=document.getElementById('nwMore'); if(mb)mb.onclick=()=>{nwLimit+=10;renderNews()};
    return;
   }
 
@@ -2398,7 +2357,7 @@ function init(){
    html+=`<button class="morebtn" id="nwMore">${total-shown}건 더 보기</button>`;
   }
   box.innerHTML=html;
-  const mb=document.getElementById('nwMore'); if(mb)mb.onclick=()=>{nwLimit+=60;renderNews()};
+  const mb=document.getElementById('nwMore'); if(mb)mb.onclick=()=>{nwLimit+=10;renderNews()};
   box.querySelectorAll('.nw-card').forEach(a=>a.addEventListener('click',()=>AA('뉴스',a.querySelector('.nw-press').textContent)));
  }
 

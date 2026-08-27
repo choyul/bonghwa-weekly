@@ -363,6 +363,50 @@ def collect():
     return rows
 
 
+# ── 같은 사안을 여러 곳이 쓴 기사 걷어내기 ───────────────────────────────
+# 제목이 글자까지 똑같지는 않지만 같은 보도자료를 받아쓴 기사가 자주 들어온다.
+#   예) "'봉화 농산물 새 이름 찾는다'… 봉화군, 공동브랜드 네이밍 공모 추진"  (매일신문)
+#       "봉화군, 농산물 공동브랜드 네이밍 공모전 접수 연장"                  (대경일보)
+# 한글은 조사가 붙어 낱말 단위 비교가 잘 안 맞으므로 **글자 두 개씩(bigram)** 겹침을 본다.
+# '봉화'·'봉화군'은 거의 모든 제목에 있어 닮음을 부풀리므로 빼고 센다.
+#
+# 실측(2026-08-27, 같은 날짜 쌍 전부): 진짜 중복 0.65 / 0.53, 그다음 남남이 0.05.
+# 사이가 크게 벌어져 있어 0.35 를 threshold 로 둔다. 올리면 중복이 새고, 내리면 남남을 묶는다.
+# **판단은 같은 날짜끼리만** 한다 — 날짜가 다르면 후속 보도일 수 있어 함부로 지우면 안 된다.
+SIMILAR = 0.35
+
+
+def title_bigrams(t):
+    x = re.sub(r"[^가-힣a-z0-9]", "", t.lower())
+    x = x.replace("봉화군", "").replace("봉화", "")
+    return {x[i:i + 2] for i in range(len(x) - 1)}
+
+
+def collapse_similar(rows):
+    """같은 사안이면 **먼저 보도한 기사 하나만** 남긴다."""
+    kept = []                                  # [(기사, 글자쌍)]
+    dropped = 0
+    # 먼저 보도된 것부터 훑으므로, 묶음에서 처음 담기는 것이 곧 가장 이른 기사다
+    for r in sorted(rows, key=lambda x: x.get("ts", 0)):
+        b = title_bigrams(r["t"])
+        dup = False
+        if b:
+            for k, kb in kept:
+                if k["d"] != r["d"] or not kb:
+                    continue
+                if len(b & kb) / min(len(b), len(kb)) >= SIMILAR:
+                    dup = True
+                    sys.stderr.write(f"    같은 사안으로 묶음: {r['t'][:34]} … ← {k['t'][:34]}\n")
+                    break
+        if not dup:
+            kept.append((r, b))
+        else:
+            dropped += 1
+    if dropped:
+        sys.stderr.write(f"  같은 사안 중복 {dropped}건을 걷어냈습니다(먼저 보도한 기사만 남김)\n")
+    return sorted((k for k, _ in kept), key=lambda r: -r.get("ts", 0))
+
+
 def merge_previous(rows, path):
     """이번에 못 받은 옛 기사를 잃지 않도록 지난 news.js 와 합친다.
        네이버 검색은 뒤로 갈수록 결과가 흔들려서, 이게 없으면
@@ -390,6 +434,7 @@ def main():
         sys.stderr.write("  받은 것이 없어 기존 news.js 를 그대로 둡니다\n")
         return 1
     rows = merge_previous(rows, out_path)
+    rows = collapse_similar(rows)          # 같은 사안은 먼저 보도한 것만
 
     payload = {
         # builtAt 은 날짜까지만 — 시각까지 넣으면 내용이 같아도 날마다 커밋된다
