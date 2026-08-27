@@ -460,7 +460,9 @@ addEventListener('beforeinstallprompt',function(e){
   e.preventDefault(); window.__installPrompt=e;
   window.__installWaiters.splice(0).forEach(function(f){f(e)});   /* 기다리던 버튼에 알려 준다 */
 });
-addEventListener('appinstalled',function(){window.__installPrompt=null;});
+addEventListener('appinstalled',function(){window.__installPrompt=null;
+  try{localStorage.setItem('bh.a2h.n','9')}catch(e){}   /* 설치했으니 더 권하지 않는다 */
+});
 /* 서비스워커를 여기서 먼저 등록한다.
    앱 로직(ui.js)은 3MB짜리 data.js를 다 받은 뒤에야 돌아서, 거기서 등록하면
    브라우저가 '설치 가능'을 늦게 판단해 버튼을 눌러도 설치창이 아직 준비되지 않는다. */
@@ -639,6 +641,7 @@ function init(){
   const path=location.pathname.replace(/index\.html$/,'');   /* .../ 형태로 — index.html 안 붙게 */
   const url=new URL(path||'/',location.origin);
   url.searchParams.set('i',uidHash(iss._id));   /* 한글 안건번호 대신 짧은 코드 — 링크가 길어지지 않게 */
+  url.searchParams.set('a','1');                /* 링크를 받은 사람에게 '바탕화면에 추가'를 한 번 권한다 */
   return url.href;
  }
  /* 복사 — 최신 클립보드 API가 막히면(카카오톡 인앱 등) execCommand로 대체 */
@@ -1617,14 +1620,17 @@ function init(){
  /* 카카오톡에서 넘어오자마자 뜨는 '한 번 누르면 추가' 창.
     설치창(prompt)은 사용자가 직접 누른 순간에만 열 수 있어서, 자동으로 띄울 수는 없다.
     그래서 버튼 하나만 크게 띄워 탭 한 번으로 끝나게 한다. */
- function installSheet(){
+ function installSheet(from){
   AV('설치안내');
   if(isStandalone())return;
   let m=document.getElementById('a2go');
   if(!m){m=document.createElement('div');m.id='a2go';m.className='modal';document.body.appendChild(m)}
+  const lead = from==='공유링크'
+    ? '이 소식을 보내 주신 <b>오늘의 봉화</b>입니다. 아래를 한 번 누르면 바탕화면에 만들어져, 다음부터는 아이콘만 눌러 들어옵니다.'
+    : '아래를 한 번 누르면 <b>오늘의 봉화</b>가 바탕화면에 만들어집니다.';
   m.innerHTML=`<div class="mbox">
     <h2>바탕화면에 추가</h2>
-    <div class="note">아래를 한 번 누르면 <b>오늘의 봉화</b>가 바탕화면에 만들어집니다.</div>
+    <div class="note">${lead}</div>
     <div style="padding:8px 18px 2px"><button class="callbtn" id="a2Now" style="width:100%">📲 바탕화면에 추가</button></div>
     <div class="mfoot"><span style="flex:1"></span><button id="a2NoNow">나중에</button></div>
   </div>`;
@@ -1633,10 +1639,23 @@ function init(){
   m.querySelector('#a2NoNow').onclick=close;
   m.onclick=e=>{if(e.target===m)close()};
   m.querySelector('#a2Now').onclick=async()=>{
+   AA('설치권유_수락',from||'');
    const p=window.__installPrompt||await waitInstall(3000);
    close();
    if(p)await runInstall(p); else howToModal();
   };
+ }
+ /* ── 설치 권유 ──
+    링크를 받은 분께 한 번만 권한다. [나중에]를 두 번 고르면 다시 띄우지 않는다.
+    (설치 자체는 사용자가 버튼을 눌러야 열린다 — 자동 설치는 어느 브라우저도 허용하지 않는다) */
+ const A2K='bh.a2h.n';
+ function offerInstall(from){
+  if(isStandalone())return;                    /* 이미 바탕화면에서 열고 있음 */
+  let n=0; try{ n=+(localStorage.getItem(A2K)||0) }catch(e){}
+  if(n>=2)return;                              /* 두 번 사양했으면 그만 권한다 */
+  try{ localStorage.setItem(A2K,n+1) }catch(e){}
+  AA('설치권유',from);
+  setTimeout(()=>installSheet(from),1300);     /* 보러 온 소식을 먼저 보여 준 뒤 */
  }
  async function addToHome(){
   if(isStandalone()){ BWUI.toast('이미 바탕화면에서 열고 있어요'); return; }
@@ -1988,6 +2007,10 @@ function init(){
    BWUI.api.openSheet(target);        /* 공유받은 소식 바로 펼치기(알림·관심 강제 안 함) */
    /* 공유 시트는 사용자가 직접 눌러야만 열리므로(자동 실행은 브라우저가 막는다) 안내만 한다 */
    if(wantShare)setTimeout(()=>BWUI.toast('이제 아래 [친구에게 공유하기]를 누르면 카카오톡·문자를 고를 수 있어요'),400);
+   /* 링크를 받고 처음 온 분께 '바탕화면에 추가'를 한 번 권한다.
+      브라우저는 페이지가 스스로 설치하는 것을 막으므로, 누르기만 하면 되는 창을 대신 띄운다.
+      소식을 먼저 펼쳐 놓고 그 위에 얹어, 닫으면 보러 온 소식이 그대로 남는다. */
+   if(params.get('a')==='1')offerInstall('공유링크');
   }
   else{ BWUI.toast('공유된 소식을 찾지 못했어요 — 지난주 자료이거나 정보가 바뀌었을 수 있어요'); }
  }else if(!isStandalone() && params.get('add')!=='1'){   /* 설치하러 넘어온 경우도 인사 화면은 건너뛴다 */

@@ -104,6 +104,12 @@ for f in icon-m192 icon-m512 icon-mmask512; do
 done
 must "$DEPLOY/build/make_icon_png.sh" "rsvg-convert" "아이콘: PNG 다시 그리기 스크립트"
 
+echo "── 3-6) 공유 링크로 들어온 분께 설치 권유 ──"
+must "$P" "url.searchParams.set('a','1')" "군민용: 공유 링크에 설치 권유 표시"
+must "$P" "function offerInstall"          "군민용: 설치 권유 함수"
+must "$P" "offerInstall('공유링크')"        "군민용: 공유로 들어오면 권유"
+must "$P" "if(n>=2)return"                 "군민용: 두 번 사양하면 그만 권함"
+
 echo "── 4) 전화 걸기 ──"
 must "$DEPLOY/mayor.html" "navigator.contacts" "군수용: 저장된 연락처 선택(안드로이드)"
 must "$DEPLOY/mayor.html" "tel:"               "군수용: 전화 걸기 폴백"
