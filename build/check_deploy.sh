@@ -51,8 +51,8 @@ must "$DEPLOY/mayor.html" "navigator.share" "군수용: 지시 전달 공유 시
 must "$P" "backClosesOverlay"  "군민용: 뒤로가기가 팝업만 닫고 앱이 꺼지지 않음"
 must "$P" "isSamsung"          "군민용: 삼성 인터넷 전용 설치 안내"
 
-echo "── 3) 주간업무/주간행사 전환 ──"
-must "$P" "modetabs"    "군민용: 맨 위 [주간업무/주간행사] 전환 탭"
+echo "── 3) 새소식/행사 전환 ──"
+must "$P" "modetabs"    "군민용: 맨 위 [새소식/행사/언론속봉화] 전환 탭"
 must "$P" "BW_EVENTS"   "군민용: 행사 데이터 읽기"
 must "$P" "events.js"   "군민용: 행사 데이터 로드"
 if [ -s "$DEPLOY/events.js" ]; then ok "events.js 존재($(wc -c < "$DEPLOY/events.js" | tr -d ' ')바이트)"
@@ -86,7 +86,8 @@ elif ! diff -q "$SRC/guide.html" "$DEPLOY/guide.html" >/dev/null 2>&1; then no "
 else ok "guide.html 소스=배포본 ($(( $(wc -c < "$DEPLOY/guide.html") / 1024 ))KB)"; fi
 must "$DEPLOY/guide.html" "shareBtn"      "안내: 링크 복사 버튼"
 must "$P" "function guideModal"           "군민용: 하단 [가이드] 로 안내 열기"
-must "$P" 'data-t="guide"'                "군민용: 하단 탭에 가이드"
+must "$P" 'data-t="more"'                 "군민용: 하단 탭에 [설정]"
+must "$P" "moreGd"                        "군민용: 설정 시트에서 사용 안내 열기"
 must "$P" "src=\"guide.html\""             "군민용: 안내 문서 연결"
 must "$DEPLOY/guide.html" "guide.html'"   "안내: 복사되는 주소가 공개 주소인지"
 
@@ -109,6 +110,17 @@ must "$P" "url.searchParams.set('a','1')" "군민용: 공유 링크에 설치 �
 must "$P" "function offerInstall"          "군민용: 설치 권유 함수"
 must "$P" "offerInstall('공유링크')"        "군민용: 공유로 들어오면 권유"
 must "$P" "if(n>=2)return"                 "군민용: 두 번 사양하면 그만 권함"
+
+echo "── 3-7) 헤더를 줄이고 옮긴 것들이 살아 있는지 ──"
+# 헤더 단추 3개를 [⚙️ 설정] 시트로 옮겼다. 시트가 빠지면 바로가기 설치·글씨 크기·맞춤 설정이
+# 통째로 사라지는데 눈에 잘 안 띈다 — 그래서 여기서 붙잡는다.
+must "$P" "function moreModal"  "군민용: 설정 시트"
+must "$P" "headerButtons:\\[\\]"  "군민용: 헤더에 단추 없음(설정 시트로 옮김)"
+must "$P" "moreA2"              "군민용: 설정 - 바탕화면 바로가기"
+must "$P" 'data-fs="2"'         "군민용: 설정 - 글씨 크기 3단계"
+must "$P" "morePf"              "군민용: 설정 - 내 소식 맞춤 설정"
+if grep -q 'class="bw-sub"' "$P"; then no "군민용: 헤더 부제가 되살아남 — 헤더는 한 줄로 유지"
+else ok "군민용: 헤더가 한 줄(부제 없음)"; fi
 
 echo "── 4) 전화 걸기 ──"
 must "$DEPLOY/mayor.html" "navigator.contacts" "군수용: 저장된 연락처 선택(안드로이드)"
@@ -149,6 +161,49 @@ else ok "수집 주소가 채워져 있음"; fi
 if grep -qE "localStorage.getItem\('bh\.(fav|prof)" "$DEPLOY/analytics.js" 2>/dev/null; then
   no "analytics.js 가 개인 저장분(관심·맞춤설정)을 읽고 있습니다"
 else ok "analytics.js 가 개인 저장분을 건드리지 않음"; fi
+
+echo "── 6-2) 봉화뉴스가 살아 있는지 · 저작권 선을 넘지 않았는지 ──"
+# 뉴스는 남의 저작물을 다루는 화면이라, 기능이 빠지는 것보다
+# '선을 넘은 채로 배포되는 것'이 훨씬 위험하다. 그래서 여기서 두 가지를 다 본다.
+if [ ! -s "$DEPLOY/build/fetch_news.py" ]; then no "build/fetch_news.py 가 배포 폴더에 없습니다"
+elif ! diff -q "$SRC/build/fetch_news.py" "$DEPLOY/build/fetch_news.py" >/dev/null 2>&1; then
+  no "fetch_news.py 가 소스와 배포본에서 다름"
+else ok "fetch_news.py 소스=배포본"; fi
+must "$P" "load('news.js"        "군민용: 뉴스 자료 로드"
+must "$P" "function buildNewsView" "군민용: 뉴스 화면"
+must "$P" "function renderNews"    "군민용: 뉴스 목록 그리기"
+must "$P" "data-m=\\\"news\\\""       "군민용: 뉴스 모드 탭"
+must "$P" "nwMissed"             "군민용: 놓친 뉴스 계산"
+# (가) 기사는 반드시 언론사 원문으로 '나가야' 한다 — 새 창 + noopener
+must "$P" 'class="nw-card" href="${E(n.u)}" target="_blank" rel="noopener noreferrer"' \
+                                 "저작권: 기사는 새 창으로 언론사 원문에 링크아웃"
+# (나) 원문을 앱 안에 끼워 넣으면(프레이밍) 분쟁 소지가 생긴다
+if grep -qE '<iframe[^>]*(n\.u|nw-)' "$P" 2>/dev/null; then
+  no "저작권: 뉴스 원문을 iframe 으로 끼워 넣고 있습니다 — 링크아웃만 허용"
+else ok "저작권: 뉴스 원문을 프레임으로 끼워 넣지 않음"; fi
+# (다) 구글 뉴스 RSS 는 피드 자체가 "개인용 리더에서 개인적·비상업적으로만" 쓰라고 못 박고 있다.
+#     커버리지가 넓어 자꾸 손이 가는 곳이라, 되살아나면 여기서 붙잡는다.
+if grep -q "news\.google\.com" "$SRC/build/fetch_news.py" 2>/dev/null; then
+  no "저작권: 구글 뉴스 RSS 를 쓰고 있습니다 — 공개 사이트 게시는 구글 약관 위반"
+else ok "저작권: 구글 뉴스 RSS 를 쓰지 않음"; fi
+must "$SRC/build/fetch_news.py" "RSS_FEEDS" "열쇠 없이도 도는 언론사 공식 RSS 수집원"
+# (라) 본문·요약(리드문)을 담으면 복제권·2차적저작물작성권 침해 소지가 생긴다.
+#     수집기가 description 을 저장하지 않는지, 실제 news.js 에 본문이 없는지 둘 다 본다.
+if grep -qE '"(desc|description|body|summary|content)"\s*:' "$SRC/build/fetch_news.py" 2>/dev/null; then
+  no "저작권: fetch_news.py 가 기사 본문/요약을 저장하려 합니다 — 제목·언론사·날짜·주소만 담을 것"
+else ok "저작권: 수집기가 본문/요약을 저장하지 않음"; fi
+if [ -s "$DEPLOY/news.js" ]; then
+  if grep -qE '"(desc|description|body|summary|content)":' "$DEPLOY/news.js" 2>/dev/null; then
+    no "저작권: news.js 에 기사 본문/요약이 들어 있습니다 — 배포 금지"
+  else ok "저작권: news.js 에 본문/요약 없음"; fi
+  if grep -q 'n\.news\.naver\.com' "$DEPLOY/news.js" 2>/dev/null; then
+    echo "  ⚠️  일부 기사가 네이버 안쪽 주소로 걸려 있습니다(원문 주소가 없는 기사) — 대개는 정상입니다"
+  else ok "저작권: 모든 기사가 언론사 원문 주소"; fi
+else
+  echo "  ⚠️  news.js 가 아직 없습니다 — 네이버 API 열쇠를 넣고 자동 갱신이 한 번 돌면 생깁니다(앱 동작에는 지장 없음)"
+fi
+# (마) 출처·저작권 고지가 화면에 남아 있어야 한다
+must "$P" "기사의 저작권은 각 언론사에 있습니다" "저작권: 화면에 저작권 고지"
 
 echo "── 7) 개인정보가 섞여 들어가지 않았는지 ──"
 if grep -rlE "01[016789]-[0-9]{3,4}-[0-9]{4}" "$DEPLOY/data.js" "$DEPLOY/md" 2>/dev/null | grep -q .; then

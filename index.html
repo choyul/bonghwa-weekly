@@ -55,13 +55,14 @@ footer{max-width:430px}
 .cards,.ev-list,.evm-list{grid-template-columns:1fr!important}
 
 /* ── 헤더 ── */
-.bw-head{background:var(--paper);color:var(--ink);border-bottom:1px solid var(--line);box-shadow:none}
-.bw-head .in{max-width:430px;padding:14px 18px 12px;gap:10px;align-items:center}
-.bw-head h1{font-size:17px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+.bw-head{background:var(--paper);color:var(--ink);border-bottom:1px solid var(--line);box-shadow:none;
+ padding:calc(2px + env(safe-area-inset-top)) 14px 2px}
+.bw-head .in{max-width:430px;padding:7px 14px;gap:8px;align-items:center;flex-wrap:nowrap}
+.bw-head h1{font-size:15.5px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
 .bw-head .wk{display:none}
-.bw-sub{font-size:11.5px;color:var(--sub);font-weight:600;margin-top:1px}
-.bw-today{font-size:11.5px;color:var(--sub);font-weight:600}
-.mascot-head{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--brand-2),var(--brand));
+/* 오늘 날짜는 제목 오른쪽 끝에 작게 — 줄바꿈 없이 한 줄을 유지한다 */
+.bw-today{margin-left:auto;flex:none;font-size:12.5px;color:var(--sub);font-weight:700;white-space:nowrap}
+.mascot-head{width:28px;height:28px;border-radius:11px;background:linear-gradient(135deg,var(--brand-2),var(--brand));
  align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(22,163,74,.28);padding:5px}
 .bw-head .hbtn{width:38px;height:38px;min-height:38px;flex:none;border-radius:12px;background:var(--bg);border:none;
  color:var(--ink);font-weight:800;font-size:16px;padding:0;display:inline-flex;align-items:center;justify-content:center}
@@ -173,14 +174,32 @@ body.fs2{--fsx:1.26}
 .tabbar .lb{font-size:calc(11.5px*var(--fsx))}
 footer{font-size:calc(14px*var(--fsx))}
 .nrow,.ntbody{font-size:calc(15px*var(--fsx))}
-.bw-head .hbtn.on{background:var(--brand);color:#fff}
 
 /* ── 바탕화면 바로가기 안내 ── */
 .a2-steps{margin:2px 0 6px;padding:0 18px 0 38px;font-size:calc(15px*var(--fsx));line-height:1.85;color:var(--ink)}
 .a2-steps li{margin-bottom:4px}
 .a2-ic{display:inline-block;padding:0 2px}
-/* 바탕화면에서 연 상태면 바로가기 버튼은 필요 없다 */
-body.standalone .bw-head [data-hb="0"]{display:none}
+/* 바탕화면에서 연 상태면 바로가기 항목은 필요 없다 */
+body.standalone #moreA2{display:none}
+
+/* ── 설정 시트 (헤더에서 옮겨 온 바로가기·글씨크기·맞춤설정·사용안내) ── */
+#moreModal .mbox{max-height:86vh;overflow-y:auto}
+.mo-lab{padding:14px 18px 8px;font-size:calc(14px*var(--fsx));font-weight:800;color:var(--ink)}
+.mo-fs{display:flex;gap:7px;padding:0 18px}
+.mo-fs button{flex:1;min-height:60px;border:1px solid var(--line);border-radius:12px;background:var(--paper);
+ color:var(--ink);font-weight:800;font-size:calc(19px*var(--fsx));cursor:pointer;font-family:inherit;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.mo-fs button small{font-size:calc(11.5px*var(--fsx));font-weight:700;color:var(--sub)}
+.mo-fs button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.mo-fs button.on small{color:#fff;opacity:.9}
+.mo-list{display:flex;flex-direction:column;gap:8px;padding:0 18px}
+.mo-list button{display:flex;align-items:center;gap:12px;text-align:left;min-height:62px;padding:10px 14px;
+ border:1px solid var(--line);border-radius:12px;background:var(--paper);cursor:pointer;font-family:inherit}
+.mo-list button:active{border-color:var(--acc)}
+.mo-ic{flex:none;font-size:22px;line-height:1}
+.mo-tx{display:flex;flex-direction:column;gap:2px;min-width:0}
+.mo-tx b{font-size:calc(15px*var(--fsx));font-weight:700;color:var(--ink)}
+.mo-tx small{font-size:calc(12.5px*var(--fsx));color:var(--sub);font-weight:600;word-break:keep-all}
 
 /* ── 내 소식 맞춤 설정 ── */
 .pf-lab{padding:14px 18px 8px;font-size:calc(14px*var(--fsx));font-weight:800;color:var(--ink)}
@@ -190,8 +209,8 @@ body.standalone .bw-head [data-hb="0"]{display:none}
  background:var(--paper);color:var(--ink);font-size:calc(14px*var(--fsx));font-weight:700;cursor:pointer;font-family:inherit}
 .pf-grid button.on{background:var(--brand);border-color:var(--brand);color:#fff}
 #profModal .mbox{max-height:86vh;overflow-y:auto}
-/* 맞춤이 켜져 있으면 설정 단추를 눈에 띄게 */
-body.profon .bw-head [data-hb="2"]{background:var(--brand);color:#fff}
+/* 맞춤이 켜져 있으면 아래 탭바의 설정 아이콘을 눈에 띄게 */
+body.profon #tabbar [data-t="more"] .ic{background:var(--acc-soft)}
 
 /* ── 검색 결과가 어느 기간인지 ── */
 .ps-scope{display:none}
@@ -259,9 +278,7 @@ footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decorat
 .nr-title{font-size:14.5px;font-weight:700;line-height:1.42;color:var(--ink);text-wrap:pretty}
 .nr-dept{font-size:12.5px;color:var(--sub);margin-top:5px}
 
-/* ── 헤더 부제 + 오늘 날짜 (자료 주차 줄은 달력 카드 타이틀로 옮겨 헤더에선 숨김) ── */
-.bw-sub{width:100%;font-size:13px;font-weight:600;opacity:.9;margin-top:3px}
-.bw-today{width:100%;font-size:13px;font-weight:700;margin-top:4px;opacity:.96}
+/* ── 헤더는 한 줄 (자료 주차 줄은 달력 카드 타이틀로 옮겨 헤더에선 숨김) ── */
 .bw-head .wk{display:none}
 
 /* ── 상단 주간 달력 (데이 스트립) + 주 네비게이터 + 기간 버튼 ── */
@@ -303,6 +320,37 @@ body.mode-event #bwTop,body.mode-event #bwFilters,body.mode-event #bwInfo,
 body.mode-event #bwCards,body.mode-event #bwMore,
 body.mode-event .ws-scopes,body.mode-event .ws-cal,body.mode-event .ws-range{display:none}
 body:not(.mode-event) #evView{display:none}
+/* 뉴스 보기는 자기만의 시간축(오늘·놓친 것·지난 1주일)을 쓰므로 주간 달력까지 통째로 감춘다 */
+body.mode-news .psearch,body.mode-news #bwTiles,body.mode-news #bwAxes,
+body.mode-news #bwTop,body.mode-news #bwFilters,body.mode-news #bwInfo,
+body.mode-news #bwCards,body.mode-news #bwMore,
+body.mode-news #evView,body.mode-news #wstrip,body.mode-news #hero{display:none}
+body:not(.mode-news) #nwView{display:none}
+/* ── 뉴스 목록 ── */
+.nw-search{margin:0 14px 12px;position:relative}
+.nw-search input{width:100%;min-height:46px;padding:0 38px 0 14px;border:1px solid var(--line);
+ border-radius:var(--r);background:var(--paper);color:var(--ink);font-size:15px;font-family:inherit}
+.nw-search .clr{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:32px;height:32px;
+ border:none;background:transparent;color:var(--sub);font-size:17px;cursor:pointer}
+.nw-list{display:grid;grid-template-columns:1fr;gap:9px;padding:0 14px}
+@media(min-width:760px){.nw-list{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}}
+.nw-card{display:block;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);
+ padding:13px 14px;text-decoration:none;color:inherit;transition:border-color .15s}
+.nw-card:active{border-color:var(--acc)}
+.nw-title{font-size:15px;font-weight:700;color:var(--ink);line-height:1.45;word-break:keep-all}
+.nw-meta{margin-top:6px;font-size:13px;color:var(--sub);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.nw-press{font-weight:700;color:var(--acc)}
+.nw-out{margin-left:auto;font-size:12px;opacity:.7}
+.nw-badge{display:inline-block;font-size:11.5px;font-weight:800;border-radius:6px;padding:2px 7px;
+ background:var(--acc);color:#fff;margin-right:6px;vertical-align:1px}
+.nw-empty{text-align:center;color:var(--sub);font-size:14px;padding:34px 10px;
+ background:var(--paper);border:1px solid var(--line);border-radius:var(--r)}
+.nw-note{margin:16px 14px 0;padding:11px 13px;border:1px solid var(--line);border-radius:var(--r);
+ background:var(--bg2,#eceae5);color:var(--sub);font-size:12.5px;line-height:1.65}
+/* 놓친 뉴스가 있으면 아래 탭바의 뉴스 아이콘에 개수를 얹는다 */
+.tabbar button{position:relative}
+.tabbar .dot{position:absolute;top:4px;left:50%;margin-left:4px;min-width:17px;height:17px;padding:0 4px;
+ border-radius:9px;background:#d9480f;color:#fff;font-size:10.5px;font-weight:800;line-height:17px;text-align:center}
 /* ── 행사 목록 ── */
 .ev-head{display:flex;align-items:baseline;gap:8px;margin:22px 14px 10px}
 .ev-head h2{font-size:17px;margin:0;color:var(--ink)}
@@ -443,7 +491,7 @@ body:not(.mode-event) #evView{display:none}
 /* 헤더에 자리잡는 마스코트 — 인트로 마스코트가 도착한 뒤에만 나타난다.
    처음부터 보이면 날아오는 마스코트와 겹쳐 '잔상'처럼 보인다. */
 /* 캐릭터 그림 자체가 주인공이므로 앞서 준 초록 배지 배경·그림자는 지운다 */
-.mascot-head{width:calc(46px*var(--fsx));height:calc(46px*var(--fsx));flex:none;
+.mascot-head{width:calc(30px*var(--fsx));height:calc(30px*var(--fsx));flex:none;
  display:inline-flex;margin-right:4px;opacity:0;transition:opacity .22s ease;
  background:none;box-shadow:none;border-radius:0;padding:0}
 .mascot-head.show{opacity:1}
@@ -487,13 +535,15 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 <script src="core.js"></script>
 <script src="ui.js"></script>
 <script>
-/* data.js(필수) → notices.js(고시·공고) → events.js(주간행사) → init
-   뒤의 둘은 없거나 실패해도 화면은 뜬다 */
+/* data.js(필수) → notices.js(고시·공고) → events.js(주간행사) → news.js(봉화 뉴스) → init
+   뒤의 셋은 없거나 실패해도 화면은 뜬다 */
 (function(){
  function load(src,cb){const s=document.createElement('script');s.src=src;s.onload=cb;s.onerror=cb;document.head.appendChild(s)}
  load('data.js?v='+Date.now(), function(){
   load('notices.js?v='+Date.now(), function(){
-   load('events.js?v='+Date.now(), init);
+   load('events.js?v='+Date.now(), function(){
+    load('news.js?v='+Date.now(), init);
+   });
   });
  });
 })();
@@ -844,6 +894,26 @@ function init(){
     ※ BWUI.start 가 첫 렌더에서 syncTopControls 를 부르므로, 이 값들은 반드시 그 앞에 선언한다. */
  const EV=(window.BW_EVENTS&&window.BW_EVENTS.items)||[];
  let MODE='work', evKind='';                     /* evKind: ''=전체 '군' '기관' */
+
+ /* ═══ 봉화 뉴스 ═══ 네이버 뉴스 검색 API로 모은 봉화 관련 기사(build/fetch_news.py).
+    ── 저작권 때문에 지켜야 할 것 (고치기 전에 읽을 것) ──
+    제목·언론사·날짜만 보여 주고, 누르면 언론사 원문으로 **새 창을 열어 나간다.**
+    · 기사 본문·요약(리드문)·사진은 담지도 보여 주지도 않는다 — 요약도 침해가 될 수 있다.
+    · iframe·임베드로 원문을 이 앱 안에 끼워 넣지 않는다(프레이밍 분쟁 소지).
+    · 언론사 사이트를 직접 긁지 않는다 — 저작권과 별개로 부정경쟁방지법에 걸린다.
+    근거: 링크 행위는 저작권법상 전송에 해당하지 않고(대법원 2021.9.9. 2017도19025 전합),
+          사실 전달에 불과한 시사보도는 보호 대상이 아니다(저작권법 제7조 제5호).
+    자세한 것은 build/fetch_news.py 머리말에 적어 두었다. */
+ const NEWS=(window.BW_NEWS&&window.BW_NEWS.items)||[];
+ const NWKEY='bh.news.seen';                     /* 이 기기가 마지막으로 본 기사 시각 */
+ let nwSeen=0, nwMissed=[], nwQ='', nwLimit=40;
+ (function initNewsSeen(){
+  try{nwSeen=+localStorage.getItem(NWKEY)||0}catch(e){}
+  const newest=NEWS.length?NEWS[0].ts:0;
+  /* 처음 온 기기라면 30일치가 통째로 '놓친 뉴스'가 돼 버린다 — 첫 방문은 놓친 것 없음으로 둔다 */
+  if(!nwSeen){ nwSeen=newest; try{localStorage.setItem(NWKEY,String(newest))}catch(e){} }
+  else nwMissed=NEWS.filter(n=>n.ts>nwSeen);     /* 이번 방문 동안은 이 목록을 고정해서 보여 준다 */
+ })();
  const evOf=day=>EV.filter(e=>e.date===day&&(!evKind||e.kind===evKind));
  const evCntOf=day=>EV.filter(e=>e.date===day&&(!evKind||e.kind===evKind)).length;
  let evSpan='week';                              /* 'week' 주간 보기 · 'month' 월간 달력 */
@@ -971,11 +1041,10 @@ function init(){
   sortWith:(a,b)=>(profScore(b)-profScore(a))||(tag(b).score-tag(a).score),
 
   /* 헤더: 바탕화면 바로가기 + 글씨 크기 (관심 모아보기는 아래 탭바에서) */
-  headerButtons:[
-   {label:'📲',on(){addToHome()}},
-   {label:'가',on(){toggleBig()}},
-   {label:'⚙️',on(){profModal()}}
-  ],
+  /* 헤더에는 단추를 두지 않는다 — 바로가기 설치·글씨 크기·맞춤 설정은
+     아래 탭바의 [⚙️ 설정] 시트(moreModal)로 모았다. 헤더를 한 줄로 줄여
+     화면을 열면 바로 [새소식/행사/언론속봉화] 를 고를 수 있게 하려는 것. */
+  headerButtons:[],
   customFilters:{fav:{label:'관심 업무만',fn:iss=>!!fav[iss._id]}},
 
   /* ── 두 갈래로 좁혀 가기 (언제는 위 달력이 맡는다) — 주간 소식과 고시·공고를 합친 축 ──
@@ -1091,14 +1160,13 @@ function init(){
 
  /* ── 헤더 부제 + 오늘 날짜 (부제 바로 밑) ── */
  function decorateHeader(){
-  const inb=document.querySelector('.bw-head .in'); if(!inb||inb.querySelector('.bw-sub'))return;
-  const wk=inb.querySelector('.wk');
-  const sub=document.createElement('div'); sub.className='bw-sub'; sub.textContent='봉화의 이모저모를 알려드립니다';
+  /* 헤더는 한 줄만 — 마스코트 + 이름 + 오늘 날짜. 부제와 단추는 뺐다.
+     화면을 열자마자 아래 [새소식/행사/언론속봉화] 가 보이게 하려는 것. */
+  const inb=document.querySelector('.bw-head .in'); if(!inb||inb.querySelector('.bw-today'))return;
   const td=BW.d2(BWUI.api.today);
   const today=document.createElement('div'); today.className='bw-today';
-  today.textContent=`📅 오늘 · ${td.getMonth()+1}월 ${td.getDate()}일 (${BW.DOW[td.getDay()]})`;
-  inb.insertBefore(sub, wk||null);
-  inb.insertBefore(today, wk||null);
+  today.textContent=`${td.getMonth()+1}월 ${td.getDate()}일 (${BW.DOW[td.getDay()]})`;
+  inb.appendChild(today);
  }
 
  /* ── 상단 주간 달력 (데이 스트립) + 이전·다음 주 이동 + 기간 버튼 ──
@@ -1476,9 +1544,11 @@ function init(){
  }
 
  function setMode(m){
-  if(m!==MODE)AV(m==='event'?'주간행사':'주간업무');
+  if(m!==MODE)AV(m==='event'?'주간행사':m==='news'?'봉화뉴스':'주간업무');
   MODE=m;
   document.body.classList.toggle('mode-event',m==='event');
+  document.body.classList.toggle('mode-news',m==='news');
+  if(m==='news'){ markNewsSeen(); renderNews(); }
   document.querySelectorAll('#modetabs button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
   /* 행사는 '그날'만 보는 게 자연스럽다 — 날짜가 안 골라져 있으면 오늘(또는 그 주 첫날)로 */
   if(m==='event'){
@@ -1497,8 +1567,9 @@ function init(){
   const wrap=document.querySelector('.bw-wrap'); if(!wrap||document.getElementById('modetabs'))return;
   const el=document.createElement('div'); el.className='modetabs'; el.id='modetabs';
   el.innerHTML=`
-    <button type="button" data-m="work" class="on">📋 주간업무</button>
-    <button type="button" data-m="event">🎪 주간행사</button>`;
+    <button type="button" data-m="work" class="on">📋 새소식</button>`
+    +(EV.length?`<button type="button" data-m="event">🎪 행사</button>`:'')
+    +(NEWS.length?`<button type="button" data-m="news">📰 언론속봉화</button>`:'');
   wrap.insertBefore(el,wrap.firstChild);
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
  }
@@ -1713,13 +1784,61 @@ function init(){
   fsLevel=Math.max(0,Math.min(2,+n||0));
   document.body.classList.toggle('fs1',fsLevel===1);
   document.body.classList.toggle('fs2',fsLevel===2);
-  const b=document.querySelector('.bw-head [data-hb="1"]');   /* 두 번째 = 글씨 버튼 */
-  if(b){ b.textContent=FS_LABEL[fsLevel]; b.classList.toggle('on',fsLevel>0); }
+  /* 설정 시트가 열려 있으면 고른 단계를 표시해 준다 (아직 안 열었으면 그릴 때 맞춰진다) */
+  document.querySelectorAll('#moreModal [data-fs]').forEach(x=>
+   x.classList.toggle('on',+x.dataset.fs===fsLevel));
  }
  function toggleBig(){                      /* 기본 → 더크게 → 가장크게 → 기본 */
   applyFs((fsLevel+1)%3);
   try{localStorage.setItem(BIGKEY,String(fsLevel))}catch(e){}
   BWUI.toast(FS_TOAST[fsLevel]);
+ }
+
+ /* ── 설정 시트 — 헤더에 있던 [바로가기 설치·글씨 크기·맞춤 설정] 을 여기로 모았다.
+      헤더를 한 줄로 줄여, 화면을 열면 바로 메뉴를 고를 수 있게 하려는 것.
+      사용 안내(가이드)도 탭 한 칸을 쓰기보다 여기 두는 편이 낫다. ── */
+ function moreModal(){
+  AV('설정');
+  let m=document.getElementById('moreModal');
+  if(!m){ m=document.createElement('div'); m.id='moreModal'; m.className='modal'; document.body.appendChild(m); }
+  m.innerHTML=`<div class="mbox">
+    <h2>설정</h2>
+    <div class="mo-lab">글씨 크기</div>
+    <div class="mo-fs" id="moFs">
+      <button type="button" data-fs="0">가<small>보통</small></button>
+      <button type="button" data-fs="1">가<small>크게</small></button>
+      <button type="button" data-fs="2">가<small>아주 크게</small></button>
+    </div>
+    <div class="mo-lab">그 밖에</div>
+    <div class="mo-list">
+      <button type="button" id="moreA2"><span class="mo-ic">📲</span>
+        <span class="mo-tx"><b>바탕화면에 바로가기 만들기</b>
+        <small>휴대폰 첫 화면에서 앱처럼 바로 열 수 있어요</small></span></button>
+      <button type="button" id="morePf"><span class="mo-ic">🙋</span>
+        <span class="mo-tx"><b>내 소식 맞춤 설정</b>
+        <small>나에게 해당하는 소식을 위로 올려 드려요</small></span></button>
+      <button type="button" id="moreGd"><span class="mo-ic">📖</span>
+        <span class="mo-tx"><b>사용 안내</b>
+        <small>이 앱을 어떻게 쓰는지 그림으로 알려 드려요</small></span></button>
+    </div>
+    <div class="mfoot"><span style="flex:1"></span><button class="pri" id="moClose">닫기</button></div>
+  </div>`;
+  m.classList.add('open');
+  const close=()=>{ m.classList.remove('open'); syncTabBar(); };
+  m.onclick=e=>{ if(e.target===m)close() };
+  m.querySelector('#moClose').onclick=close;
+  m.querySelectorAll('#moFs button').forEach(b=>b.onclick=()=>{
+   applyFs(+b.dataset.fs);
+   try{ localStorage.setItem(BIGKEY,String(fsLevel)) }catch(e){}
+   AA('설정','글씨크기'+fsLevel);
+   BWUI.toast(FS_TOAST[fsLevel]);
+  });
+  m.querySelector('#moreA2').onclick=()=>{ AA('설정','바로가기'); close(); addToHome(); };
+  m.querySelector('#morePf').onclick=()=>{ AA('설정','맞춤설정'); close(); profModal(); };
+  m.querySelector('#moreGd').onclick=()=>{ AA('설정','사용안내'); close(); guideModal(); };
+  applyFs(fsLevel);                    /* 지금 고른 단계를 켠 상태로 보여 준다 */
+  /* 뒤로가기로 닫혔을 때도 아래 탭 표시가 따라오도록 */
+  new MutationObserver(()=>syncTabBar()).observe(m,{attributes:true,attributeFilter:['class']});
  }
 
  /* ── 히어로: 이번 주 요약 (디자인 지정) — 숫자는 실제 데이터에서 센다 ── */
@@ -1757,10 +1876,12 @@ function init(){
   if(document.getElementById('tabbar'))return;
   const el=document.createElement('nav'); el.className='tabbar'; el.id='tabbar';
   el.innerHTML=`
-    <button data-t="home" class="on"><span class="ic">🏠</span><span class="lb">홈</span></button>
-    <button data-t="cal"><span class="ic">📅</span><span class="lb">행사</span></button>
-    <button data-t="guide"><span class="ic">📖</span><span class="lb">가이드</span></button>
-    <button data-t="fav"><span class="ic">⭐</span><span class="lb">관심</span></button>`;
+    <button data-t="home" class="on"><span class="ic">📋</span><span class="lb">새소식</span></button>
+    <button data-t="cal"><span class="ic">🎪</span><span class="lb">행사</span></button>
+    <button data-t="news"><span class="ic">📰</span><span class="lb">언론속봉화</span>${
+      nwMissed.length?`<span class="dot">${nwMissed.length>99?'99+':nwMissed.length}</span>`:''}</button>
+    <button data-t="fav"><span class="ic">⭐</span><span class="lb">관심</span></button>
+    <button data-t="more"><span class="ic">⚙️</span><span class="lb">설정</span></button>`;
   document.body.appendChild(el);
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>{
    const t=b.dataset.t;
@@ -1771,7 +1892,8 @@ function init(){
      if(BWUI.api.state.custom==='fav')BWUI.api.setCustom('fav');   /* 관심만 보기였다면 풀고 전체로 */
      window.scrollTo({top:0,behavior:'smooth'}); }
    else if(t==='cal'){ if(EV.length)setMode('event'); else BWUI.toast('행사 자료를 아직 받지 못했어요'); }
-   else if(t==='guide'){ guideModal(); }
+   else if(t==='news'){ if(NEWS.length)setMode('news'); else BWUI.toast('뉴스를 아직 받지 못했어요'); }
+   else if(t==='more'){ moreModal(); }
    else if(t==='fav'){ setMode('work'); BWUI.api.setCustom('fav'); window.scrollTo({top:0,behavior:'smooth'}); }
    syncTabBar();
   });
@@ -1805,8 +1927,11 @@ function init(){
   const el=document.getElementById('tabbar'); if(!el)return;
   const S=BWUI.api.state;
   const g=document.getElementById('guideModal');
-  const cur = (g&&g.classList.contains('open')) ? 'guide'
-            : MODE==='event' ? 'cal' : (S.custom==='fav' ? 'fav' : 'home');
+  const more=document.getElementById('moreModal');
+  const cur = ((g&&g.classList.contains('open'))||(more&&more.classList.contains('open'))) ? 'more'
+            : MODE==='event' ? 'cal'
+            : MODE==='news'  ? 'news'
+            : (S.custom==='fav' ? 'fav' : 'home');
   el.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===cur));
  }
  function buildEventView(){
@@ -1966,16 +2091,102 @@ function init(){
   list.querySelectorAll('.ev-card').forEach(c=>c.onclick=()=>eventModal(rows[+c.dataset.i]));
  }
 
+ /* ═══ 뉴스 화면 ═══ (원칙은 위 NEWS 선언부의 주석 참고 — 제목·언론사·날짜·링크만) */
+ function markNewsSeen(){
+  const newest=NEWS.length?NEWS[0].ts:0;
+  if(newest>nwSeen){ try{localStorage.setItem(NWKEY,String(newest))}catch(e){} }
+  /* nwMissed 는 일부러 그대로 둔다 — 보고 있는 중에 목록이 사라지면 당황스럽다 */
+  const dot=document.querySelector('#tabbar [data-t="news"] .dot'); if(dot)dot.remove();
+ }
+ function buildNewsView(){
+  const wrap=document.querySelector('.bw-wrap');
+  if(!wrap||!NEWS.length||document.getElementById('nwView'))return;
+  const el=document.createElement('div'); el.id='nwView';
+  el.innerHTML=`
+    <div class="nw-search">
+      <input type="search" id="nwQ" placeholder="뉴스 제목·언론사로 찾기" autocomplete="off" enterkeyhint="search">
+      <button type="button" class="clr" id="nwClr" aria-label="지우기" hidden>✕</button>
+    </div>
+    <div id="nwBody"></div>
+    <div class="nw-note">
+      제목을 누르면 <b>그 기사를 쓴 언론사 홈페이지</b>로 새 창이 열립니다.
+      이 화면은 제목·언론사·날짜만 모아 두는 곳이고, 기사 내용은 담고 있지 않습니다.
+      <b>기사의 저작권은 각 언론사에 있습니다.</b><br>
+      네이버 뉴스 검색으로 하루 한 번 모으며, 봉화군 공식 발표가 아닙니다.
+      빼기를 원하시는 언론사는 봉화군청 도시계획과로 알려 주시면 바로 내리겠습니다.
+    </div>`;
+  const anchor=document.getElementById('bwInfo')||document.getElementById('bwCards');
+  wrap.insertBefore(el,anchor);
+  const q=el.querySelector('#nwQ'), clr=el.querySelector('#nwClr');
+  q.addEventListener('input',()=>{ nwQ=q.value.trim(); nwLimit=40; clr.hidden=!nwQ; renderNews(); });
+  clr.onclick=()=>{ q.value=''; nwQ=''; nwLimit=40; clr.hidden=true; q.focus(); renderNews(); };
+ }
+ function renderNews(){
+  const box=document.getElementById('nwBody'); if(!box)return;
+  const nwDate=d=>{const x=BW.d2(d);return `${x.getMonth()+1}.${x.getDate()}.(${BW.DOW[x.getDay()]})`;};
+  const missed=new Set(nwMissed.map(n=>n.id));
+  const card=n=>`<a class="nw-card" href="${E(n.u)}" target="_blank" rel="noopener noreferrer">
+     <div class="nw-title">${missed.has(n.id)?'<span class="nw-badge">NEW</span>':''}${E(n.t)}</div>
+     <div class="nw-meta"><span class="nw-press">${E(n.p)}</span><span>${nwDate(n.d)}</span>
+      <span class="nw-out">기사 원문 ↗</span></div>
+   </a>`;
+
+  /* 검색 중에는 시기별로 나누지 않고 한 목록으로 — 찾는 사람은 언제 나온 기사인지보다 그 기사를 원한다 */
+  if(nwQ){
+   const k=nwQ.toLowerCase();
+   const rows=NEWS.filter(n=>(n.t+' '+n.p).toLowerCase().includes(k));
+   box.innerHTML=rows.length
+    ? `<div class="ev-head"><h2>‘${E(nwQ)}’ 검색 결과</h2><span class="cnt">${rows.length}건</span></div>
+       <div class="nw-list">${rows.slice(0,nwLimit).map(card).join('')}</div>`
+      +(rows.length>nwLimit?`<button class="morebtn" id="nwMore">${rows.length-nwLimit}건 더 보기</button>`:'')
+    : `<div class="ev-head"><h2>‘${E(nwQ)}’ 검색 결과</h2></div>
+       <div class="nw-list"><div class="nw-empty">찾으시는 뉴스가 없어요<br>
+        <span style="font-size:12.5px">다른 낱말로 찾아보시거나, 위 ✕를 눌러 전체를 보세요</span></div></div>`;
+   const mb=document.getElementById('nwMore'); if(mb)mb.onclick=()=>{nwLimit+=60;renderNews()};
+   return;
+  }
+
+  /* 시기별로 겹치지 않게 나눈다 — 위에서 이미 담은 기사는 아래 묶음에서 빼므로 한 번씩만 나온다 */
+  const today=BWUI.api.today, weekAgo=Math.floor(Date.now()/1000)-7*86400;
+  const used=new Set(), secs=[];
+  const take=(title,pred)=>{
+   const rows=NEWS.filter(n=>!used.has(n.id)&&pred(n));
+   rows.forEach(n=>used.add(n.id));
+   if(rows.length)secs.push([title,rows]);
+  };
+  take('📰 오늘의 뉴스',       n=>n.d===today);
+  take('🆕 내가 놓친 뉴스',    n=>missed.has(n.id));
+  take('🗓️ 지난 1주일',        n=>n.ts>=weekAgo);
+  take('📁 그 이전',           n=>true);
+
+  let budget=nwLimit, html='', shown=0, total=NEWS.length;
+  for(const [title,rows] of secs){
+   if(budget<=0)break;
+   const part=rows.slice(0,budget); budget-=part.length; shown+=part.length;
+   html+=`<div class="ev-head"><h2>${title}</h2><span class="cnt">${rows.length}건</span></div>
+          <div class="nw-list">${part.map(card).join('')}</div>`;
+  }
+  if(!html){
+   html=`<div class="nw-list"><div class="nw-empty">아직 모인 뉴스가 없어요</div></div>`;
+  }else if(shown<total){
+   html+=`<button class="morebtn" id="nwMore">${total-shown}건 더 보기</button>`;
+  }
+  box.innerHTML=html;
+  const mb=document.getElementById('nwMore'); if(mb)mb.onclick=()=>{nwLimit+=60;renderNews()};
+  box.querySelectorAll('.nw-card').forEach(a=>a.addEventListener('click',()=>AA('뉴스',a.querySelector('.nw-press').textContent)));
+ }
+
  decorateHeader();
  buildDayStrip();
  buildSearchCard();   /* 검색을 기간 카드보다 위에 둔다 — 검색 전에 기간부터 고르러 올라가지 않도록 */
- if(EV.length)buildModeTabs();
+ if(EV.length||NEWS.length)buildModeTabs();
  if(isStandalone())document.body.classList.add('standalone');
  paintFavicon();
  document.body.classList.toggle('profon',profOn());
  try{applyFs(localStorage.getItem(BIGKEY)||0)}catch(e){applyFs(0)}   /* 지난번에 고른 글씨 크기 그대로 */
  buildHero();
  buildEventView();
+ buildNewsView();
  buildTabBar();
  buildNotices();
  /* 기본: 오늘이 이번 자료 주간이면 '오늘 소식'부터, 아니면 이번 주 전체 */

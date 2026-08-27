@@ -1,0 +1,52 @@
+name: 봉화뉴스 갱신
+
+# 봉화 관련 뉴스 제목·링크를 모아 news.js 를 갱신한다.
+#
+# 왜 2시간마다인가 — 언론사 RSS 는 '최근 N건'만 준다. 한 번에 담기는 시간 폭을 재 보니
+#   연합뉴스 지역 120건=3.3시간 · 뉴시스 속보 100건=1.7시간
+#   경북일보 50건=20시간 · 대구일보 50건=46시간 · 한국농어민신문 50건=40시간
+# 이라서, 하루 한 번만 받으면 연합뉴스·뉴시스 기사를 대부분 놓친다.
+# 수집기가 지난 news.js 와 합치므로 조금씩 쌓여 30일치가 된다.
+#
+# 저작권: 담는 것은 제목·언론사·날짜·원문주소뿐이다. 기사 본문·요약은 담지 않는다.
+#         자세한 것은 build/fetch_news.py 머리말 참고.
+on:
+  schedule:
+    - cron: '0 */2 * * *'   # 2시간마다 (UTC 기준이지만 2시간 간격이라 한국시간에도 그대로)
+  workflow_dispatch: {}      # Actions 탭에서 수동 실행 버튼
+
+permissions:
+  contents: write
+
+concurrency:
+  group: news-update
+  cancel-in-progress: false
+
+jobs:
+  news:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 저장소 가져오기
+        uses: actions/checkout@v4
+
+      - name: 봉화 뉴스 수집 (언론사 공식 RSS + 열쇠가 있으면 네이버 검색)
+        # NAVER_* Secrets 가 없어도 RSS 만으로 정상 동작한다.
+        env:
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+        run: python3 build/fetch_news.py news.js 30
+
+      - name: 바뀌었으면 커밋·푸시
+        run: |
+          if [[ -n "$(git status --porcelain news.js)" ]]; then
+            git config user.name "bonghwa-bot"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add news.js
+            git commit -m "봉화뉴스 갱신 ($(date -u -d '+9 hours' +%Y-%m-%d\ %H:%M) KST)"
+            # 일일 갱신 워크플로가 먼저 올려둔 커밋이 있을 수 있다
+            git pull --rebase
+            git push
+            echo "갱신 완료"
+          else
+            echo "새 기사 없음"
+          fi
