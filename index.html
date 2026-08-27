@@ -238,17 +238,34 @@ footer a{color:var(--acc);font-weight:700;text-decoration:underline;text-decorat
 
 /* ── 고시·공고를 이번 주 소식과 한 목록에 섞어 보여준다(탭 없음) ── */
 .feed-divider{display:flex;align-items:center;gap:8px;margin:18px 2px 10px;color:var(--sub);font-size:13px;font-weight:700}
-/* '군청이 하는 일' — 참여하는 일은 아니지만 궁금할 때 열어 보는 자리 */
-.gov-toggle{display:flex;align-items:center;gap:9px;width:100%;margin:22px 0 10px;padding:13px 15px;
- background:var(--bg);border:1px solid var(--line);border-radius:14px;color:var(--sub);
- font-family:inherit;font-size:calc(14px*var(--fsx));font-weight:700;text-align:left;cursor:pointer}
-.gov-toggle:active{transform:scale(.99)}
-.gov-toggle .gt-i{font-size:calc(16px*var(--fsx));line-height:1}
-.gov-toggle .gt-t{flex:1;color:var(--ink)}
-.gov-toggle .gt-t b{color:var(--brand);font-weight:800}
-.gov-toggle .gt-x{font-size:calc(12.5px*var(--fsx));font-weight:700;color:var(--brand);
- background:var(--brand-soft);border-radius:100px;padding:4px 11px;white-space:nowrap}
-#bwGov .cards{padding:0}
+/* ── 목록을 두 구역으로 ──
+   '내가 할 수 있는 일' 과 '군청이 하는 일' 은 성격이 아주 다르므로
+   제목을 각각 달고, 군정 구역은 배경까지 바꿔 한눈에 갈라 보이게 한다. */
+.grp-head{display:flex;align-items:center;gap:9px;width:100%;
+ font-family:inherit;text-align:left;font-size:calc(15px*var(--fsx));font-weight:800;
+ color:var(--ink);letter-spacing:-.02em}
+.grp-head .gh-i{font-size:calc(17px*var(--fsx));line-height:1;flex:none}
+.grp-head .gh-t{flex:1;min-width:0}
+.grp-head .gh-n{flex:none;font-size:calc(12.5px*var(--fsx));font-weight:800;
+ border-radius:100px;padding:3px 10px;white-space:nowrap}
+
+/* 내가 할 수 있는 일 — 초록 띠 */
+.grp-head.mine{margin:4px 2px 12px;padding:0 0 10px;border-bottom:2px solid var(--brand)}
+.grp-head.mine .gh-n{background:var(--brand-soft);color:var(--brand-ink)}
+
+/* 군청이 하는 일 — 회색 구역으로 확실히 갈라 놓는다 */
+.govsec{margin:26px -14px 0;padding:0 14px 2px;background:var(--line-2,#F3F4F6);
+ border-top:1px solid var(--line)}
+.grp-head.gov{border:none;background:none;cursor:pointer;padding:16px 0 14px;color:var(--sub)}
+.grp-head.gov:active{opacity:.7}
+.grp-head.gov .gh-t{display:flex;flex-direction:column;gap:1px;color:var(--ink)}
+.grp-head.gov .gh-t em{font-style:normal;font-size:calc(11.5px*var(--fsx));font-weight:600;
+ color:var(--faint,#98A2AE)}
+.grp-head.gov .gh-n{background:#fff;color:var(--sub);border:1px solid var(--line)}
+.grp-head.gov .gh-x{flex:none;font-size:calc(12.5px*var(--fsx));font-weight:800;color:var(--brand);
+ white-space:nowrap}
+.gov-body{padding:0 0 16px!important}
+.gov-body .card{opacity:.94}
 .feed-divider::after{content:'';flex:1;height:1px;background:var(--line)}
 .nrow{text-align:left;width:100%;background:var(--paper);border:1px solid var(--line);border-radius:12px;
  padding:13px 15px;cursor:pointer;transition:box-shadow var(--bh-dur,180ms) var(--bh-ease,ease);font:inherit}
@@ -563,7 +580,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 </footer>
 <script src="analytics.js?v=884013ee"></script>
 <script src="core.js?v=28380ee5"></script>
-<script src="ui.js?v=3db994b3"></script>
+<script src="ui.js?v=6ec596a5"></script>
 <script>
 /* data.js(필수) → notices.js(고시·공고) → events.js(주간행사) → news.js(봉화 뉴스) → init
    뒤의 셋은 없거나 실패해도 화면은 뜬다 */
@@ -971,17 +988,19 @@ function init(){
   ['농림·환경·에너지','🌱',[],['농림·환경·에너지']],
   ['그 밖의 일','📄',['그 밖의 일'],['기타 안내']],
  ];
+ /* ── 누구를 위한 일인가요 ──
+    캐릭터로 그려 둔 일곱 갈래만 남긴다. 갈래가 많으면 고르기 전에 지치고,
+    한 자리 수짜리 갈래는 눌러도 허탕이라 오히려 신뢰를 깎는다.
+    없앤 갈래(복지·돌봄 / 구직자 / 토지·주택 소유자)의 소식은 버리지 않고
+    '주민 누구나' 로 모아 둔다 — 특정한 누구의 일이라기보다 열려 있는 일들이다. */
  const MERGED_AUD=[
+  ['주민 누구나','👥',['주민 누구나','복지·돌봄','구직자'],['주민 누구나','구직자','토지·주택 소유자']],
   ['어르신','🧓',['어르신'],[]],
   ['아이·청소년','🧒',['아이·청소년'],[]],
-  ['청년','🧑',['청년'],[]],
-  ['농업인','🧑‍🌾',['농업인'],['농업인']],
   ['여성·가족','👨‍👩‍👧',['여성·가족'],[]],
-  ['복지·돌봄','🤝',['복지·돌봄'],[]],
+  ['농업인','🧑‍🌾',['농업인'],['농업인']],
+  ['청년','🧑',['청년'],[]],
   ['소상공인','🏪',['소상공인'],['사업자·업체']],
-  ['구직자','🧑‍💼',['구직자'],['구직자']],
-  ['토지·주택 소유자','🏠',[],['토지·주택 소유자']],
-  ['주민 누구나','👥',['주민 누구나'],['주민 누구나']],
  ];
  /* 주간소식 카드의 원래 분류 키 → 합친 표시이름 (카드 태그를 누르면 그 합친 축이 켜지도록) */
  const W2M_TOPIC={}; MERGED_TOPICS.forEach(([m,,wk])=>wk.forEach(k=>W2M_TOPIC[k]=m));
@@ -1117,7 +1136,10 @@ function init(){
      : `${s.getMonth()+1}월 ${s.getDate()}일(${BW.DOW[s.getDay()]})`);
    }
    if(c.regions.length)bits.push(c.regions.slice(0,2).join('·'));
-   if(c.auds.length)bits.push(c.auds.slice(0,2).join('·'));
+   /* 카드에도 화면에서 고를 수 있는 일곱 갈래 이름으로만 적는다 —
+      없앤 갈래 이름(복지·돌봄 등)이 카드에만 남으면 눌러도 그런 조건이 없어 헷갈린다 */
+   const mg=[...new Set(c.auds.map(a=>W2M_AUD[a]).filter(Boolean))];
+   if(mg.length)bits.push(mg.slice(0,2).join('·'));
    return bits.join(' · ');
   },
 
@@ -1430,12 +1452,17 @@ function init(){
  function ncat(title){ for(const c of NCATS){ if(c[2].test(title)) return c[0]; } return '기타 안내'; }
  const NCAT_ICON={'기타 안내':'📄'}; NCATS.forEach(c=>NCAT_ICON[c[0]]=c[1]);
 
- /* ── 대상(누구를 위한 것) 규칙 [이름, 아이콘, 정규식] — 여러 대상에 걸칠 수 있음 ── */
+ /* ── 고시·공고는 누구를 위한 것인가 [이름, 아이콘, 정규식] — 여러 대상에 걸칠 수 있음 ──
+    이름을 이번 주 소식과 똑같은 일곱 갈래(캐릭터)로 맞춘다.
+    한쪽은 '사업자·업체', 다른 쪽은 '소상공인' 이면 같은 사람을 두 이름으로 부르는 셈이다.
+    어디에도 안 걸리는 것은 '주민 누구나' 로 간다. */
  const NTGTS=[
-  ['구직자','🧑‍💼',       /채용|임용|일자리|근로자|공무직|기간제|인력/i],
-  ['사업자·업체','🏢',    /입찰|낙찰|용역|계약|수의계약|제안서|인가|허가|등록|말소|폐업|양수|양도|전기사업|발전소|공장|업체|사업자|제조|판매|영업/i],
+  ['어르신','🧓',         /노인|경로|어르신|치매|장기요양|고령|정년|노령/i],
+  ['아이·청소년','🧒',    /어린이|아동|청소년|유아|보육|어린이집|유치원|학교|학생|급식/i],
+  ['여성·가족','👨‍👩‍👧',    /여성|다문화|가족|출산|임신|육아|산모|한부모|결혼/i],
   ['농업인','🧑‍🌾',       /농지|농업|산림|임야|축산|재선충|방제|농촌|영농|작물|가축/i],
-  ['토지·주택 소유자','🏠', /보상|수용|편입|공시지가|개별주택가격|지가|도시계획|군관리계획|지구단위|개발행위|건축|지적|지목|측량|도로\s*구역|도로구간|무단점용|재산세|주택|토지/i],
+  ['청년','🧑',           /청년|대학생|취업준비|창업 지원|신혼/i],
+  ['소상공인','🏪',       /입찰|낙찰|용역|계약|수의계약|제안서|인가|허가|등록|말소|폐업|양수|양도|전기사업|발전소|공장|업체|사업자|제조|판매|영업|상인|시장|소상공/i],
  ];
  function ntgts(title){ const a=NTGTS.filter(t=>t[2].test(title)).map(t=>t[0]); return a.length?a:['주민 누구나']; }
  const NTGT_ICON={'주민 누구나':'👥'}; NTGTS.forEach(t=>NTGT_ICON[t[0]]=t[1]);

@@ -475,20 +475,36 @@
          그렇다고 지우면 군정이 궁금한 분이 볼 곳이 없어지므로, 접어서 아래에 둔다. */
       const mine = [], gov = [];
       rows.forEach(iss => (CFG.splitAdmin(iss) ? mine : gov).push(iss));
-      mine.slice(0, S.limit).forEach(iss => box.appendChild(cardEl(iss)));
-      $('#bwMore').innerHTML = mine.length > S.limit
-        ? `<button class="morebtn">${mine.length - S.limit}건 더 보기</button>` : '';
-      const mb = $('#bwMore').querySelector('button');
-      if (mb) mb.onclick = () => { S.limit += 120; render(); };
+      /* 두 구역 모두 있을 때만 제목을 단다 — 한쪽뿐이면 제목이 군더더기다 */
+      const both = mine.length && gov.length;
+      if (both) {
+        const h = document.createElement('div'); h.className = 'grp-head mine';
+        h.innerHTML = `<span class="gh-i">📝</span><span class="gh-t">신청·참여할 수 있는 일</span>
+          <span class="gh-n">${mine.length}건</span>`;
+        box.appendChild(h);
+      }
+      if (mine.length) {
+        mine.slice(0, S.limit).forEach(iss => box.appendChild(cardEl(iss)));
+        $('#bwMore').innerHTML = mine.length > S.limit
+          ? `<button class="morebtn">${mine.length - S.limit}건 더 보기</button>` : '';
+        const mb = $('#bwMore').querySelector('button');
+        if (mb) mb.onclick = () => { S.limit += 120; render(); };
+      } else {
+        $('#bwMore').innerHTML = '';
+        box.appendChild(Object.assign(document.createElement('div'),
+          { className: 'empty', textContent: '이 조건으로 신청·참여할 수 있는 일은 없어요' }));
+      }
       if (gov.length) {
-        const sec = document.createElement('div'); sec.id = 'bwGov';
-        const dv = document.createElement('button'); dv.type = 'button'; dv.className = 'gov-toggle';
-        const list = document.createElement('div'); list.className = 'cards';
+        const sec = document.createElement('div'); sec.id = 'bwGov'; sec.className = 'govsec';
+        const dv = document.createElement('button'); dv.type = 'button'; dv.className = 'grp-head gov';
+        const list = document.createElement('div'); list.className = 'cards gov-body';
         const paint = () => {
-          dv.innerHTML = `<span class="gt-i">🏛</span>
-            <span class="gt-t">군청이 하는 일 <b>${gov.length}건</b></span>
-            <span class="gt-x">${S.govOpen ? '접기' : '펼쳐 보기'}</span>`;
+          dv.innerHTML = `<span class="gh-i">🏛</span>
+            <span class="gh-t">군청이 하는 일<em>참여하는 일은 아니에요</em></span>
+            <span class="gh-n">${gov.length}건</span>
+            <span class="gh-x">${S.govOpen ? '접기 ▴' : '펼쳐 보기 ▾'}</span>`;
           dv.setAttribute('aria-expanded', S.govOpen ? 'true' : 'false');
+          sec.classList.toggle('open', !!S.govOpen);
           list.hidden = !S.govOpen;
           if (S.govOpen && !list.childElementCount)
             gov.slice(0, 200).forEach(iss => list.appendChild(cardEl(iss)));
@@ -497,9 +513,6 @@
         paint();
         sec.appendChild(dv); sec.appendChild(list); box.appendChild(sec);
       }
-      if (!mine.length && gov.length && !S.govOpen)
-        box.insertBefore(Object.assign(document.createElement('div'),
-          { className: 'empty', textContent: '이 조건으로 신청·참여할 수 있는 일은 없어요' }), box.firstChild);
     } else {
       rows.slice(0, S.limit).forEach(iss => box.appendChild(cardEl(iss)));
       $('#bwMore').innerHTML = rows.length > S.limit

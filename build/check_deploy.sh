@@ -173,7 +173,21 @@ echo "── 3-8) 내가 할 수 있는 일 / 군청이 하는 일 ──"
 must "$P" "splitAdmin"            "군민용: 목록을 두 갈래로 나눔"
 must "$DEPLOY/ui.js" "CFG.splitAdmin" "엔진: 두 갈래 렌더"
 must "$DEPLOY/ui.js" "군청이 하는 일" "엔진: 접어 둔 군정 소식 구간"
-must "$P" "gov-toggle"            "군민용: 펼쳐 보기 버튼 모양"
+must "$P" "grp-head"              "군민용: 두 구역 제목"
+must "$DEPLOY/ui.js" "grp-head mine"  "엔진: '신청·참여할 수 있는 일' 제목"
+# 대상은 캐릭터로 그려 둔 일곱 갈래만 — 없앤 갈래가 되살아나면 캐릭터와 어긋난다
+AUDBLK=$(sed -n '/const MERGED_AUD=/,/^ \];/p' "$P")
+for a in 복지·돌봄 구직자 토지·주택 사업자·업체; do
+  if echo "$AUDBLK" | grep -q "^  \['$a'"; then
+    no "대상 갈래에 '$a' 가 되살아났습니다 (캐릭터에 없는 갈래)"; fi
+done
+# 고시·공고 대상표도 같은 이름을 써야 한다
+if sed -n '/const NTGTS=/,/^ \];/p' "$P" | grep -qE "^  \['(구직자|사업자·업체|토지·주택)"; then
+  no "고시·공고 대상표가 캐릭터와 다른 이름을 씁니다"
+else ok "고시·공고 대상표도 캐릭터와 같은 이름"; fi
+if [ "$(grep -c "^  \['" <(sed -n '/const MERGED_AUD=/,/^ \];/p' "$P"))" = "7" ]; then
+  ok "대상이 일곱 갈래(캐릭터와 같음)"
+else no "대상 갈래 수가 7이 아닙니다"; fi
 
 echo "── 3-9) 파일 짝이 어긋나지 않는지 ──"
 # 버전 표시가 없으면 '새 index.html + 옛 ui.js' 가 만들어져 고친 기능이 안 보인다
