@@ -2051,13 +2051,14 @@ function init(){
    const nEv=EV.filter(e=>days.includes(e.date)).length;
    const N=heroNums(days), nWork=N.work;
    const nNt=(NOTICES||[]).filter(n=>days.includes(n.date)).length;
-   /* 갈래 탭과 같은 숫자를 말한다 — 첫 칸은 59, 목록 탭은 18이면 서로 거짓말이 된다 */
+   /* 갈래 탭과 같은 숫자를 말한다 — 첫 칸은 93, 목록 탭은 16이면 서로 거짓말이 된다.
+      앞머리는 보고 있는 기간의 말(오늘/이번 주/그 주)로 — 목요일에 다음 주 계획이
+      먼저 올라와 '오늘'이 자료 주간 밖일 때도 문장이 어긋나지 않는다. */
    const gc=BWUI.api.groupCounts;
-   const openN=(gc&&inPeriod(BWUI.api.today))?gc.apply:N.open;
-   /* 신청할 수 있는 일이 하나도 없는 기간(지난 주간을 넘겨볼 때 등)에는 예전 문장으로 돌아간다 */
+   const openN=gc?gc.apply:N.open;
    title = openN
-     ? `지금,<br>신청할 수 있는 일이<br><b>${openN}개</b> 있어요`
-     : `이번 주,<br>봉화에는 <b>${nEv+nWork+nNt}개</b><br>소식이 있어요`;
+     ? `${P},<br>신청할 수 있는 일이<br><b>${openN}개</b> 있어요`
+     : `${P},<br>봉화에는 <b>${nEv+nWork+nNt}개</b><br>소식이 있어요`;
   }
 
   el.innerHTML=`
