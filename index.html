@@ -1000,6 +1000,8 @@ function init(){
  })();
  const evOf=day=>EV.filter(e=>e.date===day&&(!evKind||e.kind===evKind));
  const evCntOf=day=>EV.filter(e=>e.date===day&&(!evKind||e.kind===evKind)).length;
+ let evLimit=60;                                 /* 행사 목록 한 번에 그리는 수 */
+ let evSig='';                                   /* 기간·검색이 바뀌면 상한을 되돌린다 */
  let evSpan='week';                              /* 'week' 주간 보기 · 'month' 월간 달력 */
  let EVM=(EV.length?EV[EV.length-1].date:BW.ymd(new Date())).slice(0,7);   /* 달력이 보고 있는 달 */
  const EV_MONTHS=[...new Set(EV.map(e=>e.date.slice(0,7)))].sort();
@@ -1333,7 +1335,10 @@ function init(){
   const host=document.getElementById('wsDays'); if(!host)return;
   const today=BWUI.api.today;
   /* 숫자는 지금 보고 있는 모드 기준 — 행사 보기면 그날 행사 수 */
-  const count=day=>MODE==='event'?evCntOf(day):cntOf(day);
+  /* 달력의 날짜별 숫자는 지금 보고 있는 화면의 것이어야 한다 —
+     뉴스 화면에서 업무 건수를 보여 주면 눌러 보고 '왜 안 맞지?' 하게 된다 */
+  const nwCntOf=day=>NEWS.filter(n=>n.d===day).length;
+  const count=day=>MODE==='event'?evCntOf(day):MODE==='news'?nwCntOf(day):cntOf(day);
   host.innerHTML=daysOf(VIEW_WEEK).map(day=>{const d=BW.d2(day),g=d.getDay(),we=(g===0?'sun':g===6?'sat':''),n=count(day);
     return `<button type="button" class="calday ${we} ${n?'':'zero'}" data-day="${day}">
       <span class="dow">${BW.DOW[d.getDay()]}</span><span class="d">${d.getDate()}</span><span class="cnt">${n}</span>
@@ -1963,7 +1968,8 @@ function init(){
    if(k==='evToday'||k==='nwToday'){ setDay(BWUI.api.today); return; }
    if(k==='evGun'){ evKind='군'; document.querySelectorAll('#evKinds button')
       .forEach(x=>x.classList.toggle('on',x.dataset.k==='군')); renderEvents(); return; }
-   if(k==='nw'||k==='nwMiss'){ return; }        /* 이미 그 화면에 있다 — 움직이지 않는다 */
+   if(k==='evWeek'||k==='nwWeek'){ setScope('week'); return; }
+   if(k==='nwMiss'){ return; }                  /* 이미 그 화면에 있다 — 움직이지 않는다 */
    if(k==='ev'){ if(EV.length)setMode('event'); return; }
    setMode('work');
    /* '마감 임박'에는 따로 갈 곳이 없다 — 없는 곳으로 데려가느니 소식 목록으로 보낸다.
@@ -2008,27 +2014,33 @@ function init(){
    const nToday=EV.filter(e=>e.date===today).length;
    const nGun=inP.filter(e=>e.kind==='군').length;
    head=calTitle();
+   const hasToday=inPeriod(today);
    title = inP.length
      ? `${P},<br>가 볼 만한 행사가<br><b>${inP.length}개</b> 있어요`
-       +(nToday?`<span class="h-sub">오늘 열리는 행사가 ${nToday}개예요</span>`
-               :`<span class="h-sub">오늘은 예정된 행사가 없어요</span>`)
+       +(!hasToday?`<span class="h-sub">지난 기간을 보고 계세요</span>`
+         :nToday?`<span class="h-sub">오늘 열리는 행사가 ${nToday}개예요</span>`
+                :`<span class="h-sub">오늘은 예정된 행사가 없어요</span>`)
      : `${P}에는<br>예정된 행사가<br><b>없어요</b><span class="h-sub">위에서 기간을 넓혀 보세요</span>`;
-   stats = stat('evToday',nToday,'📅 오늘')+stat('ev',inP.length,'🎪 '+P)+stat('evGun',nGun,'🏛️ 군 행사');
+   const nWk=EV.filter(e=>days.includes(e.date)).length;
+   stats = stat('evToday',nToday,'📅 오늘')+stat('evWeek',nWk,'🎪 이번 주')+stat('evGun',nGun,'🏛️ 군 행사');
 
   }else if(MODE==='news'){
    const inP=NEWS.filter(n=>inPeriod(n.d));
    const nToday=NEWS.filter(n=>n.d===today).length;
    const nMiss=nwMissed.length;
+   const hasToday=inPeriod(today);      /* 고른 기간이 오늘을 품고 있나 */
    head=calTitle();
-   title = nToday
+   title = (hasToday&&nToday)
      ? `오늘,<br>봉화 소식이<br><b>${nToday}개</b> 올라왔어요`
        +(nMiss?`<span class="h-sub">아직 안 보신 소식이 ${nMiss}개 있어요</span>`
               :`<span class="h-sub">새 소식은 다 보셨어요</span>`)
      : (inP.length
         ? `${P}에<br>봉화 소식이<br><b>${inP.length}개</b> 있어요`
-          +`<span class="h-sub">오늘 올라온 소식은 아직 없어요</span>`
+          +(hasToday?`<span class="h-sub">오늘 올라온 소식은 아직 없어요</span>`
+                    :`<span class="h-sub">지난 기간을 보고 계세요</span>`)
         : `${P}에는<br>봉화 소식이<br><b>없어요</b><span class="h-sub">위에서 기간을 넓혀 보세요</span>`);
-   stats = stat('nwToday',nToday,'📰 오늘')+stat('nw',inP.length,'🗓️ '+P)+stat('nwMiss',nMiss,'🆕 안 본 것');
+   const nWk=NEWS.filter(n=>days.includes(n.d)).length;
+   stats = stat('nwToday',nToday,'📰 오늘')+stat('nwWeek',nWk,'🗓️ 이번 주')+stat('nwMiss',nMiss,'🆕 안 본 것');
 
   }else{
    const nEv=EV.filter(e=>days.includes(e.date)).length;
@@ -2262,17 +2274,26 @@ function init(){
      <span style="font-size:12.5px">위에서 ${q?'다른 낱말로 찾아보시거나 ':''}기간을 넓혀 보세요</span></div>`;
    return;
   }
+  /* 기간·검색·갈래가 바뀌면 상한을 처음으로 되돌린다 */
+  const sig=JSON.stringify([S.scope,S.day,S.month,S.from,S.to,VIEW_WEEK,q,evKind]);
+  if(sig!==evSig){ evSig=sig; evLimit=60; }
+  const part=rows.slice(0,evLimit);
+
   let lastDate='';
-  list.innerHTML=rows.map(e=>{
+  list.innerHTML=part.map((e,i)=>{
    const head=(S.scope!=='day'&&e.date!==lastDate)?(lastDate=e.date,`<div class="feed-divider" style="grid-column:1/-1">${E(dLabel(e.date))}</div>`):'';
-   return head+`<div class="ev-card" data-i="${rows.indexOf(e)}">
+   return head+`<div class="ev-card" data-i="${i}">
      <div class="ev-time">${E(e.time)}</div>
      <div class="ev-body">
       <div class="ev-title">${E(e.title)}<span class="ev-badge ${e.kind==='군'?'gun':'org'}">${e.kind==='군'?'군 행사':'읍면·기관'}</span></div>
       <div class="ev-meta">📍 ${E(e.place||'장소 미기재')}${e.people?` · 👥 ${E(e.people)}명`:''}</div>
      </div></div>`;
-  }).join('');
-  list.querySelectorAll('.ev-card').forEach(c=>c.onclick=()=>eventModal(rows[+c.dataset.i]));
+  }).join('')
+   +(rows.length>evLimit
+     ? `<button class="morebtn" id="evMore" style="grid-column:1/-1">${rows.length-evLimit}건 더 보기</button>`
+     : '');
+  list.querySelectorAll('.ev-card').forEach(c=>c.onclick=()=>eventModal(part[+c.dataset.i]));
+  const mb=list.querySelector('#evMore'); if(mb)mb.onclick=()=>{evLimit+=60;renderEvents()};
  }
 
  /* ═══ 뉴스 화면 ═══ (원칙은 위 NEWS 선언부의 주석 참고 — 제목·언론사·날짜·링크만) */
@@ -2357,7 +2378,8 @@ function init(){
           <div class="nw-list">${part.map(card).join('')}</div>`;
   }
   if(!html){
-   html=`<div class="nw-list"><div class="nw-empty">아직 모인 뉴스가 없어요</div></div>`;
+   html=`<div class="nw-list"><div class="nw-empty">${periodWord()}에는 올라온 소식이 없어요<br>
+     <span style="font-size:12.5px">위에서 기간을 넓혀 보세요</span></div></div>`;
   }else if(shown<total){
    html+=`<button class="morebtn" id="nwMore">${total-shown}건 더 보기</button>`;
   }

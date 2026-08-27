@@ -158,6 +158,21 @@ if [ -n "$FSX_LAST" ] && [ -n "$FIXED_PX" ] && [ "$FSX_LAST" -lt "$FIXED_PX" ]; 
   no "군민용: 글자크기(--fsx) 규칙이 고정 px 규칙보다 위에 있습니다 — 그 화면만 글씨가 안 커집니다"
 else ok "군민용: 글자크기 규칙이 스타일 맨 끝에 있음"; fi
 
+echo "── 3-7-3) 검색·기간을 세 화면이 함께 쓰는지 ──"
+# 화면마다 기간 규칙이 따로 생기면 반드시 어긋난다 — 규칙은 inPeriod 한 곳에만 둔다.
+must "$P" "function inPeriod"   "군민용: 기간 규칙이 한 곳(inPeriod)에 있음"
+must "$P" "function periodWord" "군민용: 기간 이름(히어로 문구용)"
+must "$P" "inPeriod(e.date)"    "군민용: 행사가 공통 기간을 따름"
+must "$P" "inPeriod(n.d)"       "군민용: 언론속봉화가 공통 기간을 따름"
+must "$P" "nwCntOf"             "군민용: 달력 숫자가 화면별로 맞음"
+must "$P" "evLimit"             "군민용: 행사 목록 상한(전체 기간 1,200건이면 멎는다)"
+# 검색·기간·요약은 세 화면 공통이라 숨김 목록에 들어가면 안 된다
+for sel in ".psearch" "#wstrip" "#hero"; do
+  if grep -qE "body\.mode-(event|news) [^{]*\$sel" "$P"; then
+    no "군민용: $sel 가 특정 화면에서 숨겨져 있습니다 — 셋이 함께 써야 합니다"
+  else ok "군민용: $sel 가 세 화면 공통"; fi
+done
+
 echo "── 3-8) 첫 화면 요약 문구 ──"
 # '93개 소식' 은 군청이 한 일의 개수라 군민에게 뜻이 없었다 — 되돌아가면 안 된다
 must "$P" "function heroNums"              "군민용: 신청 가능·마감 임박 세기"
