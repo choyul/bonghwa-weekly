@@ -201,6 +201,16 @@ must "$DEPLOY/ui.js" "군청이 하는 일" "엔진: 접어 둔 군정 소식 �
 must "$P" "groupTabs:true"        "군민용: 갈래 탭 켜짐"
 must "$P" "noticeTab"             "군민용: 고시·공고 갈래 연결"
 must "$P" "axesLabel:'맞춤설정'"   "군민용: 목적·대상 고르는 칸 이름"
+# 접어 뒀더니 있는 줄 모른다는 지적 — 펼친 채로 시작하되 접을 수는 있어야 한다
+must "$P" "axesOpen:true"         "군민용: 맞춤설정이 펼친 채로 시작"
+must "$P" "axesFold:true"         "군민용: 맞춤설정을 접을 수 있음"
+must "$DEPLOY/ui.js" "CFG.axesFold === true" "엔진: 펼침 기본값과 접기 기능을 따로 다룸"
+must "$DEPLOY/ui.js" "펼치기 ▾"   "엔진: 접힌 맞춤설정 줄에 펼치기 표시"
+must "$DEPLOY/ui.js" "접기 ▴"     "엔진: 펼친 맞춤설정 줄에 접기 표시"
+must "$DEPLOY/ui.css" "calfold.axfold" "엔진: 접힌 맞춤설정 줄 강조 스타일"
+# '맞춤설정' 줄과 그 아래 고르는 칸들은 바탕 하나를 같이 써야 한 덩어리로 읽힌다
+must "$DEPLOY/ui.js" "axpanel"    "엔진: 맞춤설정 줄과 고르는 칸을 한 상자에"
+must "$DEPLOY/ui.css" ".axpanel{" "엔진: 맞춤설정 덩어리 바탕 스타일"
 must "$DEPLOY/ui.js" "insertBefore(bar, axHost)" "엔진: 갈래 탭을 맞춤설정 위에"
 must "$DEPLOY/ui.js" "새로 올라온"             "엔진: 새 소식 / 이어지는 소식 구분"
 must "$DEPLOY/ui.js" "CFG.groupTabs"  "엔진: 갈래 탭 렌더"

@@ -23,7 +23,7 @@
 <link rel="apple-touch-icon" href="icon-m192.png">
 <!-- 토큰은 반드시 ui.css보다 먼저 로드한다 -->
 <link rel="stylesheet" href="bonghwa-tokens.css?v=b3e2a291">
-<link rel="stylesheet" href="ui.css?v=104d50e4">
+<link rel="stylesheet" href="ui.css?v=daaead66">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
 /* ═══════════════════════════════════════════════════════════════
@@ -611,7 +611,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 </footer>
 <script src="analytics.js?v=884013ee"></script>
 <script src="core.js?v=28380ee5"></script>
-<script src="ui.js?v=2c22fb1b"></script>
+<script src="ui.js?v=545a69d8"></script>
 <script>
 /* data.js(필수) → notices.js(고시·공고) → events.js(주간행사) → news.js(봉화 뉴스) → init
    뒤의 셋은 없거나 실패해도 화면은 뜬다 */
@@ -1158,9 +1158,11 @@ function init(){
   noticeTab:{ count:()=>noticeMatches().length, render:host=>renderNoticeSection(host),
     renderRecent:host=>renderNoticeSection(host,'recent') },
   onGroupTab:k=>AA('갈래탭',k),
-  /* 무엇을(목적)·누구를(대상)·어디서 고르는 칸.
-     갈래를 고른 다음에 좁히는 것이라 갈래 탭 아래에 놓고 '맞춤설정'으로 접어 둔다. */
-  axesOpen:false, axesLabel:'맞춤설정',
+  /* 무엇을(목적)·누구를(대상)·어디서 고르는 칸. 갈래 탭 아래에 온다.
+     접어 뒀더니 있는 줄 모른다는 얘기가 있어 펼친 채로 시작한다(axesOpen:true).
+     보다가 자리를 먹는다 싶으면 '접기'로 접을 수 있다(axesFold:true). */
+  axesOpen:true, axesFold:true, axesLabel:'맞춤설정',
+  axesHint:'주제·대상·지역으로 좁혀 보기',
   searchPlaceholder:'궁금한 일을 검색해 보세요 (예: 축제, 도로, 교육)',
   listTitle:'봉화의 소식은?',   /* 앞에 '오늘' / '이번 주' / '7월 28일(화)' 처럼 기간이 붙는다 */
   publicLabels:true,
