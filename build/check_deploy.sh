@@ -209,6 +209,12 @@ must "$P" "due-today"             "군민용: 오늘 마감 강조 색"
 must "$DEPLOY/ui.js" "CFG.cardDue" "엔진: 마감 딱지 렌더"
 # 딱지 색 규칙 — 난색은 마감에만, 조건 딱지는 테두리 한 벌. 색이 늘면 다시 정신없어진다
 must "$P" "딱지 색 규칙"          "군민용: 딱지 색 규칙 주석"
+# 목록에는 별표 단추를 두지 않는다(제목이 두 줄로 넘어감) — 관심은 본문 아래 글씨 단추 하나로
+must "$P" "cardActions:null"      "군민용: 목록 별표 단추 없음"
+must "$P" "sheetActions:null"     "군민용: 제목 옆 별표 아이콘 없음"
+must "$P" "관심 목록에 담기"       "군민용: 본문의 관심 단추"
+must "$P" "cardFav"               "군민용: 담아 둔 것 딱지로 표시"
+must "$DEPLOY/ui.js" "CFG.cardFav" "엔진: 관심 딱지 렌더"
 must "$P" ".tag.type,.tag.dept,.tag.annual" "군민용: 조건 딱지를 한 벌로 묶음"
 if grep -qE "\.tag\.(type|annual)\{background:var\(--(blue|red)-soft\)" "$P"; then
   no "군민용: 조건 딱지가 예전 파랑/빨강으로 되돌아갔습니다"
@@ -322,6 +328,9 @@ must "$P" "function buildNewsView" "군민용: 뉴스 화면"
 must "$P" "function renderNews"    "군민용: 뉴스 목록 그리기"
 must "$P" "data-m=\\\"news\\\""       "군민용: 뉴스 모드 탭"
 must "$P" "nwMissed"             "군민용: 놓친 뉴스 계산"
+# 하루만 걸면 기사가 한두 건뿐이라 화면이 빈다 — 그날 + 그 앞 1주일을 함께 보여야 한다
+must "$P" "function nwDayWindow"  "군민용: 뉴스 하루 선택 시 1주일 함께"
+must "$P" "function nwPool"       "군민용: 뉴스 목록·첫 칸이 같은 기간 규칙"
 # (가) 기사는 반드시 언론사 원문으로 '나가야' 한다 — 새 창 + noopener
 must "$P" 'class="nw-card" href="${E(n.u)}" target="_blank" rel="noopener noreferrer"' \
                                  "저작권: 기사는 새 창으로 언론사 원문에 링크아웃"

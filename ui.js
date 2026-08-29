@@ -725,6 +725,10 @@
       const dd = CFG.cardDue && CFG.cardDue(iss);
       return dd ? `<span class="tag due due-${dd.lv}">${E(dd.text)}</span>` : '';
     })()}
+        ${CFG.cardFav && CFG.cardFav(iss)
+      /* 목록에서 별표 단추를 뺐으므로(제목이 두 줄로 넘어가서),
+         담아 둔 것인지는 이 딱지로만 알 수 있다 — 누르는 칸이 아니라 표시다. */
+      ? '<span class="tag fav">★ 관심</span>' : ''}
         <button class="tag st st-${iss._st}" data-f="status" data-v="${iss._st}">${ST_LABEL[iss._st]}</button>
         ${CFG.hideDeptTag ? '' : `<button class="tag dept" data-f="dept" data-v="${E(iss.dept)}">${E(iss.dept)}</button>`}
         ${(() => { const t = tagOf(iss); return `<button class="tag type" data-f="${t.axis ? 'axis:' + t.axis : 'type'}" data-v="${E(t.v)}">${E(t.label)}</button>`; })()}

@@ -110,6 +110,9 @@ footer{max-width:430px}
 .tag.type,.tag.dept,.tag.annual{
  background:var(--paper)!important;color:#4A525C!important;
  border:1px solid #E1E4E8!important;font-weight:700!important}
+/* '★ 관심'은 내가 담아 둔 표시 — 같은 테두리 벌이되 별표만 금색(아래 탭바 ⭐와 맞춤) */
+.tag.fav{background:var(--paper)!important;color:#B7830E!important;
+ border:1px solid #EAD9A6!important;cursor:default}
 
 /* ③ 마감 — 화면에서 난색은 여기서만. 진할수록 급하다.
    오늘=채운 빨강 · 내일=연빨강 · 2~3일=아주 옅은 빨강 · 4~7일=무채 */
@@ -633,7 +636,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 </footer>
 <script src="analytics.js?v=884013ee"></script>
 <script src="core.js?v=28380ee5"></script>
-<script src="ui.js?v=1e1c0778"></script>
+<script src="ui.js?v=47976e03"></script>
 <script>
 /* data.js(필수) → notices.js(고시·공고) → events.js(주간행사) → news.js(봉화 뉴스) → init
    뒤의 셋은 없거나 실패해도 화면은 뜬다 */
@@ -1002,6 +1005,22 @@ function init(){
   return VIEW_WEEK===HOME_WEEK?'이번 주':'그 주';
  }
 
+ /* ── 언론속봉화만의 예외: 하루를 고르면 그 앞 1주일을 함께 본다 ──
+    기사는 하루에 한두 건뿐이라 '오늘'만 걸면 화면이 거의 빈다. 그렇다고 기간을 늘리면
+    그날 소식이 묻히므로, 그날 것을 먼저 보이고 이어서 앞 6일치를 붙인다.
+    기간 규칙(inPeriod) 자체는 손대지 않는다 — 새소식·행사는 그대로 하루만 본다.
+    첫 칸(히어로)과 목록이 같은 규칙을 써야 말이 어긋나지 않으므로 둘 다 이걸 쓴다. */
+ function nwDayWindow(){
+  const S=BWUI.api.state;
+  if(S.scope!=='day')return null;
+  const day=S.day||BWUI.api.today;
+  return {day, from:BW.ymd(new Date(BW.d2(day).getTime()-6*864e5))};
+ }
+ function nwPool(){
+  const w=nwDayWindow();
+  return w ? NEWS.filter(n=>n.d>=w.from&&n.d<=w.day) : NEWS.filter(n=>inPeriod(n.d));
+ }
+
  /* ── 주/달 이동·달력 헬퍼 (onRender가 첫 렌더에서 참조하므로 BWUI.start 이전에 선언) ── */
  const WEEKS=D.weeks.slice();                 /* 자료가 있는 주차(월요일) 목록 */
  const MONTHS=[...new Set(D.weeks.map(w=>w.slice(0,7)))].sort();   /* 자료가 있는 달 목록 */
@@ -1247,11 +1266,11 @@ function init(){
     match:(iss,v)=>tag(iss).regions.includes(v)}
   ],
 
-  cardActions:iss=>[{
-   icon:fav[iss._id]?'★':'☆', title:'관심 업무', active:!!fav[iss._id],
-   on(i){ AA(fav[i._id]?'관심빼기':'관심담기','소식:'+uidHash(i._id),i.title);
-          if(fav[i._id])delete fav[i._id]; else fav[i._id]={at:BW.ymd(new Date())}; saveFav(); }
-  }],
+  /* 목록에는 별표를 두지 않는다 — 단추가 제목 자리를 뺏어 제목이 두 줄로 넘어갔다.
+     관심 담기는 소식을 열어 본 다음 아래 단추로 한다(글씨가 있어 더 알아보기도 쉽다). */
+  cardActions:null,
+  /* 담아 둔 것인지는 딱지로만 알린다(누르는 칸이 아니다) */
+  cardFav:iss=>!!fav[iss._id],
 
   /* 마감이 얼마나 급한지 — 카드 맨 앞 딱지. 색이 진할수록 급하다.
      'D-2' 같은 약어를 안 쓰고 '2일 전' 으로 적는다(어르신에게 D-day 가 안 읽힌다).
@@ -1288,12 +1307,9 @@ function init(){
   },
 
   /* 제목 옆 ⭐ — 본문에 같은 체크박스를 또 두지 않는다 */
-  sheetActions:iss=>[{
-   icon:fav[iss._id]?'★':'☆', title:'관심 업무', active:!!fav[iss._id],
-   on(i){ AA(fav[i._id]?'관심빼기':'관심담기','소식:'+uidHash(i._id),i.title);
-          if(fav[i._id])delete fav[i._id]; else fav[i._id]={at:BW.ymd(new Date())};
-          saveFav(); BWUI.toast(fav[i._id]?'관심 업무에 담았습니다':'관심 업무에서 뺐습니다'); BWUI.api.render(); }
-  }],
+  /* 제목 옆 아이콘도 두지 않는다 — 같은 일을 하는 단추가 둘이면 어느 쪽이 듣는지 모른다.
+     관심 담기는 아래 단추(detailFooter 의 favBtn) 하나로만 한다. */
+  sheetActions:null,
 
   /* ── 상세 맨 위: 판단에 필요한 것만 ── */
   detailTop(iss,body){
@@ -1344,19 +1360,47 @@ function init(){
       ${canRemind?`<button class="callbtn" id="remindBtn" style="flex:1;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔔 알림 받기</button>`:''}
       <a class="callbtn" href="tel:${tel}" style="flex:1">📞 문의</a>
      </div>
-     <button class="callbtn" id="shareBtn" style="background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔗 친구에게 공유하기</button>
+     <div style="display:flex;gap:8px">
+      <button class="callbtn" id="favBtn" style="flex:1"></button>
+      <button class="callbtn" id="shareBtn" style="flex:1;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔗 공유하기</button>
+     </div>
    </div>`;
   },
   onFooterMount(iss,foot){
    const b=foot.querySelector('#remindBtn');
    if(b)b.onclick=()=>{
-    if(!fav[iss._id]){fav[iss._id]={at:BW.ymd(new Date())};saveFav();BWUI.api.render()}  /* 알림 걸면 관심에도 담김 */
+    if(!fav[iss._id]){fav[iss._id]={at:BW.ymd(new Date())};saveFav();paintFav(foot.querySelector('#favBtn'),iss._id);BWUI.api.render()}
     calModal([iss],'봉화군_'+iss.title.replace(/[^가-힣0-9a-zA-Z]/g,'').slice(0,14));
    };
+   /* 관심 담기 — 목록에서 뺀 별표를 여기에 글씨 있는 단추로 둔다.
+      시트를 다시 그리면 읽던 자리를 잃으므로 단추 모양만 바꾼다. */
+   const fb=foot.querySelector('#favBtn');
+   if(fb){
+    paintFav(fb,iss._id);
+    fb.onclick=()=>{
+     AA(fav[iss._id]?'관심빼기':'관심담기','소식:'+uidHash(iss._id),iss.title);
+     if(fav[iss._id])delete fav[iss._id]; else fav[iss._id]={at:BW.ymd(new Date())};
+     saveFav(); paintFav(fb,iss._id);
+     BWUI.toast(fav[iss._id]?'관심 목록에 담았습니다':'관심 목록에서 뺐습니다');
+     BWUI.api.render();
+    };
+   }
    const sb=foot.querySelector('#shareBtn');
    if(sb)sb.onclick=()=>shareIssue(iss);
   }
  });
+
+ /* 관심 단추 한 개의 모양을 담김/안담김에 맞춘다 — 소식·고시·공고가 같이 쓴다.
+    목록에서 별표를 뺐으므로(제목이 두 줄로 넘어가서) 이 단추가 유일한 관심 조작 자리다. */
+ function paintFav(b,key){
+  if(!b)return;
+  const on=!!fav[key];
+  b.textContent=on?'★ 관심 목록에 담김':'☆ 관심 목록에 담기';
+  b.style.background=on?'var(--gold-soft)':'var(--paper)';
+  b.style.color='#B7830E';
+  b.style.border='1.5px solid '+(on?'#E9C55F':'#EAD9A6');
+  b.style.fontWeight='800';
+ }
 
  /* ── 헤더 부제 + 오늘 날짜 (부제 바로 밑) ── */
  function decorateHeader(){
@@ -1650,10 +1694,7 @@ function init(){
     <h2>고시·공고 상세</h2>
     <div style="padding:2px 18px 4px">
      <div class="nr-top" style="margin-bottom:8px"><span class="nkind nk-cat">${E(n._cat||ncat(n.title))}</span><span class="nr-date">${E(n.date)}</span></div>
-     <div style="display:flex;gap:8px;align-items:flex-start">
-      <div style="font-size:16px;font-weight:700;line-height:1.45;flex:1">${E(n.title)}</div>
-      <button class="iconb ${on?'on':''}" id="ntFav" title="관심">${on?'★':'☆'}</button>
-     </div>
+     <div style="font-size:16px;font-weight:700;line-height:1.45">${E(n.title)}</div>
      <div class="note" style="padding:8px 0 2px">${E(n.dept)} · ${E(n.num)}</div>
      ${n.body?`<div class="ntbody">${E(n.body)} …</div>`:''}
      <div class="note" style="padding:6px 0 2px">일부 내용입니다. 전체 내용·첨부파일은 봉화군 공식 페이지에서 확인하세요.</div>
@@ -1664,7 +1705,10 @@ function init(){
       ${canRemind?`<button class="callbtn" id="ntRemind" style="flex:1;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔔 알림 받기</button>`:''}
       <a class="callbtn" href="tel:${tel}" style="flex:1">📞 문의</a>
      </div>
-     <button class="callbtn" id="ntShare" style="background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔗 공유</button>
+     <div style="display:flex;gap:8px">
+      <button class="callbtn" id="ntFav" style="flex:1"></button>
+      <button class="callbtn" id="ntShare" style="flex:1;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔗 공유</button>
+     </div>
     </div>
     <div class="mfoot"><span style="flex:1"></span><button id="ntClose">닫기</button></div>
   </div>`;
@@ -1672,16 +1716,21 @@ function init(){
   const close=()=>m.classList.remove('open');
   m.querySelector('#ntClose').onclick=close;
   m.onclick=e=>{if(e.target===m)close()};
-  /* 알림받기는 헤더가 아니라 여기, 본문을 보는 자리에서 — 관심에 담으면 목록에서도 ★로 표시된다 */
-  m.querySelector('#ntFav').onclick=()=>{
+  /* 알림받기·관심담기는 헤더가 아니라 여기, 본문을 보는 자리에서.
+     관심에 담으면 목록 카드에도 '★ 관심' 딱지가 붙는다. */
+  const nfb=m.querySelector('#ntFav');
+  paintFav(nfb,'n:'+n.id);
+  nfb.onclick=()=>{
    const key='n:'+n.id;
    AA(fav[key]?'관심빼기':'관심담기','고시:'+n.id,n.title);
    if(fav[key])delete fav[key]; else fav[key]={at:BW.ymd(new Date())};
-   saveFav(); noticeModal(n,viewBase); renderNoticeSection();
+   saveFav(); paintFav(nfb,key);
+   BWUI.toast(fav[key]?'관심 목록에 담았습니다':'관심 목록에서 뺐습니다');
+   renderNoticeSection();
   };
   const rb=m.querySelector('#ntRemind');
   if(rb)rb.onclick=()=>{
-   const key='n:'+n.id; if(!fav[key]){fav[key]={at:BW.ymd(new Date())};saveFav();renderNoticeSection()}
+   const key='n:'+n.id; if(!fav[key]){fav[key]={at:BW.ymd(new Date())};saveFav();paintFav(nfb,key);renderNoticeSection()}
    calModal([nIss],'봉화군_'+n.title.replace(/[^가-힣0-9a-zA-Z]/g,'').slice(0,14));
   };
   m.querySelector('#ntShare').onclick=()=>{
@@ -1736,19 +1785,15 @@ function init(){
    const d=n.date.split('-').map(Number).join('.')+'.';
    const el=document.createElement('div'); el.className='card';
    const on=!!fav['n:'+n.id];
+   /* 소식 카드와 같이 별표를 뺐다 — 단추가 제목 자리를 뺏어 제목이 두 줄로 넘어갔다.
+      관심 담기는 열어 본 다음 아래 단추로 한다. */
    el.innerHTML=`
     <div class="top">
      <h3>${E(n.title)}</h3>
-     <div class="acts"><button class="iconb ${on?'on':''}" title="관심">${on?'★':'☆'}</button></div>
     </div>
-    <div class="tagrow"><span class="tag type" style="cursor:default">${NCAT_ICON[n._cat]||'📄'} ${E(n._cat)}</span></div>
+    <div class="tagrow"><span class="tag type" style="cursor:default">${NCAT_ICON[n._cat]||'📄'} ${E(n._cat)}</span>${on?'<span class="tag fav">★ 관심</span>':''}</div>
     <div class="meta">${d} · ${E(n.dept)}</div>`;
    el.querySelector('h3').onclick=()=>noticeModal(n,NOTICES._viewBase);
-   el.querySelector('.iconb').onclick=e=>{
-    e.stopPropagation();
-    const key='n:'+n.id; if(fav[key])delete fav[key]; else fav[key]={at:BW.ymd(new Date())};
-    saveFav(); BWUI.api.render();
-   };
    list.appendChild(el);
   });
   sec.appendChild(list);
@@ -2106,15 +2151,27 @@ function init(){
      : `${P}에는<br>예정된 행사가<br><b>없어요</b>`;
 
   }else if(MODE==='news'){
-   const inP=NEWS.filter(n=>inPeriod(n.d));
-   const nToday=NEWS.filter(n=>n.d===today).length;
-   const hasToday=inPeriod(today);
+   /* 하루를 골랐을 때는 목록이 '그날 + 그 앞 1주일'을 보여 주므로 첫 칸도 그렇게 말한다 —
+      목록엔 기사가 잔뜩인데 첫 칸만 '없어요'라고 하면 서로 거짓말이 된다. */
+   const w=nwDayWindow(), inP=nwPool();
    head=calTitle();
-   title = (hasToday&&nToday)
-     ? `오늘,<br>봉화 소식이<br><b>${nToday}개</b> 올라왔어요`
-     : (inP.length
-        ? `${P}에<br>봉화 소식이<br><b>${inP.length}개</b> 있어요`
-        : `${P}에는<br>봉화 소식이<br><b>없어요</b>`);
+   if(w){
+    const dw=w.day===today?'오늘':'그날', wk=w.day===today?'지난 1주일':'그 전 1주일';
+    const nDay=NEWS.filter(n=>n.d===w.day).length;
+    title = nDay
+      ? `${dw},<br>봉화 소식이<br><b>${nDay}개</b> 올라왔어요`
+      : (inP.length
+         ? `${dw}은 조용해서<br><b>${wk}</b> 소식을<br>모아 드려요`
+         : `${wk}에는<br>봉화 소식이<br><b>없어요</b>`);
+   }else{
+    const nToday=NEWS.filter(n=>n.d===today).length;
+    const hasToday=inPeriod(today);
+    title = (hasToday&&nToday)
+      ? `오늘,<br>봉화 소식이<br><b>${nToday}개</b> 올라왔어요`
+      : (inP.length
+         ? `${P}에<br>봉화 소식이<br><b>${inP.length}개</b> 있어요`
+         : `${P}에는<br>봉화 소식이<br><b>없어요</b>`);
+   }
 
   }else{
    const nEv=EV.filter(e=>days.includes(e.date)).length;
@@ -2419,7 +2476,8 @@ function init(){
   /* 기간은 맨 위 공통 UI가 정한다. 검색도 같은 칸(psearch)을 쓴다. */
   const St=BWUI.api.state;
   nwQ=(St.q||'').trim();
-  const POOL=NEWS.filter(n=>inPeriod(n.d));
+  const POOL=nwPool();
+  const WIN=nwDayWindow();          /* 하루를 골랐으면 {day, from} — 아니면 null */
   /* 기간이나 검색어가 바뀌면 '더 보기'로 펼쳐 둔 것을 처음으로 되돌린다 */
   const nsig=JSON.stringify([St.scope,St.day,St.month,St.from,St.to,VIEW_WEEK,nwQ]);
   if(nsig!==nwSig){ nwSig=nsig; nwLimit=10; }
@@ -2447,12 +2505,20 @@ function init(){
    rows.forEach(n=>used.add(n.id));
    if(rows.length)secs.push([title,rows]);
   };
-  take('📰 오늘의 뉴스',       n=>n.d===today);
-  take('🆕 내가 놓친 뉴스',    n=>missed.has(n.id));
-  take('🗓️ 지난 1주일',        n=>n.ts>=weekAgo);
-  take('📁 그 이전',           n=>true);
-  /* 기간을 좁혀 놓으면 묶음이 하나만 남는 일이 잦다 — 그럴 땐 제목을 기간 이름으로 바꾼다 */
-  if(secs.length===1)secs[0][0]='📰 '+periodWord()+' 봉화 소식';
+  if(WIN){
+   /* 하루를 고른 경우 — 그날 것을 먼저, 그 앞 1주일을 이어서 (한 화면에 같이 나온다) */
+   const isToday=WIN.day===today;
+   take(isToday?'📰 오늘의 뉴스':`📰 ${nwDate(WIN.day)} 뉴스`, n=>n.d===WIN.day);
+   take('🆕 내가 놓친 뉴스', n=>missed.has(n.id));
+   take(isToday?'🗓️ 지난 1주일':'🗓️ 그 전 1주일', n=>true);
+  }else{
+   take('📰 오늘의 뉴스',       n=>n.d===today);
+   take('🆕 내가 놓친 뉴스',    n=>missed.has(n.id));
+   take('🗓️ 지난 1주일',        n=>n.ts>=weekAgo);
+   take('📁 그 이전',           n=>true);
+   /* 기간을 좁혀 놓으면 묶음이 하나만 남는 일이 잦다 — 그럴 땐 제목을 기간 이름으로 바꾼다 */
+   if(secs.length===1)secs[0][0]='📰 '+periodWord()+' 봉화 소식';
+  }
 
   let budget=nwLimit, html='', shown=0, total=POOL.length;
   for(const [title,rows] of secs){
@@ -2462,7 +2528,7 @@ function init(){
           <div class="nw-list">${part.map(card).join('')}</div>`;
   }
   if(!html){
-   html=`<div class="nw-list"><div class="nw-empty">${periodWord()}에는 올라온 소식이 없어요<br>
+   html=`<div class="nw-list"><div class="nw-empty">${WIN?'최근 1주일':periodWord()}에는 올라온 소식이 없어요<br>
      <span style="font-size:12.5px">위에서 기간을 넓혀 보세요</span></div></div>`;
   }else if(shown<total){
    html+=`<button class="morebtn" id="nwMore">${total-shown}건 더 보기</button>`;
