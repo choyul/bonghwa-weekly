@@ -170,6 +170,18 @@ button,input,select,textarea{font:inherit}
 .tag.dept{background:#f0efe9;color:#67614f}
 .tag.type{background:var(--acc-soft);color:var(--acc)}
 .tag.annual{background:#fdf3d7;color:#7a5c00;border-color:#f0e0aa;font-weight:600}
+
+/* ── 마감 딱지 — 색이 진할수록 급하다 ──
+   한 줄 글에 섞여 있을 때는 '오늘 마감'과 '엿새 뒤'가 똑같아 보여서 갈랐다.
+   누르는 칸이 아니라 표시이므로 cursor 를 바꾸지 않는다. */
+.tag.due{cursor:default;font-weight:700;letter-spacing:-.01em}
+.tag.due:active{opacity:1}
+.due-today{background:var(--warn);color:#fff;border-color:var(--warn);font-weight:800}
+.due-tomorrow{background:var(--bh-warn-soft,#FBEAE7);color:var(--warn);border-color:#F0C9C2;font-weight:800}
+.due-near{background:var(--bh-accent-soft,#F6EFDD);color:#7A5C00;border-color:#EDDFB8}
+.due-far{background:var(--bg);color:var(--sub);border-color:var(--line);font-weight:600}
+/* 급하지 않은 것은 시계도 조용히 — 색으로만 갈라도 시계가 다 똑같이 튄다 */
+.due-far{opacity:.85}
 .meta{font-size:12.5px;color:var(--sub);line-height:1.5}
 .prog{font-size:12.5px;color:var(--warn);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .iconb{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--paper);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ink);flex:none}

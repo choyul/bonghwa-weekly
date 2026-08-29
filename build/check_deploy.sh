@@ -192,6 +192,21 @@ if grep -q "봉화에는 <b>\${nEv+nWork+nNt}개</b><br>소식이 있어요" "$P
   no "군민용: 첫 화면이 예전 '전체 개수' 문장으로 되돌아갔습니다"
 else ok "군민용: 예전 '전체 개수' 문장으로 되돌아가지 않음"; fi
 
+# 마감 표시는 'D-2' 같은 약어가 아니라 '2일 전' 으로 — 어르신에게 D-day 가 안 읽힌다
+if grep -q "마감 D-" "$P"; then no "군민용: 마감 표시가 'D-2' 로 되돌아갔습니다"
+else ok "군민용: 마감을 '2일 전' 처럼 풀어서 적음"; fi
+must "$P" "마감 \${d}일 전"      "군민용: 마감 남은 날 표시"
+# 급한 것과 안 급한 것을 색으로 갈라 본다 — 딱지가 빠지면 다시 다 똑같아 보인다
+must "$P" "cardDue"               "군민용: 마감 딱지 네 단계"
+must "$P" "due-today"             "군민용: 오늘 마감 강조 색"
+must "$DEPLOY/ui.js" "CFG.cardDue" "엔진: 마감 딱지 렌더"
+# 딱지 색 규칙 — 난색은 마감에만, 조건 딱지는 테두리 한 벌. 색이 늘면 다시 정신없어진다
+must "$P" "딱지 색 규칙"          "군민용: 딱지 색 규칙 주석"
+must "$P" ".tag.type,.tag.dept,.tag.annual" "군민용: 조건 딱지를 한 벌로 묶음"
+if grep -qE "\.tag\.(type|annual)\{background:var\(--(blue|red)-soft\)" "$P"; then
+  no "군민용: 조건 딱지가 예전 파랑/빨강으로 되돌아갔습니다"
+else ok "군민용: 난색은 마감 딱지에만 씀"; fi
+
 echo "── 3-8) 내가 할 수 있는 일 / 군청이 하는 일 ──"
 # 내부 행정 업무를 지우면 군정이 궁금한 분이 볼 창구가 없어진다 — 접어서 남겨 둔다
 must "$P" "splitAdmin"            "군민용: 목록을 두 갈래로 나눔"
@@ -276,6 +291,9 @@ must "$P" "AV('소식상세'"        "군민용: 소식 상세 기록"
 must "$P" "AA('공유_누름'"       "군민용: 공유 기록"
 must "$P" "function trackState"  "군민용: 검색·필터·기간 기록"
 must "$P" "AA('공유_대체창')"    "군민용: 공유 대체창 기록(카톡 인앱 비율 판단)"
+# 맞춤설정을 펼친 채로 내보냈으니, 군민이 실제로 접는지 볼 수 있어야 판단을 되돌릴 수 있다
+must "$P" "onAxesFold"            "군민용: 맞춤설정 여닫기 기록"
+must "$DEPLOY/ui.js" "CFG.onAxesFold" "엔진: 맞춤설정 여닫기 알림"
 # 수집 주소가 비어 있으면 통계가 아예 안 쌓인다 — 막지는 않고 알려만 준다(주소 없이도 앱은 정상)
 if grep -q "PUT-WORKER-URL-HERE" "$DEPLOY/analytics.js" 2>/dev/null; then
   echo "  ⚠️  수집 주소가 아직 비어 있어 통계가 쌓이지 않습니다 — analytics/setup.sh 를 먼저 실행하세요(앱 동작에는 지장 없음)"

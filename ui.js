@@ -381,7 +381,11 @@
         <span class="axf-tx"><b>${E(axLabel)}</b><i>${E(sub)}</i></span>
         ${picked ? `<span class="axbadge">${picked}</span>` : ''}
         <span class="chev">펼치기 ▾</span></button>`;
-      $('#bwAxOpen').onclick = () => { axesOpen = true; render(); };
+      $('#bwAxOpen').onclick = () => {
+        axesOpen = true;
+        if (CFG.onAxesFold) CFG.onAxesFold(true);   /* 이용 통계 — 접어 둔 걸 다시 펴는가 */
+        render();
+      };
       return;
     }
     /* 펼친 모습 — '맞춤설정' 줄과 그 아래 칸들이 한 덩어리로 읽히도록
@@ -439,7 +443,12 @@
             ${picked ? `<span class="axbadge">${picked}</span>` : ''}
             <span class="chev">접기 ▴</span></button>` : '')
       + `<div class="axbody">${axBody}</div></div>`;
-    const ac = $('#bwAxClose'); if (ac) ac.onclick = () => { axesOpen = false; render(); };
+    const ac = $('#bwAxClose');
+    if (ac) ac.onclick = () => {
+      axesOpen = false;
+      if (CFG.onAxesFold) CFG.onAxesFold(false);    /* 이용 통계 — 펼쳐 둔 걸 접는가 */
+      render();
+    };
     host.querySelectorAll('[data-ax]').forEach(b =>
       b.onclick = () => pickAxis(b.dataset.ax, b.dataset.v));
   }
@@ -710,6 +719,12 @@
       `<button class="iconb ${a.active ? 'on' : ''}" data-a="${i}" title="${E(a.title || '')}">${a.icon}</button>`).join('')}</div>` : ''}
       </div>
       <div class="tagrow">
+        ${(() => {
+      /* 마감이 얼마나 급한지 — 색으로 갈라 보이게 맨 앞에 둔다.
+         화면이 CFG.cardDue 로 {lv, text} 를 주면 그린다(누르는 칸이 아니라 표시). */
+      const dd = CFG.cardDue && CFG.cardDue(iss);
+      return dd ? `<span class="tag due due-${dd.lv}">${E(dd.text)}</span>` : '';
+    })()}
         <button class="tag st st-${iss._st}" data-f="status" data-v="${iss._st}">${ST_LABEL[iss._st]}</button>
         ${CFG.hideDeptTag ? '' : `<button class="tag dept" data-f="dept" data-v="${E(iss.dept)}">${E(iss.dept)}</button>`}
         ${(() => { const t = tagOf(iss); return `<button class="tag type" data-f="${t.axis ? 'axis:' + t.axis : 'type'}" data-v="${E(t.v)}">${E(t.label)}</button>`; })()}

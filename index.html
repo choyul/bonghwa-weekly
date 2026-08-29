@@ -23,7 +23,7 @@
 <link rel="apple-touch-icon" href="icon-m192.png">
 <!-- 토큰은 반드시 ui.css보다 먼저 로드한다 -->
 <link rel="stylesheet" href="bonghwa-tokens.css?v=b3e2a291">
-<link rel="stylesheet" href="ui.css?v=daaead66">
+<link rel="stylesheet" href="ui.css?v=decbefe3">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
 /* ═══════════════════════════════════════════════════════════════
@@ -92,13 +92,34 @@ footer{max-width:430px}
 #bwCards .card:active{transform:scale(.98);box-shadow:var(--shadow-2)}
 #bwCards .card .top h3{font-size:15.5px;font-weight:700;line-height:1.4;color:var(--ink);text-wrap:pretty;word-break:keep-all}
 #bwCards .card .meta{font-size:12.5px;font-weight:600;color:var(--sub)}
-.tag{font-size:11.5px!important;font-weight:800!important;padding:3px 8px!important;border-radius:6px!important;border:none!important}
-.tag.st-ongoing{background:var(--brand-soft);color:var(--brand-ink)}
-.tag.st-upcoming{background:var(--gold-soft);color:#B7830E}
-.tag.st-done{background:var(--line-2,#F1F2F5);color:var(--sub)}
-.tag.type{background:var(--blue-soft);color:#1D5DBB}
-.tag.dept{background:#F1F2F5;color:var(--sub)}
-.tag.annual{background:var(--red-soft);color:var(--red)}
+/* ══ 딱지 색 규칙 — 새 딱지를 만들기 전에 이 세 줄을 먼저 볼 것 ══════════
+   한 카드에 녹·금·청·보라·빨강이 한꺼번에 떠서 정신없다는 지적을 받고 세 줄로 줄였다.
+   ① 난색(빨강)은 '마감이 급하다' 에만 쓴다. 다른 데 쓰면 급한 게 안 보인다.
+   ② 상태(진행중·예정·완료)는 채운 딱지, 브랜드 녹 한 계열에서 '진하기'로만 가른다.
+   ③ 눌러서 좁히는 조건(주제·부서·매년)은 색 대신 '테두리'로 가른다 — 무채.
+   색을 늘리지 말고, 채움/테두리와 진하기로 가를 것. */
+.tag{font-size:11.5px!important;font-weight:800!important;padding:3px 8px!important;
+ border-radius:6px!important;border:none!important}
+
+/* ① 상태 — 채운 딱지, 녹 한 계열. 진행중이 제일 진하고 완료는 힘을 뺀다 */
+.tag.st-ongoing {background:#E1EDE6;color:#1B5138}
+.tag.st-upcoming{background:#EEF3F0;color:#41715B}
+.tag.st-done    {background:#F2F3F5;color:#7C848E}
+
+/* ② 고르는 조건 — 테두리만. 셋을 서로 다른 색으로 칠할 이유가 없다 */
+.tag.type,.tag.dept,.tag.annual{
+ background:var(--paper)!important;color:#4A525C!important;
+ border:1px solid #E1E4E8!important;font-weight:700!important}
+
+/* ③ 마감 — 화면에서 난색은 여기서만. 진할수록 급하다.
+   오늘=채운 빨강 · 내일=연빨강 · 2~3일=아주 옅은 빨강 · 4~7일=무채 */
+.tag.due{cursor:default}
+.due-today{background:#C62828;color:#fff;font-size:12.5px!important;padding:4px 10px!important;
+ box-shadow:0 1px 3px rgba(198,40,40,.28)}
+.due-tomorrow{background:#FBE7E7;color:#B3261E}
+.due-near{background:#FCF3F2;color:#9C554E}
+.due-far{background:#F2F3F5;color:#7C848E;filter:grayscale(1)}   /* 시계 그림까지 무채로 — 안 급한 건 조용히 */
+.due-near{filter:grayscale(.4)}
 
 /* ── 섹션 제목 ── */
 #bwInfo{margin:22px 14px 10px;padding:0}
@@ -402,8 +423,9 @@ body:not(.mode-news) #nwView{display:none}
 .ev-title{font-size:15px;font-weight:700;color:var(--ink);line-height:1.4;margin-bottom:5px;word-break:keep-all}
 .ev-meta{font-size:13px;color:var(--sub);line-height:1.5}
 .ev-badge{display:inline-block;font-size:11.5px;font-weight:700;border-radius:6px;padding:2px 7px;margin-left:6px;vertical-align:1px}
-.ev-badge.gun{background:var(--acc-soft);color:var(--acc)}
-.ev-badge.org{background:#f0ede7;color:var(--sub)}
+/* 행사 주최 표시도 위 규칙 ③ — 색 대신 테두리로 가른다(군 행사는 조금 진하게) */
+.ev-badge.gun{background:var(--paper);color:#41715B;border:1px solid #D9E4DE}
+.ev-badge.org{background:var(--paper);color:#7C848E;border:1px solid #E1E4E8}
 .ev-empty{text-align:center;color:var(--sub);font-size:14px;padding:34px 10px;
  background:var(--paper);border:1px solid var(--line);border-radius:var(--r)}
 .ev-card{cursor:pointer;transition:border-color .15s}
@@ -611,7 +633,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 </footer>
 <script src="analytics.js?v=884013ee"></script>
 <script src="core.js?v=28380ee5"></script>
-<script src="ui.js?v=545a69d8"></script>
+<script src="ui.js?v=1e1c0778"></script>
 <script>
 /* data.js(필수) → notices.js(고시·공고) → events.js(주간행사) → news.js(봉화 뉴스) → init
    뒤의 셋은 없거나 실패해도 화면은 뜬다 */
@@ -885,10 +907,10 @@ function init(){
  /* ── 첫 화면 인트로: 인사 → [시작하기] → 마스코트가 헤더로 날아가고 본문이 드러남 ── */
  /* 인트로 아래 한 줄 요약 — 언제 자료인지, 이번 주에 무엇이 몇 건인지 */
  function introSummary(){
-  const days=daysOf(D.weekStart), a=BW.d2(days[0]), b=BW.d2(days[6]);
+  const days=daysOf(HOME_WEEK), a=BW.d2(days[0]), b=BW.d2(days[6]);
   const f=d=>`${d.getMonth()+1}. ${d.getDate()}.`;
   const nEv=EV.filter(e=>days.includes(e.date)).length;
-  const nWork=BWUI.api.issues.filter(i=>i.list.some(o=>o.week===D.weekStart)).length;
+  const nWork=BWUI.api.issues.filter(i=>i.list.some(o=>o.week===HOME_WEEK)).length;
   const nNt=(NOTICES||[]).filter(n=>days.includes(n.date)).length;
   const bits=[];
   if(nWork)bits.push(`📋 업무 ${nWork}`);
@@ -977,13 +999,25 @@ function init(){
   if(S.scope==='range')return '고른 기간';
   if(S.scope==='month')return S.month===BW.ymd(new Date()).slice(0,7)?'이번 달':'그 달';
   if(S.scope==='day')return S.day===BWUI.api.today?'오늘':'그날';
-  return VIEW_WEEK===D.weekStart?'이번 주':'그 주';
+  return VIEW_WEEK===HOME_WEEK?'이번 주':'그 주';
  }
 
  /* ── 주/달 이동·달력 헬퍼 (onRender가 첫 렌더에서 참조하므로 BWUI.start 이전에 선언) ── */
  const WEEKS=D.weeks.slice();                 /* 자료가 있는 주차(월요일) 목록 */
  const MONTHS=[...new Set(D.weeks.map(w=>w.slice(0,7)))].sort();   /* 자료가 있는 달 목록 */
- let VIEW_WEEK=D.weekStart;                    /* 지금 보고 있는 주(월요일) */
+ /* ── '이번 주'의 기준 (HOME_WEEK) ──
+    주간업무계획은 다음 주 것이 미리 올라오므로 D.weekStart 가 오늘을 안 품을 수 있다.
+    그대로 두면 '1주' 보기가 다음 주가 되어, 오늘 올라온 뉴스·행사가 0건으로 보인다.
+    그래서 **오늘이 들어 있는 주**를 기본으로 삼고, 그런 주차가 자료에 없을 때만 D.weekStart 로 물러선다.
+    (다음 주 계획은 화살표 ›로 넘겨 보면 된다) */
+ const HOME_WEEK=(function(){
+  const t=BW.ymd(new Date());
+  const hit=D.weeks.filter(w=>{const s=BW.d2(w);s.setDate(s.getDate()-s.getDay());
+    const e=new Date(s);e.setDate(s.getDate()+6);
+    return BW.ymd(s)<=t&&t<=BW.ymd(e);});
+  return hit.length?hit[hit.length-1]:D.weekStart;
+ })();
+ let VIEW_WEEK=HOME_WEEK;                       /* 지금 보고 있는 주(월요일) */
  /* 달력처럼 일요일부터 토요일까지 7일. 자료의 주차 키(월요일)가 들어오면
     그 월요일이 속한 달력 주의 일요일부터 센다. */
  const daysOf=mon=>{const s=BW.d2(mon);s.setDate(s.getDate()-s.getDay());   /* 그 주의 일요일로 */
@@ -1158,6 +1192,9 @@ function init(){
   noticeTab:{ count:()=>noticeMatches().length, render:host=>renderNoticeSection(host),
     renderRecent:host=>renderNoticeSection(host,'recent') },
   onGroupTab:k=>AA('갈래탭',k),
+  /* 맞춤설정을 펼친 채로 내보냈다(2026-08-29). 군민이 실제로 접는지 보려고 기록한다 —
+     접는 사람이 많으면 처음 상태를 다시 생각해야 한다. */
+  onAxesFold:open=>AA('맞춤설정',open?'펼침':'접힘'),
   /* 무엇을(목적)·누구를(대상)·어디서 고르는 칸. 갈래 탭 아래에 온다.
      접어 뒀더니 있는 줄 모른다는 얘기가 있어 펼친 채로 시작한다(axesOpen:true).
      보다가 자리를 먹는다 싶으면 '접기'로 접을 수 있다(axesFold:true). */
@@ -1216,6 +1253,20 @@ function init(){
           if(fav[i._id])delete fav[i._id]; else fav[i._id]={at:BW.ymd(new Date())}; saveFav(); }
   }],
 
+  /* 마감이 얼마나 급한지 — 카드 맨 앞 딱지. 색이 진할수록 급하다.
+     'D-2' 같은 약어를 안 쓰고 '2일 전' 으로 적는다(어르신에게 D-day 가 안 읽힌다).
+     신청할 수 있는 일(score>0)에만 붙인다 — 군정 소식에는 마감이란 게 없다. */
+  cardDue:iss=>{
+   const c=tag(iss); if(!(c.score>0))return null;
+   const r=BW.parseDateRange(c.item,c.week); if(!r||!r.end)return null;
+   const d=Math.round((BW.d2(r.end)-BW.d2(BWUI.api.today))/864e5);
+   if(d===0)return{lv:'today',   text:'⏰ 오늘 마감'};
+   if(d===1)return{lv:'tomorrow',text:'⏰ 내일 마감'};
+   if(d>=2&&d<=3)return{lv:'near',text:`⏰ 마감 ${d}일 전`};
+   if(d>=4&&d<=7)return{lv:'far', text:`⏰ 마감 ${d}일 전`};
+   return null;              /* 여드레 넘게 남았거나 이미 지난 것은 안 적는다 */
+  },
+
   /* 카드 한 줄에 언제·어디서·누구 */
   cardMeta:iss=>{
    const c=tag(iss), bits=[];
@@ -1227,13 +1278,8 @@ function init(){
      : `${s.getMonth()+1}월 ${s.getDate()}일(${BW.DOW[s.getDay()]})`);
    }
    if(c.regions.length)bits.push(c.regions.slice(0,2).join('·'));
-   /* 신청할 수 있는 일에는 마감이 얼마나 남았는지를 맨 앞에 — 갈래 탭이 마감순이라 이 표시가 눈금이 된다 */
-   if(c.score>0&&r&&r.end){
-    const d=Math.round((BW.d2(r.end)-BW.d2(BWUI.api.today))/864e5);
-    if(d===0)bits.unshift('⏰ 오늘 마감');
-    else if(d===1)bits.unshift('⏰ 내일 마감');
-    else if(d>1&&d<=7)bits.unshift(`⏰ 마감 D-${d}`);
-   }
+   /* 마감 표시는 이제 카드 위 딱지(cardDue)가 맡는다 — 색으로 급한 정도를 가른다.
+      한 줄 글에 섞여 있을 때는 오늘 마감이나 엿새 남은 것이나 똑같아 보였다. */
    /* 카드에도 화면에서 고를 수 있는 일곱 갈래 이름으로만 적는다 —
       없앤 갈래 이름(복지·돌봄 등)이 카드에만 남으면 눌러도 그런 조건이 없어 헷갈린다 */
    const mg=[...new Set(c.auds.map(a=>W2M_AUD[a]).filter(Boolean))];
@@ -1327,7 +1373,7 @@ function init(){
     보고 있는 주(VIEW_WEEK)의 7일을 늘어놓고, 날짜를 누르면 그날 '진행 중'(진행기간 포함)인
     소식만 본다. 양쪽 화살표로 이전·다음 주 계획을 넘겨 본다.
     (WEEKS·VIEW_WEEK·daysOf·cntOf·dLabel·weekLabel 은 BWUI.start 앞에서 선언됨) */
- const CUR_MONTH=D.weekStart.slice(0,7);
+ const CUR_MONTH=BW.ymd(new Date()).slice(0,7);   /* '1개월'은 오늘이 든 달 */
  /* 기간 버튼 = 보기 단위 선택. 누르면 항상 '지금'(현재 주/달)으로 이동, 이동은 화살표가 맡는다 */
  function setScope(sc){
   const S=BWUI.api.state;
@@ -1339,7 +1385,7 @@ function init(){
   }
   if(sc==='month'){ S.scope='month'; S.month=CUR_MONTH; S.day=''; }
   else if(sc==='all'){ S.scope='all'; S.day=''; }
-  else { VIEW_WEEK=D.weekStart; S.scope='week'; S.week=VIEW_WEEK; S.month=CUR_MONTH; S.day=''; renderDayPills(); }
+  else { VIEW_WEEK=HOME_WEEK; S.scope='week'; S.week=VIEW_WEEK; S.month=CUR_MONTH; S.day=''; renderDayPills(); }
   S.limit=60; BWUI.api.render();
  }
  function setDay(day){ const S=BWUI.api.state; S.scope='day'; S.day=day; S.month=day.slice(0,7); S.limit=60; BWUI.api.render(); }
@@ -1540,7 +1586,7 @@ function init(){
    else if(S.scope==='range') t='고른 기간의 봉화 소식은?';
    else if(S.scope==='month'){const[y,m]=S.month.split('-');t=`${+y}년 ${+m}월 봉화의 소식은?`;}
    else if(S.scope==='all') t='전체 봉화의 소식은?';
-   else t=(VIEW_WEEK===D.weekStart?'이번 주':weekLabel(VIEW_WEEK))+' 봉화의 소식은?';
+   else t=(VIEW_WEEK===HOME_WEEK?'이번 주':weekLabel(VIEW_WEEK))+' 봉화의 소식은?';
    listh.textContent=t;
   }
   /* 고시·공고는 갈래 탭의 세 번째 칸이 그린다 — 여기서 또 붙이면 두 번 나온다 */
@@ -2440,7 +2486,7 @@ function init(){
  buildTabBar();
  buildNotices();
  /* 기본: 오늘이 이번 자료 주간이면 '오늘 소식'부터, 아니면 이번 주 전체 */
- if(daysOf(D.weekStart).includes(BWUI.api.today)) setDay(BWUI.api.today); else setScope('week');
+ if(daysOf(HOME_WEEK).includes(BWUI.api.today)) setDay(BWUI.api.today); else setScope('week');
 
  /* 링크로 들어온 경우 처리 — 인트로를 건너뛰고 해당 안건으로 바로 간다.
     코드는 짧은 해시(i·r)를 쓰되, 예전 긴 링크(item·remind, 전체 안건번호)도 계속 열리게 둔다. */
