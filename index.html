@@ -691,6 +691,13 @@ footer{font-size:calc(14px*var(--fsx))}
 .nw-note{font-size:calc(12.5px*var(--fsx))}
 .nw-search input{font-size:calc(15px*var(--fsx))}
 
+ /* ── 상세 시트의 칸 나누기 ──
+    칸 제목(h3)이 본문과 같은 검정 계열이라 어디서 칸이 바뀌는지 안 보였다(사용자 지적).
+    제목을 초록 이름표(막대+색)로 만들고 칸 사이를 조금 더 띄운다. 글씨 크기 설정을 따른다. */
+ #bwShBody .blk{padding:16px 0}
+ #bwShBody .blk h3{font-size:calc(12.5px*var(--fsx));color:var(--acc);display:flex;align-items:center;gap:7px}
+ #bwShBody .blk h3::before{content:'';width:4px;height:13px;border-radius:2px;background:var(--acc);flex:none}
+ #bwShBody .simtoggle{font-size:calc(13px*var(--fsx))}
  /* ── 공지사항 원문 바로가기 ── 눌러서 나가는 칸이라 화살표로 '나간다'를 알린다 */
 .nlink-row{display:block;padding:11px 12px;margin-top:7px;border:1px solid var(--line);border-radius:10px;
  background:var(--paper);text-decoration:none;color:var(--ink)}
@@ -792,27 +799,33 @@ function init(){
  }
  function icsEvent(iss){
   const c=tag(iss), r=BW.parseDateRange(c.item,c.week);
-  if(!r||!r.start)return null;
+  if(!r||(!r.start&&!r.end))return null;
   const today=BW.ymd(new Date()), end=r.end||r.start;
   if(end<today)return null;                          /* 이미 지난 일정은 알림 무의미 */
+  /* '9. 9.(수)까지' 처럼 마감만 적힌 건은 시작이 비어 온다 — 마감일 하루짜리로 담는다.
+     (전에는 이런 건을 통째로 버려서, 접수가 열려 있는데도 알림 단추가 사라졌다) */
+  const start=r.start||end;
   const placeLine=c.item.lines.find(l=>/^(장\s*소|위\s*치)/.test(l.txt));
   const loc=placeLine?placeLine.txt.replace(/^[^:：]*[:：]\s*/,'').trim():c.regions.filter(x=>x!=='공통').join(', ');
   const t=timeOf(c.item);
   const L=['BEGIN:VEVENT','UID:bh'+uidHash(iss._id)+'@bonghwa','DTSTAMP:'+icsStamp()];
   let alarms;
   if(t){
-   L.push('DTSTART:'+icsD(r.start)+'T'+pad(t.h)+pad(t.mi)+'00');
-   const ed=new Date(BW.d2(r.start).getFullYear(),BW.d2(r.start).getMonth(),BW.d2(r.start).getDate(),t.h+1,t.mi);
+   L.push('DTSTART:'+icsD(start)+'T'+pad(t.h)+pad(t.mi)+'00');
+   const ed=new Date(BW.d2(start).getFullYear(),BW.d2(start).getMonth(),BW.d2(start).getDate(),t.h+1,t.mi);
    L.push('DTEND:'+icsD(BW.ymd(ed))+'T'+pad(ed.getHours())+pad(ed.getMinutes())+'00');
    alarms=['-P1D','-PT2H'];                          /* 하루 전 · 2시간 전 */
   }else{
-   L.push('DTSTART;VALUE=DATE:'+icsD(r.start),'DTEND;VALUE=DATE:'+icsD(BW.ymd(BW.addD(BW.d2(end),1))));
-   alarms=['-PT15H'];                                /* 종일 → 전날 오전 9시쯤 */
+   L.push('DTSTART;VALUE=DATE:'+icsD(start),'DTEND;VALUE=DATE:'+icsD(BW.ymd(BW.addD(BW.d2(end),1))));
+   /* 알림은 시작이 아니라 '마감 전날 아침 9시'에 — 신청·접수는 마감이 생명이다.
+      (상대 시각 -PT15H 는 시작일 기준이라, 긴 사업기간이면 알림이 이미 지나가 버린다) */
+   alarms=[icsD(BW.ymd(BW.addD(BW.d2(end),-1)))+'T000000Z'];    /* UTC 00시 = 한국 아침 9시 */
   }
   L.push('SUMMARY:'+icsEsc('[봉화군] '+iss.title));
   if(loc)L.push('LOCATION:'+icsEsc(loc));
   L.push('DESCRIPTION:'+icsEsc(iss.dept+' · '+(iss._icsNote||'봉화군 주간업무 안내\n계획 단계 정보라 실제 일정과 다를 수 있습니다.')));
-  alarms.forEach(tr=>L.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(iss.title),'TRIGGER:'+tr,'END:VALARM'));
+  alarms.forEach(tr=>L.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(iss.title),
+   (tr.charAt(0)==='-'?'TRIGGER:':'TRIGGER;VALUE=DATE-TIME:')+tr,'END:VALARM'));
   L.push('END:VEVENT');
   return L.join('\r\n');
  }
@@ -834,6 +847,77 @@ function init(){
  const UA=navigator.userAgent;
  const inApp=/KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\//i.test(UA);
  const isKakao=/KAKAOTALK/i.test(UA);
+ /* 아이패드는 UA 가 Macintosh 로 나온다 — 손가락 개수로 가른다 */
+ const isIOS=/iPhone|iPad|iPod/.test(UA)||(/Macintosh/.test(UA)&&navigator.maxTouchPoints>1);
+
+ /* ── 한 번에 달력에 넣기 ──
+    .ics 내려받기는 '받은 파일을 다시 찾아 여는' 단계에서 대부분 막힌다(사용자 확인).
+    구글 캘린더는 주소만으로 일정 등록 화면이 열리므로(앱이 있으면 앱으로) —
+    안드로이드·PC는 단추 한 번 → 구글 캘린더 → [저장] 으로 끝낸다.
+    아이폰은 기본 캘린더를 쓰는 사람이 많아 두 갈래를 보여 주고,
+    카카오톡 인앱은 새 창이 막히므로 기존 안내(기본 브라우저로 열기)를 그대로 쓴다. */
+ function gcalUrl(iss){
+  const c=tag(iss), r=BW.parseDateRange(c.item,c.week);
+  const start=r.start||r.end, end=r.end||r.start;
+  const t=timeOf(c.item);
+  let dates;
+  if(t){
+   const ed=new Date(BW.d2(start).getFullYear(),BW.d2(start).getMonth(),BW.d2(start).getDate(),t.h+1,t.mi);
+   dates=icsD(start)+'T'+pad(t.h)+pad(t.mi)+'00/'+icsD(BW.ymd(ed))+'T'+pad(ed.getHours())+pad(ed.getMinutes())+'00';
+  }else dates=icsD(start)+'/'+icsD(BW.ymd(BW.addD(BW.d2(end),1)));
+  const placeLine=c.item.lines.find(l=>/^(장\s*소|위\s*치)/.test(l.txt));
+  const loc=placeLine?placeLine.txt.replace(/^[^:：]*[:：]\s*/,'').trim():'';
+  const p=new URLSearchParams({action:'TEMPLATE',text:'[봉화군] '+iss.title,dates,
+   details:iss.dept+' · '+(iss._icsNote||'봉화군 주간업무 안내\n계획 단계 정보라 실제 일정과 다를 수 있습니다.'),
+   ctz:'Asia/Seoul'});
+  if(loc)p.set('location',loc);
+  return 'https://calendar.google.com/calendar/render?'+p.toString();
+ }
+ /* .ics 를 공유 시트로 넘기고, 안 되면 파일로 연다. 취소하면 false. */
+ async function addViaFile(ics,fname){
+  const file=new File([ics],fname,{type:'text/calendar'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+   try{await navigator.share({files:[file],title:'봉화군 일정'});return true}
+   catch(err){if(err&&err.name==='AbortError')return false}   /* 사용자가 취소 */
+  }
+  downloadICS(ics,fname);
+  BWUI.toast('파일이 열리면 [추가]를 누르면 캘린더에 들어갑니다');
+  return true;
+ }
+ function quickCal(iss,base){
+  if(!icsEvent(iss)){BWUI.toast('알림 받을 일정이 없어요 — 날짜가 지났거나 정해지지 않았습니다');return}
+  if(inApp){calModal([iss],base);return}          /* 인앱 안내·기록은 calModal 이 맡는다 */
+  AV('알림받기','',iss.title);
+  if(isIOS){iosCalModal(iss,base);return}
+  AA('캘린더담기_구글','',iss.title);
+  window.open(gcalUrl(iss),'_blank','noopener');
+  BWUI.toast('구글 캘린더가 열립니다 — [저장]을 누르면 달력에 담겨요');
+ }
+ function iosCalModal(iss,base){
+  let m=document.getElementById('iosCalModal');
+  if(!m){m=document.createElement('div');m.id='iosCalModal';m.className='modal';document.body.appendChild(m)}
+  m.innerHTML=`<div class="mbox">
+    <h2>달력에 추가</h2>
+    <div class="note">저장해 두면 날짜 전에 휴대폰이 알려 줍니다.</div>
+    <div style="padding:4px 18px 2px;display:flex;flex-direction:column;gap:8px">
+     <button class="callbtn" id="icApple">🍎 아이폰 캘린더에 추가</button>
+     <button class="callbtn" id="icGoogle" style="background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">📅 구글 캘린더에 추가</button>
+    </div>
+    <div class="mfoot"><span style="flex:1"></span><button id="icClose">닫기</button></div>
+  </div>`;
+  m.classList.add('open');
+  const close=()=>m.classList.remove('open');
+  m.querySelector('#icClose').onclick=close;
+  m.onclick=e=>{if(e.target===m)close()};
+  m.querySelector('#icApple').onclick=async()=>{
+   AA('캘린더담기_아이폰','',iss.title);
+   if(await addViaFile(buildICS([iss]),base+'.ics'))close();
+  };
+  m.querySelector('#icGoogle').onclick=()=>{
+   AA('캘린더담기_구글','',iss.title);
+   window.open(gcalUrl(iss),'_blank','noopener'); close();
+  };
+ }
 
  function calModal(list,base){
   AV('알림받기','', list.length===1?list[0].title:(list.length+'건'));
@@ -867,17 +951,7 @@ function init(){
    url.searchParams.set('r',list.map(i=>uidHash(i._id)).join(','));   /* 짧은 코드로 — 링크 길이 절약 */
    location.href='kakaotalk://web/openExternal?url='+encodeURIComponent(url.href);
   };
-  m.querySelector('#calAdd').onclick=async()=>{
-   const file=new File([ics],fname,{type:'text/calendar'});
-   /* 1) 공유 시트 — 가장 매끄럽다. 눌러서 '캘린더'를 고르면 바로 추가된다. */
-   if(navigator.canShare&&navigator.canShare({files:[file]})){
-    try{await navigator.share({files:[file],title:'봉화군 관심 일정'});close();return}
-    catch(err){if(err&&err.name==='AbortError')return}   /* 사용자가 취소 */
-   }
-   /* 2) 공유가 안 되면 파일 열기 — 열리면 캘린더 추가 화면이 뜬다. */
-   downloadICS(ics,fname); close();
-   BWUI.toast('파일이 열리면 [추가]를 누르면 캘린더에 들어갑니다');
-  };
+  m.querySelector('#calAdd').onclick=async()=>{ if(await addViaFile(ics,fname))close(); };
  }
  function remindFav(){
   const favIss=BWUI.api.issues.filter(i=>fav[i._id]);
@@ -1458,7 +1532,9 @@ function init(){
    const exec =line(/^(근무\s*기간|근무\s*예정\s*기간|채용\s*기간|고용\s*기간|계약\s*기간|활동\s*기간)/);
    const when=apply||line(/^(일\s*시|기\s*간|일\s*자|기\s*한|점검기간|접수기간|모집기간|교육기간|운영기간|신청기한)/);
    const place=line(/^(장\s*소|위\s*치|신청장소|접수처)/) || c.regions.join(', ');
-   const who=line(/^(대\s*상|참석대상|교육대상|모집대상|지원대상)/) || c.auds.join(', ');
+   /* '신청대상'을 몰라봐서, 위 '누구' 칸은 추측한 대상(어르신·청년…)을 적고
+      본문이 진짜 신청대상을 또 적는 중복이 있었다 — 적힌 줄이 있으면 그것을 쓴다. */
+   const who=line(/^(대\s*상|참석대상|교육대상|모집대상|지원대상|신청대상|신청\s*자격|지원\s*자격|가입대상)/) || c.auds.join(', ');
    const rows=[
     when  && ['📅', apply?'접수 기한':'언제', when],
     exec  && ['💼','근무 기간', exec],
@@ -1485,7 +1561,7 @@ function init(){
    /* 위 '한눈에' 칸에 이미 올린 줄은 본문에서 뺀다.
       접수기한·근무기간 같은 줄은 '기 한'·'기 간'과 글자가 달라 예전 규칙에 안 걸려
       같은 내용이 위아래로 두 번 나왔다 — 앞에 '공고 및' 이 붙는 표기까지 함께 잡는다. */
-   const already=/^((공고\s*및\s*)?(일\s*시|기\s*간|일\s*자|기\s*한|마\s*감|점검기간|접수기간|접수기한|접수마감|모집기간|응모기간|공모기간|교육기간|운영기간|신청기한|신청기간|신청마감|제출기한|제출기간|근무기간|근무예정기간|채용기간|고용기간|계약기간|활동기간)|장\s*소|위\s*치|신청장소|접수처|대\s*상|참석대상|교육대상|모집대상|지원대상)/;
+   const already=/^((공고\s*및\s*)?(일\s*시|기\s*간|일\s*자|기\s*한|마\s*감|점검기간|접수기간|접수기한|접수마감|모집기간|응모기간|공모기간|교육기간|운영기간|신청기한|신청기간|신청마감|제출기한|제출기간|근무기간|근무예정기간|채용기간|고용기간|계약기간|활동기간)|장\s*소|위\s*치|신청장소|접수처|대\s*상|참석대상|교육대상|모집대상|지원대상|신청대상|신청\s*자격|지원\s*자격|가입대상)/;
    const inner=/^(참여단체|참석인원|참석자|참\s*석|협조사항|추진근거|근\s*거|사업비|사\s*업\s*비|총사업비|예\s*산|담\s*당|주\s*관|점검자|조사자|점검반|추진방법|비\s*고|기타사항|제출처|보조비율)/;
    const out=lines.filter(l=>!already.test(l.txt)&&!inner.test(l.txt))
     /* '주요내용:' 라벨은 위 제목이 이미 말하고 있으니 지운다.
@@ -1499,13 +1575,20 @@ function init(){
      제목·등록일을 함께 보여 준다. 짝이 잘못 붙었더라도 누르기 전에 알아볼 수 있게. */
   afterContent(iss,body){
    const ls=linksOf(iss); if(!ls.length)return;
+   const kd=d=>{const[y,m,dd]=d.split('-');return `${y}. ${+m}. ${+dd}.`};
+   /* 짝짓기가 제목이 거의 같은 글만 남기므로, 한 건일 때 공지 제목을 또 적으면
+      바로 위 시트 제목과 중복이다(사용자 지적) — 할 일만 적는다.
+      여러 건일 때는 어느 글인지 갈라야 하니 제목을 남긴다. */
    body.insertAdjacentHTML('beforeend',`
     <div class="blk nlink">
      <h3>봉화군 공지사항 원문</h3>
-     <div class="hint" style="padding-bottom:8px">같은 내용이 봉화군 홈페이지에 올라와 있습니다. 신청서식·첨부파일은 원문에서 받으실 수 있습니다.</div>
-     ${ls.map((x,i)=>`<a class="nlink-row" href="${E(NLBASE+x.i)}" target="_blank" rel="noopener" data-nl="${i}">
-        <span class="nlink-t">${E(x.t)}</span>
-        <span class="nlink-d">${E(x.d)} 등록 · 봉화군 공지사항 &rsaquo;</span></a>`).join('')}
+     ${ls.length===1
+      ?`<a class="nlink-row" href="${E(NLBASE+ls[0].i)}" target="_blank" rel="noopener" data-nl="0">
+         <span class="nlink-t">📄 원문·신청서식(첨부) 보러 가기</span>
+         <span class="nlink-d">${E(kd(ls[0].d))} 등록 · 봉화군 홈페이지 &rsaquo;</span></a>`
+      :ls.map((x,i)=>`<a class="nlink-row" href="${E(NLBASE+x.i)}" target="_blank" rel="noopener" data-nl="${i}">
+         <span class="nlink-t">${E(x.t)}</span>
+         <span class="nlink-d">${E(kd(x.d))} 등록 · 봉화군 홈페이지 &rsaquo;</span></a>`).join('')}
     </div>`);
    body.querySelectorAll('[data-nl]').forEach(a=>a.addEventListener('click',()=>
     AA('공지사항원문','소식:'+uidHash(iss._id),ls[+a.dataset.nl].t)));
@@ -1529,7 +1612,7 @@ function init(){
    const b=foot.querySelector('#remindBtn');
    if(b)b.onclick=()=>{
     if(!fav[iss._id]){fav[iss._id]={at:BW.ymd(new Date())};saveFav();paintFav(foot.querySelector('#favBtn'),iss._id);BWUI.api.render()}
-    calModal([iss],'봉화군_'+iss.title.replace(/[^가-힣0-9a-zA-Z]/g,'').slice(0,14));
+    quickCal(iss,'봉화군_'+iss.title.replace(/[^가-힣0-9a-zA-Z]/g,'').slice(0,14));
    };
    /* 관심 담기 — 목록에서 뺀 별표를 여기에 글씨 있는 단추로 둔다.
       시트를 다시 그리면 읽던 자리를 잃으므로 단추 모양만 바꾼다. */
@@ -1890,7 +1973,7 @@ function init(){
   const rb=m.querySelector('#ntRemind');
   if(rb)rb.onclick=()=>{
    const key='n:'+n.id; if(!fav[key]){fav[key]={at:BW.ymd(new Date())};saveFav();paintFav(nfb,key);renderNoticeSection()}
-   calModal([nIss],'봉화군_'+n.title.replace(/[^가-힣0-9a-zA-Z]/g,'').slice(0,14));
+   quickCal(nIss,'봉화군_'+n.title.replace(/[^가-힣0-9a-zA-Z]/g,'').slice(0,14));
   };
   m.querySelector('#ntShare').onclick=()=>{
    AA('공유_누름','고시:'+n.id,n.title);
