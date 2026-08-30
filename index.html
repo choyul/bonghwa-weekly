@@ -2068,8 +2068,10 @@ function init(){
    PROF.region=b.dataset.r;
    m.querySelectorAll('#pfReg button').forEach(x=>x.classList.toggle('on',x.dataset.r===PROF.region));
   });
-  m.querySelector('#pfClear').onclick=()=>{ PROF={aud:[],region:''}; saveProf(); document.body.classList.remove('profon'); close(); BWUI.api.render(); BWUI.toast('맞춤 설정을 지웠어요'); };
-  m.querySelector('#pfSave').onclick=()=>{ saveProf(); document.body.classList.toggle('profon',profOn()); close(); BWUI.api.render();
+  /* 설정에서 고른 '나' 와 첫 칸 캐릭터가 가리키는 대상은 같은 값이어야 한다 —
+     따로 두면 설정만 바꿔 놓고 목록은 그대로여서, 다음에 열 때 갑자기 걸러진다. */
+  m.querySelector('#pfClear').onclick=()=>{ PROF={aud:[],region:''}; saveProf(); BWUI.api.state.axis.aud=''; document.body.classList.remove('profon'); close(); BWUI.api.render(); BWUI.toast('맞춤 설정을 지웠어요'); };
+  m.querySelector('#pfSave').onclick=()=>{ saveProf(); BWUI.api.state.axis.aud=PROF.aud[0]||''; document.body.classList.toggle('profon',profOn()); close(); BWUI.api.render();
     BWUI.toast(profOn()?'내게 맞는 소식을 위로 올렸어요':'맞춤 설정 없이 보여 드릴게요'); };
  }
 
