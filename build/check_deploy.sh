@@ -215,6 +215,11 @@ must "$P" "sheetActions:null"     "군민용: 제목 옆 별표 아이콘 없음
 must "$P" "관심 목록에 담기"       "군민용: 본문의 관심 단추"
 must "$P" "cardFav"               "군민용: 담아 둔 것 딱지로 표시"
 must "$DEPLOY/ui.js" "CFG.cardFav" "엔진: 관심 딱지 렌더"
+# 축 숫자 = 지금 갈래 탭이 보여 주는 것과 같은 무리여야 한다(진행 중 포함, 탭으로 나눔)
+must "$DEPLOY/ui.js" "function buildAxisBase" "엔진: 축 숫자의 바탕 무리"
+must "$DEPLOY/ui.js" "S.grpTab === 'notice'"  "엔진: 고시·공고 탭은 공고를 셈"
+must "$P" "countAxis"             "군민용: 고시·공고 축 숫자"
+must "$P" "S=>S.grpTab!=='notice'" "군민용: 고시·공고 탭에서 지역 칸 감춤"
 must "$P" ".tag.type,.tag.dept,.tag.annual" "군민용: 조건 딱지를 한 벌로 묶음"
 if grep -qE "\.tag\.(type|annual)\{background:var\(--(blue|red)-soft\)" "$P"; then
   no "군민용: 조건 딱지가 예전 파랑/빨강으로 되돌아갔습니다"

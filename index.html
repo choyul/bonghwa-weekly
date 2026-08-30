@@ -636,7 +636,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 </footer>
 <script src="analytics.js?v=884013ee"></script>
 <script src="core.js?v=28380ee5"></script>
-<script src="ui.js?v=47976e03"></script>
+<script src="ui.js?v=d943243e"></script>
 <script>
 /* data.js(필수) → notices.js(고시·공고) → events.js(주간행사) → news.js(봉화 뉴스) → init
    뒤의 셋은 없거나 실패해도 화면은 뜬다 */
@@ -1209,7 +1209,16 @@ function init(){
    return !!e&&e[2].some(k=>tag(iss).auds.includes(k));
   },
   noticeTab:{ count:()=>noticeMatches().length, render:host=>renderNoticeSection(host),
-    renderRecent:host=>renderNoticeSection(host,'recent') },
+    renderRecent:host=>renderNoticeSection(host,'recent'),
+    /* 고시·공고 탭에서 축의 숫자는 업무가 아니라 공고를 세야 한다 —
+       탭에 '0건'인데 축에는 34건이라고 적혀 있으면 눌러 보고 속았다고 느낀다. */
+    countAxis(key,v){
+     const S=BWUI.api.state, keep=S.axis[key];
+     S.axis[key]=v;
+     const n=noticeMatches().length;
+     S.axis[key]=keep;
+     return n;
+    } },
   onGroupTab:k=>AA('갈래탭',k),
   /* 맞춤설정을 펼친 채로 내보냈다(2026-08-29). 군민이 실제로 접는지 보려고 기록한다 —
      접는 사람이 많으면 처음 상태를 다시 생각해야 한다. */
@@ -1260,7 +1269,10 @@ function init(){
     values:MERGED_AUD.map(([v,icon])=>({v,label:v,icon:audIcon(v,icon)})),
     match:(iss,v)=>{const e=MERGED_AUD.find(x=>x[0]===v);return !!e&&e[2].some(k=>tag(iss).auds.includes(k));}},
 
+   /* 공고에는 지역이 적혀 있지 않다 — 고시·공고 탭에서는 이 칸을 감춘다.
+      감추지 않으면 어느 지역을 눌러도 숫자가 같아 고장 난 것처럼 보인다. */
    {key:'region', label:'어디에서 열리나요?', chipLabel:'지역', render:'chips',
+    when:S=>S.grpTab!=='notice',
     allLabel:'전체',
     values:[{v:'공통',label:'공통',chip:'공통(전 지역)'}].concat(BW.REGIONS.map(r=>({v:r,label:r}))),
     match:(iss,v)=>tag(iss).regions.includes(v)}
