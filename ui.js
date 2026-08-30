@@ -402,7 +402,7 @@
     const foldable = CFG.axesFold === false ? false
       : (CFG.axesFold === true || CFG.axesOpen === false);
     const axLabel = CFG.axesLabel || '갈라 보기';
-    const picked = CFG.axes.filter(ax => S.axis[ax.key]).length;
+    const picked = CFG.axes.filter(ax => !ax.hidden && S.axis[ax.key]).length;
     /* 접힌 모습 — 예전엔 회색 줄 하나라 눈에 안 띈다는 지적이 있었다.
        무엇이 들어 있는지 한 줄 더 적고, 색과 화살표로 누를 곳임을 드러낸다. */
     if (foldable && !axesOpen) {
@@ -423,6 +423,7 @@
     /* 펼친 모습 — '맞춤설정' 줄과 그 아래 칸들이 한 덩어리로 읽히도록
        바탕 하나(.axpanel)에 같이 담는다. 따로 놓으면 아래 칸들이 목록의 일부처럼 보였다. */
     const axBody = CFG.axes.map(ax => {
+      if (ax.hidden) return '';        /* 화면에는 안 그린다 — 거르기에는 그대로 쓴다 */
       if (ax.when && !ax.when(S)) return '';
       let vals = axValues(ax);
       /* 개수 많은 순 — '전체' 칸은 맨 앞에 둔 채 나머지만 정렬한다 */
@@ -998,6 +999,12 @@
     setCustom(name) { S.custom = S.custom === name ? '' : name; S.limit = 60; render(); },
     get state() { return S },
     get groupCounts() { return GRP_COUNTS },
+    /* 화면이 축 하나의 값별 건수를 물어볼 때 — 지금 보고 있는 기간·갈래와 같은 무리를 센다.
+       (첫 칸 캐릭터로 대상을 고르는 창이 쓴다. 따로 세면 창의 숫자와 목록 숫자가 어긋난다.) */
+    axisCount(key, v) {
+      const ax = (CFG.axes || []).find(a => a.key === key);
+      return ax ? countFor(ax, v || '') : 0;
+    },
     ST_LABEL, typeLabel, E
   };
   global.BWUI = { start, toast, api };

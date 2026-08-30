@@ -334,7 +334,8 @@ must "$P" "function renderNews"    "군민용: 뉴스 목록 그리기"
 must "$P" "data-m=\\\"news\\\""       "군민용: 뉴스 모드 탭"
 must "$P" "nwMissed"             "군민용: 놓친 뉴스 계산"
 # 하루만 걸면 기사가 한두 건뿐이라 화면이 빈다 — 그날 + 그 앞 1주일을 함께 보여야 한다
-must "$P" "function nwDayWindow"  "군민용: 뉴스 하루 선택 시 1주일 함께"
+must "$P" "function nwWindow"     "군민용: 뉴스 기간 예외(하루→앞 1주일, 1주→지난 7일)"
+must "$P" "지난 7일"              "군민용: 뉴스의 '1주'는 지난 7일"
 must "$P" "function nwPool"       "군민용: 뉴스 목록·첫 칸이 같은 기간 규칙"
 # (가) 기사는 반드시 언론사 원문으로 '나가야' 한다 — 새 창 + noopener
 must "$P" 'class="nw-card" href="${E(n.u)}" target="_blank" rel="noopener noreferrer"' \
