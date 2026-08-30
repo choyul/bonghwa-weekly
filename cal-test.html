@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>달력 저장 시험 — 오늘의 봉화</title>
+<!-- ═══════════════════════════════════════════════════════════════
+     cal-test.html — 갤럭시에서 '기본 달력 앱이 바로 열리는가'를 확인하는 시험 페이지
+
+     왜 필요한가
+       지금 '오늘의 봉화'는 달력 저장을 누르면 구글 캘린더로 보낸다. 그런데 갤럭시의
+       기본 달력은 대개 삼성 캘린더다. 안드로이드 달력 등록 인텐트(intent://)를 쓰면
+       그 폰의 기본 달력이 열리는데, 브라우저가 여는 인텐트는 BROWSABLE 문제로
+       기기마다 되기도 하고 안 되기도 한다 — 실제 폰에서 눌러 봐야만 안다.
+
+       각 단추는 실패하면 이 페이지로 되돌아오게(browser_fallback_url) 해 두었다.
+       달력 앱이 뜨면 성공, 이 페이지로 돌아와 ❌ 가 뜨면 실패다.
+
+     이 페이지는 앱과 이어져 있지 않다(어디서도 링크하지 않는다). 시험이 끝나면 지운다.
+     ═══════════════════════════════════════════════════════════════ -->
+<style>
+ :root{--ink:#1f2328;--sub:#6b7280;--line:#e5e7eb;--paper:#fff;--bg:#f4f6f5;--acc:#16a34a;--warn:#c2410c}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  line-height:1.55;padding:16px 14px calc(28px + env(safe-area-inset-bottom))}
+ .wrap{max-width:520px;margin:0 auto}
+ h1{font-size:19px;margin:0 0 4px}
+ .sub{font-size:13px;color:var(--sub);margin:0 0 14px}
+ .card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+ .card h2{font-size:13px;color:var(--acc);margin:0 0 8px;display:flex;align-items:center;gap:6px}
+ .card h2::before{content:'';width:4px;height:13px;border-radius:2px;background:var(--acc)}
+ .warn{background:#fff5ed;border-color:#f6cfae;color:var(--warn)}
+ .warn h2{color:var(--warn)} .warn h2::before{background:var(--warn)}
+ a.btn,button.btn{display:block;width:100%;text-align:left;padding:13px 14px;margin-bottom:9px;
+  border:1px solid var(--line);border-radius:11px;background:var(--paper);color:var(--ink);
+  text-decoration:none;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
+ a.btn:active,button.btn:active{background:var(--bg)}
+ a.btn small,button.btn small{display:block;font-weight:400;font-size:12.5px;color:var(--sub);margin-top:3px}
+ .res{font-size:14px;padding:7px 0;border-bottom:1px solid var(--line);display:flex;gap:8px}
+ .res:last-child{border-bottom:none}
+ .res b{flex:none;width:26px}
+ .ok{color:var(--acc)} .ng{color:var(--warn)}
+ .note{font-size:12.5px;color:var(--sub)}
+ pre{white-space:pre-wrap;word-break:break-all;font-size:11px;background:var(--bg);
+  border:1px solid var(--line);border-radius:9px;padding:10px;margin:0}
+ .mini{font-size:12px;padding:9px 12px;width:auto;display:inline-block;margin:0 6px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <h1>달력 저장 시험</h1>
+ <p class="sub">갤럭시에서 <b>어느 방법으로 기본 달력이 열리는지</b> 확인하는 페이지입니다.
+   아래 단추를 <b>위에서부터 하나씩</b> 눌러 보세요.</p>
+
+ <div id="kakaoWarn" class="card warn" hidden>
+  <h2>먼저 브라우저에서 여세요</h2>
+  <div class="note">카카오톡·네이버 앱 안에서는 달력 앱 호출이 <b>원래 막힙니다</b>. 시험 결과가
+   전부 실패로 나옵니다. 오른쪽 위 <b>⋮ → 다른 브라우저로 열기</b>(크롬 또는 삼성 인터넷)로 여신 뒤
+   다시 눌러 주세요.</div>
+ </div>
+
+ <div class="card">
+  <h2>시험용 일정</h2>
+  <div class="note" id="evInfo"></div>
+ </div>
+
+ <div class="card">
+  <h2>눌러 보기</h2>
+  <div id="btns"></div>
+  <div class="note" style="margin-top:6px">
+   달력 앱이 뜨면 <b>성공</b>입니다 — 어떤 앱이 떴는지(삼성 캘린더 / 구글 캘린더) 봐 주세요.
+   저장은 하지 않으셔도 됩니다. <b>이 페이지로 되돌아오면 실패</b>이고 아래에 ❌ 로 남습니다.
+  </div>
+ </div>
+
+ <div class="card">
+  <h2>결과</h2>
+  <div id="results"></div>
+  <div style="margin-top:10px">
+   <button class="btn mini" id="copyBtn">결과 복사</button>
+   <button class="btn mini" id="clearBtn">결과 지우기</button>
+  </div>
+ </div>
+
+ <div class="card">
+  <h2>이 기기</h2>
+  <pre id="ua"></pre>
+ </div>
+</div>
+
+<script>
+(function(){
+ var UA=navigator.userAgent;
+ var inApp=/KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\//i.test(UA);
+ if(inApp)document.getElementById('kakaoWarn').hidden=false;
+ document.getElementById('ua').textContent=UA;
+
+ /* 시험용 일정 — 일주일 뒤 오전 10~11시. 종일 일정은 표준시 처리가 기기마다 달라
+    '열리는가'만 보는 이 시험에서는 시각을 박아 두는 편이 헷갈리지 않는다. */
+ var d=new Date(); d.setDate(d.getDate()+7); d.setHours(10,0,0,0);
+ var begin=d.getTime(), end=begin+3600000;
+ var pad=function(n){return String(n).padStart(2,'0')};
+ var TITLE='[시험] 봉화군 달력 저장 확인';
+ var LOC='봉화군청';
+ var DESC='오늘의 봉화 시험용 일정입니다. 저장하지 않으셔도 됩니다.';
+ document.getElementById('evInfo').textContent=
+   TITLE+' / '+d.getFullYear()+'. '+(d.getMonth()+1)+'. '+d.getDate()+'. 10:00~11:00 / '+LOC;
+
+ /* 구글 캘린더 주소 — 지금 앱이 쓰는 방식(대조군)이자 인텐트 실패 시 마지막 갈 곳 */
+ var utc=function(ms){var x=new Date(ms);return ''+x.getUTCFullYear()+pad(x.getUTCMonth()+1)+pad(x.getUTCDate())
+   +'T'+pad(x.getUTCHours())+pad(x.getUTCMinutes())+'00Z'};
+ var GCAL='https://calendar.google.com/calendar/render?action=TEMPLATE'
+   +'&text='+encodeURIComponent(TITLE)+'&dates='+utc(begin)+'/'+utc(end)
+   +'&location='+encodeURIComponent(LOC)+'&details='+encodeURIComponent(DESC)+'&ctz=Asia/Seoul';
+
+ var here=location.origin+location.pathname;
+ var enc=encodeURIComponent;
+
+ /* intent:// 한 줄 만들기. 값 안의 ; = # 은 구조 문자라 반드시 인코딩해야 한다. */
+ function intentUrl(o){
+  var p=['intent:'+(o.data||'')+'#Intent','action='+o.action];
+  if(o.scheme)p.push('scheme='+o.scheme);
+  if(o.type)p.push('type='+o.type);
+  if(o.pkg)p.push('package='+o.pkg);
+  p.push('S.title='+enc(TITLE));
+  p.push('S.eventLocation='+enc(LOC));
+  p.push('S.description='+enc(DESC));
+  p.push('l.beginTime='+begin);
+  p.push('l.endTime='+end);
+  p.push('S.browser_fallback_url='+enc(here+'?fail='+o.id));
+  p.push('end');
+  return p.join(';');
+ }
+
+ var TESTS=[
+  {id:'A',name:'A · 기본 달력 (표준)',desc:'INSERT + 일정 형식. 가장 표준적인 방법입니다.',
+   url:function(){return intentUrl({id:'A',action:'android.intent.action.INSERT',type:'vnd.android.cursor.dir/event'})}},
+  {id:'B',name:'B · 기본 달력 (주소 지정)',desc:'INSERT + content:// 주소. A가 안 될 때의 다른 길입니다.',
+   url:function(){return intentUrl({id:'B',action:'android.intent.action.INSERT',
+     scheme:'content',data:'//com.android.calendar/events'})}},
+  {id:'C',name:'C · 기본 달력 (편집 방식)',desc:'EDIT 방식. 일부 기기에서 INSERT 대신 이것만 됩니다.',
+   url:function(){return intentUrl({id:'C',action:'android.intent.action.EDIT',type:'vnd.android.cursor.dir/event'})}},
+  {id:'D',name:'D · 삼성 캘린더 지정',desc:'삼성 캘린더를 콕 집어 부릅니다.',
+   url:function(){return intentUrl({id:'D',action:'android.intent.action.INSERT',
+     type:'vnd.android.cursor.dir/event',pkg:'com.samsung.android.calendar'})}},
+  {id:'E',name:'E · 구글 캘린더 앱 지정',desc:'구글 캘린더 앱을 콕 집어 부릅니다.',
+   url:function(){return intentUrl({id:'E',action:'android.intent.action.INSERT',
+     type:'vnd.android.cursor.dir/event',pkg:'com.google.android.calendar'})}},
+  {id:'G',name:'G · 지금 앱이 쓰는 방법 (대조군)',desc:'구글 캘린더 웹으로 보냅니다. 이건 원래 됩니다.',
+   url:function(){return GCAL},plain:true}
+ ];
+
+ var box=document.getElementById('btns');
+ TESTS.forEach(function(t){
+  var a=document.createElement('a');
+  a.className='btn'; a.href=t.url();
+  if(t.plain){a.target='_blank'; a.rel='noopener'}
+  a.innerHTML='<span></span><small></small>';
+  a.firstChild.textContent=t.name;
+  a.lastChild.textContent=t.desc;
+  a.addEventListener('click',function(){ mark(t.id,'눌러 봄'); });
+  box.appendChild(a);
+ });
+
+ /* 결과는 이 기기에만 남긴다(서버 없음). 되돌아오면 실패로 덮어쓴다. */
+ var KEY='bh.caltest';
+ function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return {}}}
+ function save(o){try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}}
+ function mark(id,state){var o=load();o[id]=state;save(o);draw()}
+ function draw(){
+  var o=load(), host=document.getElementById('results'), html='';
+  TESTS.forEach(function(t){
+   var v=o[t.id], icon='·', cls='', txt='아직 안 눌러 봤습니다';
+   if(v==='실패'){icon='❌';cls='ng';txt='앱이 열리지 않았습니다'}
+   else if(v==='눌러 봄'){icon='✅';cls='ok';txt='눌렀고 이 페이지로 돌아오지 않았습니다 → 열림'}
+   html+='<div class="res"><b>'+icon+'</b><span><b>'+t.id+'</b> <span class="'+cls+'">'+txt+'</span></span></div>';
+  });
+  host.innerHTML=html;
+ }
+ var fail=new URLSearchParams(location.search).get('fail');
+ if(fail){ mark(fail,'실패'); history.replaceState(null,'',here); }
+ draw();
+
+ document.getElementById('clearBtn').onclick=function(){save({});draw()};
+ document.getElementById('copyBtn').onclick=function(){
+  var o=load();
+  var txt='달력 시험 결과\n'+TESTS.map(function(t){
+    return t.id+': '+(o[t.id]==='실패'?'실패(앱 안 열림)':o[t.id]==='눌러 봄'?'열림':'미시험')}).join('\n')+'\n'+UA;
+  var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy')}catch(e){}
+  ta.remove(); this.textContent='복사했습니다';
+  var b=this; setTimeout(function(){b.textContent='결과 복사'},1500);
+ };
+})();
+</script>
+</body>
+</html>

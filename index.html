@@ -698,6 +698,9 @@ footer{font-size:calc(14px*var(--fsx))}
  #bwShBody .blk h3{font-size:calc(12.5px*var(--fsx));color:var(--acc);display:flex;align-items:center;gap:7px}
  #bwShBody .blk h3::before{content:'';width:4px;height:13px;border-radius:2px;background:var(--acc);flex:none}
  #bwShBody .simtoggle{font-size:calc(13px*var(--fsx))}
+ /* 단추 밑 한 줄 — 왜 저장하는지. 단추 이름이 길어지는 대신 여기서 말한다 */
+ .calhint{font-size:calc(12.5px*var(--fsx));color:var(--sub);text-align:center;line-height:1.45;margin:-2px 0 2px}
+ .calhint b{color:var(--acc)}
  /* ── 공지사항 원문 바로가기 ── 눌러서 나가는 칸이라 화살표로 '나간다'를 알린다 */
 .nlink-row{display:block;padding:11px 12px;margin-top:7px;border:1px solid var(--line);border-radius:10px;
  background:var(--paper);text-decoration:none;color:var(--ink)}
@@ -726,8 +729,8 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 </head>
 <body>
 <footer>
- <b>🔔 알림 받기</b> — 소식을 눌러 자세히 본 화면 아래 [🔔 알림 받기]를 누르면
- 휴대폰 캘린더에 담깁니다. 그러면 날짜 전에 휴대폰이 알아서 알려 줍니다.<br><br>
+ <b>📅 달력에 저장</b> — 소식을 눌러 자세히 본 화면 아래 [📅 달력에 저장]을 누르면
+ 휴대폰 달력 앱이 열립니다. [저장]을 한 번 누르면 마감 전날 휴대폰이 알아서 알려 줍니다.<br><br>
  이 정보는 봉화군 홈페이지에 공개된 주간업무 계획을 바탕으로 합니다.
  계획 단계의 내용이므로 실제 일정과 장소가 달라질 수 있습니다.
  참여하시기 전에 담당 부서로 한 번 확인해 주세요.<br><br>
@@ -1597,11 +1600,14 @@ function init(){
   detailFooter(iss){
    const tel=phoneOf(iss.dept)||'054-679-6114';
    const canRemind=!!buildICS([iss]);
+   /* 단추 이름은 '무엇이 일어나는가'로 적는다 — 「알림 받기」인데 달력이 열리면
+      기대가 어긋난다(사용자 지적). 왜 하는지는 단추 밑 한 줄이 맡는다. */
    return `<div style="display:flex;flex-direction:column;gap:8px">
      <div style="display:flex;gap:8px">
-      ${canRemind?`<button class="callbtn" id="remindBtn" style="flex:1;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔔 알림 받기</button>`:''}
+      ${canRemind?`<button class="callbtn" id="remindBtn" style="flex:1;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">📅 달력에 저장</button>`:''}
       <a class="callbtn" href="tel:${tel}" style="flex:1">📞 문의</a>
      </div>
+     ${canRemind?`<div class="calhint">달력에 저장해 두면 <b>마감 전날</b> 휴대폰이 알려 줍니다</div>`:''}
      <div style="display:flex;gap:8px">
       <button class="callbtn" id="favBtn" style="flex:1"></button>
       <button class="callbtn" id="shareBtn" style="flex:1;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔗 공유하기</button>
@@ -1922,7 +1928,7 @@ function init(){
  }
 
  /* ── 고시·공고 상세 모달 — 이번 주 소식 상세와 같은 구성
-    (⭐는 제목 옆, 🔔 알림 받기 + 📞 문의, 🔗 공유, 📄 원문 보기) ── */
+    (⭐는 제목 옆, 📅 달력에 저장 + 📞 문의, 🔗 공유, 📄 원문 보기) ── */
  function noticeModal(n,viewBase){
   AV('고시공고상세','고시:'+n.id,n.title);
   const url=viewBase+'?notAncmtMgtNo='+n.id+'&mid=0201030000';
@@ -1944,9 +1950,10 @@ function init(){
     <div style="padding:8px 18px 2px"><a class="callbtn" href="${url}" target="_blank" rel="noopener">📄 봉화군에서 원문·첨부 보기</a></div>
     <div style="padding:6px 18px 2px;display:flex;flex-direction:column;gap:8px">
      <div style="display:flex;gap:8px">
-      ${canRemind?`<button class="callbtn" id="ntRemind" style="flex:1;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔔 알림 받기</button>`:''}
+      ${canRemind?`<button class="callbtn" id="ntRemind" style="flex:1;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">📅 달력에 저장</button>`:''}
       <a class="callbtn" href="tel:${tel}" style="flex:1">📞 문의</a>
      </div>
+     ${canRemind?`<div class="calhint">달력에 저장해 두면 <b>마감 전날</b> 휴대폰이 알려 줍니다</div>`:''}
      <div style="display:flex;gap:8px">
       <button class="callbtn" id="ntFav" style="flex:1"></button>
       <button class="callbtn" id="ntShare" style="flex:1;background:var(--paper);color:var(--acc);border:1.5px solid var(--acc)">🔗 공유</button>
