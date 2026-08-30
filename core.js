@@ -205,6 +205,17 @@
      주의: 이것은 '계획서에 적힌 기간'이지 실제 완료 여부가 아니다. */
   const PERIOD_LABEL = /(기\s*간|일\s*시|일\s*자|기\s*한|마\s*감|점검기간|사업기간|용역기간|과업기간|접수기간|모집기간|교육기간|운영기간|추진기간|공사기간|지급일|개최일|신청기한|제출기한|접수기한)/;
 
+  /* ── 접수 기한 우선 규칙 ──
+     채용·모집 공고는 '언제까지 신청할 수 있나'(접수기한)와
+     '붙으면 언제부터 일하나'(근무기간)를 한 장에 같이 적는다.
+     둘을 뭉뚱그려 가장 늦은 날짜를 끝으로 보면, 접수가 이미 끝난 공고가
+     근무기간이 남았다는 이유로 계속 '진행중'으로 뜬다(2026년 도시재생지원센터
+     코디네이터 채용 공고: 접수기한 2025.12.17. / 근무기간 2026.11.30.).
+     군민이 할 수 있는 일은 '접수'뿐이므로, 두 가지가 같이 적혀 있으면
+     상태(진행중·종료)와 마감 딱지는 접수 기한만 보고 정한다. */
+  const APPLY_LABEL = /(접수\s*기한|접수\s*기간|접수\s*마감|접수\s*일시|원서\s*접수|신청\s*기한|신청\s*기간|신청\s*마감|제출\s*기한|제출\s*기간|모집\s*기간|응모\s*기간|공모\s*기간)/;
+  const EXEC_LABEL  = /(근무\s*기간|근무\s*예정\s*기간|채용\s*기간|고용\s*기간|계약\s*기간|위탁\s*기간|활동\s*기간|수행\s*기간|임\s*기|사업\s*기간|용역\s*기간|과업\s*기간|공사\s*기간|교육\s*기간|운영\s*기간)/;
+
   function dateTokens(text, baseYear) {
     /* 반환: [{y,mo,d,ym:bool}] — ym:true 면 '2025. 9.' 처럼 일(日) 생략 */
     const out = [];
@@ -246,23 +257,48 @@
     }
     if (!texts.length) return null;
 
-    let start = null, end = null, openEnded = false;
-    texts.forEach(t => {
+    /* 접수 기한과 이행 기간(근무·교육 등)이 같이 적혀 있으면 접수 기한만 본다.
+       한쪽만 있을 때는 예전대로 적힌 날짜를 다 본다 — 멀쩡한 사업기간까지 좁히지 않는다. */
+    const applyTexts = texts.filter(t => APPLY_LABEL.test(t));
+    const execTexts  = texts.filter(t => EXEC_LABEL.test(t) && !APPLY_LABEL.test(t));
+    let byApply = applyTexts.length > 0 && execTexts.length > 0;
+
+    function span(list) {
+      let start = null, end = null, openEnded = false;
+      list.forEach(t => {
+        const toks = dateTokens(t, baseYear);
+        if (!toks.length) return;
+        /* '~ 소진 시까지', '계속' 처럼 종료가 열린 표현 */
+        if (/소진|계속|연중|상시/.test(t)) openEnded = true;
+        const first = toks[0], last = toks[toks.length - 1];
+        const sv = ymd(new Date(first.y, first.mo - 1, first.ym ? 1 : first.d));
+        /* 일 생략형 종료는 그 달 말일로 (사업기간 표기 관행) */
+        const ev = ymd(new Date(last.y, last.mo - 1, last.ym ? new Date(last.y, last.mo, 0).getDate() : last.d));
+        /* '~까지'만 있고 시작이 없으면 시작은 미상 */
+        const endOnly = /까지/.test(t) && toks.length === 1;
+        if (!endOnly && (!start || sv < start)) start = sv;
+        if (!end || ev > end) end = ev;
+      });
+      return { start, end, openEnded };
+    }
+
+    let sp = span(byApply ? applyTexts : texts);
+    /* '접수기간: 3월 중' 처럼 접수 줄에 날짜가 없으면 접수 기준을 접는다 —
+       그것 때문에 기간을 통째로 모르는 것으로 만들면 되레 나빠진다. */
+    if (byApply && !sp.start && !sp.end) { byApply = false; sp = span(texts); }
+    const start = sp.start, end = sp.end, openEnded = sp.openEnded;
+    if (!start && !end) return null;
+    /* basis:'apply' 면 end 는 '접수 마감일'이다 — 화면에서 문구를 가려 쓸 수 있게 남긴다.
+       execEnd 는 뒤로 밀린 근무·교육 기간의 끝(참고용, 상태 판단에는 안 쓴다). */
+    let execEnd = null;
+    if (byApply) execTexts.forEach(t => {
       const toks = dateTokens(t, baseYear);
       if (!toks.length) return;
-      /* '~ 소진 시까지', '계속' 처럼 종료가 열린 표현 */
-      if (/소진|계속|연중|상시/.test(t)) openEnded = true;
-      const first = toks[0], last = toks[toks.length - 1];
-      const sv = ymd(new Date(first.y, first.mo - 1, first.ym ? 1 : first.d));
-      /* 일 생략형 종료는 그 달 말일로 (사업기간 표기 관행) */
+      const last = toks[toks.length - 1];
       const ev = ymd(new Date(last.y, last.mo - 1, last.ym ? new Date(last.y, last.mo, 0).getDate() : last.d));
-      /* '~까지'만 있고 시작이 없으면 시작은 미상 */
-      const endOnly = /까지/.test(t) && toks.length === 1;
-      if (!endOnly && (!start || sv < start)) start = sv;
-      if (!end || ev > end) end = ev;
+      if (!execEnd || ev > execEnd) execEnd = ev;
     });
-    if (!start && !end) return null;
-    return { start, end, openEnded };
+    return { start, end, openEnded, basis: byApply ? 'apply' : 'all', execEnd };
   }
 
   /* 오늘 기준 3상태. 반환: 'done'(종료) | 'ongoing'(진행중) | 'upcoming'(예정) | null(기간 미기재) */
