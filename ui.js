@@ -766,6 +766,10 @@
         ${CFG.hideDeptTag ? '' : `<button class="tag dept" data-f="dept" data-v="${E(iss.dept)}">${E(iss.dept)}</button>`}
         ${(() => { const t = tagOf(iss); return `<button class="tag type" data-f="${t.axis ? 'axis:' + t.axis : 'type'}" data-v="${E(t.v)}">${E(t.label)}</button>`; })()}
         ${iss._ann ? `<button class="tag annual" data-f="annual" data-v="1">매년 이맘때</button>` : ''}
+        ${/* 화면이 덧붙이는 표시 딱지 — 누르는 칸이 아니라 '이런 것이 딸려 있다'는 알림.
+              (군민용의 '공지사항 있음'이 이걸 쓴다) */
+      (CFG.cardTags ? CFG.cardTags(iss) : []).map(t =>
+        `<span class="tag ${E(t.cls || '')}" style="cursor:default">${E(t.text)}</span>`).join('')}
       </div>
       ${cardMetaHtml(iss)}
       ${progHtml(iss)}`;

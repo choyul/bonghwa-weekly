@@ -43,6 +43,15 @@ jobs:
         run: python3 build/fetch_events.py events.js 2
         continue-on-error: true   # 첨부 형식이 바뀌어도 주간 갱신을 막지 않도록
 
+      - name: 공지사항 목록 이어받기 (봉화군 공지사항 게시판 → build/cache)
+        # 이미 받아 둔 글이 한 쪽을 다 채우면 거기서 멈춘다 — 매일 120쪽을 다시 훑지 않는다.
+        run: python3 build/fetch_notice.py 24
+        continue-on-error: true   # 게시판 일시 오류가 주간 갱신을 막지 않도록
+
+      - name: 소식 ↔ 공지사항 잇기 (data.js + 공지사항 → notice_links.js)
+        run: node build/link_notices.js data.js build/cache/notice_posts.json notice_links.js
+        continue-on-error: true
+
       - name: 아이콘 날짜 갱신 (달력 숫자 = 오늘)
         # 홈 화면에 실제로 박히는 것은 manifest 가 가리키는 PNG 세 장이다.
         # SVG 만 고쳐 두면 새로 설치하는 사람도 옛 날짜를 보게 되므로 PNG 까지 다시 그린다.
@@ -56,10 +65,10 @@ jobs:
 
       - name: 바뀌었으면 커밋·푸시
         run: |
-          if [[ -n "$(git status --porcelain data.js md notices.js events.js icon.svg icon-maskable.svg icon-m192.png icon-m512.png icon-mmask512.png)" ]]; then
+          if [[ -n "$(git status --porcelain data.js md notices.js events.js notice_links.js build/cache icon.svg icon-maskable.svg icon-m192.png icon-m512.png icon-mmask512.png)" ]]; then
             git config user.name "bonghwa-bot"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add data.js md notices.js events.js icon.svg icon-maskable.svg icon-m192.png icon-m512.png icon-mmask512.png
+            git add data.js md notices.js events.js notice_links.js build/cache icon.svg icon-maskable.svg icon-m192.png icon-m512.png icon-mmask512.png
             git commit -m "자동 갱신 ($(date -u +%Y-%m-%d))"
             git push
             echo "갱신 완료"

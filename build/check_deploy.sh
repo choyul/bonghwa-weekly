@@ -278,6 +278,24 @@ for a in ui.js core.js ui.css; do
   else no "$a 에 버전 도장이 없습니다 — 캐시 때문에 고친 것이 안 보일 수 있습니다"; fi
 done
 
+echo "── 3-10) 공지사항 원문 바로가기 ──"
+must "$P" "BW_NLINKS"        "군민용: 공지사항 바로가기 자료를 읽는다"
+must "$P" "notice_links.js"  "군민용: notice_links.js 를 불러온다"
+must "$P" "공지사항 원문"     "군민용: 상세에 원문 바로가기 칸"
+if [ -f "$DEPLOY/notice_links.js" ]; then
+  # 자동 짝짓기라 '틀린 글로 이어지지 않는가'가 핵심이다.
+  # 관문(부서·날짜·연도/회차·핵심어)을 하나라도 빼면 엉뚱한 공지로 이어진다.
+  for k in "conflicts(" "clash(" "DEPT_ALIAS" "backDays"; do
+    if grep -q "$k" "$SRC/build/link_notices.js"; then ok "짝짓기 관문 유지: $k"
+    else no "link_notices.js 에서 '$k' 관문이 사라졌습니다 — 틀린 공지로 이어질 수 있습니다"; fi
+  done
+  # 링크 주소가 공지사항 게시판(bcIdx=100)을 가리켜야 한다
+  if grep -q "bcIdx=100" "$DEPLOY/notice_links.js"; then ok "notice_links.js: 공지사항 게시판 주소"
+  else no "notice_links.js 의 링크 주소가 공지사항 게시판이 아닙니다"; fi
+else
+  no "notice_links.js 가 배포 폴더에 없습니다"
+fi
+
 echo "── 4) 전화 걸기 ──"
 must "$DEPLOY/mayor.html" "navigator.contacts" "군수용: 저장된 연락처 선택(안드로이드)"
 must "$DEPLOY/mayor.html" "tel:"               "군수용: 전화 걸기 폴백"
@@ -292,7 +310,7 @@ if grep -q "cache-first" "$DEPLOY/sw.js" || grep -q "caches.match(e.request, *{ 
   no "sw.js: 앱 셸이 캐시 우선으로 되돌아감 (고친 내용이 사용자에게 전달되지 않음)"
 else ok "sw.js: 네트워크 우선 유지"; fi
 # (c) 소스와 배포본의 나머지 파일도 어긋나면 안 된다
-for f in sw.js build/build.js; do
+for f in sw.js build/build.js build/link_notices.js build/notice_words.js build/fetch_notice.py; do
   if diff -q "$SRC/$f" "$DEPLOY/$f" >/dev/null 2>&1; then ok "$f 소스=배포본"
   else no "$f 가 소스와 배포본에서 다름"; fi
 done

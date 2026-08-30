@@ -23,7 +23,7 @@
 <link rel="apple-touch-icon" href="icon-m192.png">
 <!-- 토큰은 반드시 ui.css보다 먼저 로드한다 -->
 <link rel="stylesheet" href="bonghwa-tokens.css?v=b3e2a291">
-<link rel="stylesheet" href="ui.css?v=decbefe3">
+<link rel="stylesheet" href="ui.css?v=35eac8d9">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
 /* ═══════════════════════════════════════════════════════════════
@@ -691,6 +691,12 @@ footer{font-size:calc(14px*var(--fsx))}
 .nw-note{font-size:calc(12.5px*var(--fsx))}
 .nw-search input{font-size:calc(15px*var(--fsx))}
 
+ /* ── 공지사항 원문 바로가기 ── 눌러서 나가는 칸이라 화살표로 '나간다'를 알린다 */
+.nlink-row{display:block;padding:11px 12px;margin-top:7px;border:1px solid var(--line);border-radius:10px;
+ background:var(--paper);text-decoration:none;color:var(--ink)}
+.nlink-row:active{background:var(--bg)}
+.nlink-t{display:block;font-weight:700;line-height:1.45;font-size:calc(14.5px*var(--fsx))}
+.nlink-d{display:block;margin-top:4px;color:var(--sub);font-size:calc(12.5px*var(--fsx))}
 </style>
 <script>
 /* 안드로이드 계열은 '바탕화면에 추가' 안내를 페이지가 뜨자마자 한 번 보낸다.
@@ -725,16 +731,19 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 </footer>
 <script src="analytics.js?v=884013ee"></script>
 <script src="core.js?v=7d81f33f"></script>
-<script src="ui.js?v=45150370"></script>
+<script src="ui.js?v=9446fb88"></script>
 <script>
-/* data.js(필수) → notices.js(고시·공고) → events.js(주간행사) → news.js(봉화 뉴스) → init
-   뒤의 셋은 없거나 실패해도 화면은 뜬다 */
+/* data.js(필수) → notices.js(고시·공고) → events.js(주간행사) → news.js(봉화 뉴스)
+   → notice_links.js(공지사항 바로가기) → init
+   뒤의 넷은 없거나 실패해도 화면은 뜬다 */
 (function(){
  function load(src,cb){const s=document.createElement('script');s.src=src;s.onload=cb;s.onerror=cb;document.head.appendChild(s)}
  load('data.js?v='+Date.now(), function(){
   load('notices.js?v='+Date.now(), function(){
    load('events.js?v='+Date.now(), function(){
-    load('news.js?v='+Date.now(), init);
+    load('news.js?v='+Date.now(), function(){
+     load('notice_links.js?v='+Date.now(), init);
+    });
    });
   });
  });
@@ -1284,6 +1293,25 @@ function init(){
   if((S.scope||'')!==AS_s){ AS_s=S.scope||''; AA('기간바꾸기',AS_s); }
  }
 
+ /* ═══ 소식 ↔ 봉화군 공지사항 바로가기 ═══
+    같은 내용이 군 홈페이지 공지사항에 올라와 있으면 그 글로 이어 준다 —
+    군민이 원문·첨부(신청서식 등)를 여기서 다시 찾아 헤매지 않도록.
+    짝짓기는 화면이 아니라 build/link_notices.js 가 미리 해 둔다.
+    부서·등록일·연도·회차가 맞고 제목의 핵심어가 어느 한쪽에만 있지 않은 것만 남긴다
+    (틀린 글로 이어지면 안 하느니만 못하다). 여기서는 그 결과를 읽기만 한다. */
+ const NL=window.BW_NLINKS||{map:{}};
+ const NLBASE=NL.base||'https://www.bonghwa.go.kr/portal/board/post/view.do?bcIdx=100&mid=0201010000&idx=';
+ function linksOf(iss){
+  const m=NL.map||{}, out=[], seen={};
+  (iss.list||[]).forEach(o=>{
+   (m[o.dept+'|'+BW.normKey(o.item.title)]||[]).forEach(x=>{
+    if(seen[x.i])return; seen[x.i]=1; out.push(x);
+   });
+  });
+  out.sort((a,b)=>a.d<b.d?1:-1);      /* 최근에 올라온 글부터 */
+  return out.slice(0,3);
+ }
+
  BWUI.start({
   role:'public', title:'오늘의 봉화',
   /* 1주 = 달력 주(일~토). 주간계획은 월~일 단위로 실리지만, 군민에게는 달력이 익숙하다 */
@@ -1335,6 +1363,8 @@ function init(){
   hideDeptTag:true,          /* 군민은 어느 과인지로 고르지 않는다 — 문의할 때만 필요 */
   /* 카드 태그는 고시·공고와 합친 분류 이름으로 보여준다(원래 분류 키를 합친 이름으로 바꿔서) */
   typeTag:iss=>{const m=W2M_TOPIC[tag(iss).topics[0]]||tag(iss).topics[0];return {v:m,label:m,axis:'topic'};},
+  /* 원문이 군 홈페이지에 있는 소식은 목록에서부터 알려 준다 — 열어 봐야 알면 못 찾는다 */
+  cardTags:iss=>linksOf(iss).length?[{cls:'notice',text:'📄 공지사항'}]:[],
 
   /* 군민이 참여할 수 있는 일부터 위로 */
   /* 내 프로필에 맞는 소식을 먼저, 그다음은 기존처럼 군민 관심도 순.
@@ -1463,6 +1493,22 @@ function init(){
     .map(l=>({lv:l.lv,txt:l.txt.replace(/^(주요\s*내용|내\s*용|사업내용|프로그램|추진내용|교육내용|점검내용|주요\s*사업)\s*[:：]?\s*/,'')}))
     .filter(l=>l.txt.trim());
    return out;
+  },
+
+  /* 본문 바로 밑 — 읽고 나서 '그래서 어디서 신청하나'가 나올 자리다.
+     제목·등록일을 함께 보여 준다. 짝이 잘못 붙었더라도 누르기 전에 알아볼 수 있게. */
+  afterContent(iss,body){
+   const ls=linksOf(iss); if(!ls.length)return;
+   body.insertAdjacentHTML('beforeend',`
+    <div class="blk nlink">
+     <h3>봉화군 공지사항 원문</h3>
+     <div class="hint" style="padding-bottom:8px">같은 내용이 봉화군 홈페이지에 올라와 있습니다. 신청서식·첨부파일은 원문에서 받으실 수 있습니다.</div>
+     ${ls.map((x,i)=>`<a class="nlink-row" href="${E(NLBASE+x.i)}" target="_blank" rel="noopener" data-nl="${i}">
+        <span class="nlink-t">${E(x.t)}</span>
+        <span class="nlink-d">${E(x.d)} 등록 · 봉화군 공지사항 &rsaquo;</span></a>`).join('')}
+    </div>`);
+   body.querySelectorAll('[data-nl]').forEach(a=>a.addEventListener('click',()=>
+    AA('공지사항원문','소식:'+uidHash(iss._id),ls[+a.dataset.nl].t)));
   },
 
   detailFooter(iss){

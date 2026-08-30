@@ -170,6 +170,9 @@ button,input,select,textarea{font:inherit}
 .tag.dept{background:#f0efe9;color:#67614f}
 .tag.type{background:var(--acc-soft);color:var(--acc)}
 .tag.annual{background:#fdf3d7;color:#7a5c00;border-color:#f0e0aa;font-weight:600}
+/* 딸린 것이 있다는 표시 — 급한 일이 아니므로 색을 쓰지 않고 테두리로만 알린다 */
+.tag.notice{background:var(--paper);color:var(--sub);border-color:var(--line);cursor:default}
+.tag.notice:active{opacity:1}
 
 /* ── 마감 딱지 — 색이 진할수록 급하다 ──
    한 줄 글에 섞여 있을 때는 '오늘 마감'과 '엿새 뒤'가 똑같아 보여서 갈랐다.
