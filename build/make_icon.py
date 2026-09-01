@@ -3,6 +3,7 @@
 
   사용: python3 build/make_icon.py <출력.svg> [일자]
         python3 build/make_icon.py icon-maskable.svg --maskable [일자]
+        python3 build/make_icon.py icon-ios.svg --ios [일자]   (아이폰 홈 화면용)
         일자를 안 주면 오늘 날짜를 쓴다.
 
 글자를 <text> 로 두면 그리는 쪽(브라우저·서버)에 그 글꼴이 없을 때
@@ -31,8 +32,11 @@ def txt(s, cx, baseline, size, fill, tracking=0):
         x += a + tracking
     return '\n  '.join(out)
 
-def build(day, maskable=False):
-    rx   = '' if maskable else ' rx="112"'
+def build(day, maskable=False, ios=False):
+    # 아이폰은 제 손으로 모서리를 둥글린다. 우리가 미리 둥글려 두면 그 바깥이
+    # 투명 → 검정으로 깔려 귀퉁이에 검은 조각이 남는다. 그래서 ios 는 네모 그대로.
+    # 안드로이드 마스커블처럼 줄이지도 않는다(아이폰은 귀퉁이만 깎는다).
+    rx   = '' if (maskable or ios) else ' rx="112"'
     open_g  = '<g transform="translate(256 256) scale(.82) translate(-256 -256)">' if maskable else ''
     close_g = '</g>' if maskable else ''
     return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -79,9 +83,12 @@ def build(day, maskable=False):
 '''
 
 if __name__ == '__main__':
-    args = [a for a in sys.argv[1:] if a != '--maskable']
+    flags = {'--maskable', '--ios'}
+    args = [a for a in sys.argv[1:] if a not in flags]
     maskable = '--maskable' in sys.argv[1:]
+    ios      = '--ios' in sys.argv[1:]
     out = args[0] if args else 'icon.svg'
     day = args[1] if len(args) > 1 else str(datetime.date.today().day)
-    open(out, 'w', encoding='utf-8').write(build(day, maskable))
-    print(f'{out} 생성 (달력 숫자: {day}{", 마스커블" if maskable else ""})')
+    open(out, 'w', encoding='utf-8').write(build(day, maskable, ios))
+    kind = ', 마스커블' if maskable else (', 아이폰용' if ios else '')
+    print(f'{out} 생성 (달력 숫자: {day}{kind})')

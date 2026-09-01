@@ -107,6 +107,32 @@ for f in icon-m192 icon-m512 icon-mmask512; do
 done
 must "$DEPLOY/build/make_icon_png.sh" "rsvg-convert" "아이콘: PNG 다시 그리기 스크립트"
 
+# ── 아이폰 홈 화면 아이콘 ──
+# 아이폰은 투명한 곳을 검정으로 깔고 제 손으로 모서리를 둥글린다.
+# 그래서 이 그림만은 네모에 색이 꽉 차 있어야 한다(투명 금지).
+if [ ! -s "$DEPLOY/apple-touch-icon.png" ]; then
+  no "apple-touch-icon.png 이 없습니다 — 아이폰 홈 화면 아이콘이 흐릿한 화면 갈무리로 박힙니다"
+else
+  ios_chk=$(python3 - "$DEPLOY/apple-touch-icon.png" <<'PY2'
+import sys
+try:
+    from PIL import Image
+except Exception:
+    print('skip'); sys.exit()
+im = Image.open(sys.argv[1]); w, h = im.size
+a = im.convert('RGBA').getchannel('A').getextrema()
+print('ok' if (w == h == 180 and a[0] == 255) else f'bad {w}x{h} alpha{a[0]}')
+PY2
+)
+  case "$ios_chk" in
+    ok)   ok "apple-touch-icon.png 180×180 · 투명 없음(아이폰용)" ;;
+    skip) ok "apple-touch-icon.png 있음 (Pillow 가 없어 속은 못 봄)" ;;
+    *)    no "apple-touch-icon.png 이 아이폰에 맞지 않습니다 ($ios_chk) — 180×180 에 투명이 없어야 합니다" ;;
+  esac
+fi
+must "$DEPLOY/index.html" 'rel="apple-touch-icon" sizes="180x180"' "아이폰: 홈 화면 아이콘 연결"
+must "$DEPLOY/index.html" 'apple-mobile-web-app-title' "아이폰: 아이콘 밑에 붙을 이름"
+
 echo "── 3-6) 공유 링크로 들어온 분께 설치 권유 ──"
 must "$P" "url.searchParams.set('a','1')" "군민용: 공유 링크에 설치 권유 표시"
 must "$P" "function offerInstall"          "군민용: 설치 권유 함수"

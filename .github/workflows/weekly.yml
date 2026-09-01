@@ -65,10 +65,10 @@ jobs:
 
       - name: 바뀌었으면 커밋·푸시
         run: |
-          if [[ -n "$(git status --porcelain data.js md notices.js events.js notice_links.js build/cache icon.svg icon-maskable.svg icon-m192.png icon-m512.png icon-mmask512.png)" ]]; then
+          if [[ -n "$(git status --porcelain data.js md notices.js events.js notice_links.js build/cache icon.svg icon-maskable.svg icon-m192.png icon-m512.png icon-mmask512.png apple-touch-icon.png)" ]]; then
             git config user.name "bonghwa-bot"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add data.js md notices.js events.js notice_links.js build/cache icon.svg icon-maskable.svg icon-m192.png icon-m512.png icon-mmask512.png
+            git add data.js md notices.js events.js notice_links.js build/cache icon.svg icon-maskable.svg icon-m192.png icon-m512.png icon-mmask512.png apple-touch-icon.png
             git commit -m "자동 갱신 ($(date -u +%Y-%m-%d))"
             git push
             echo "갱신 완료"

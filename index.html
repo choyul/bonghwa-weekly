@@ -20,7 +20,11 @@
 <link rel="manifest" href="public.webmanifest?v=2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="icon-m192.png">
+<meta name="apple-mobile-web-app-title" content="오늘의 봉화">
+<!-- 아이폰 홈 화면 아이콘은 따로 둔다. 안드로이드용(icon-m192)은 모서리가 이미
+     둥글고 그 바깥이 투명이라, 아이폰이 검정으로 깔고 제 손으로 한 번 더 둥글리면
+     귀퉁이에 검은 조각이 남는다. 이 그림은 네모에 색이 꽉 차 있다. -->
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <!-- 토큰은 반드시 ui.css보다 먼저 로드한다 -->
 <link rel="stylesheet" href="bonghwa-tokens.css?v=b3e2a291">
 <link rel="stylesheet" href="ui.css?v=35eac8d9">
@@ -2096,11 +2100,18 @@ function init(){
     if(x)x.click(); else sh.classList.remove('open');
    }
   }
-  new MutationObserver(()=>{
+  /* 창이 닫히고 곧바로 다른 창이 열리는 경우가 있다(설정 → 바탕화면 바로가기).
+     그때마다 곧이곧대로 history.back() 을 부르면, 뒤늦게 도착한 뒤로가기 신호가
+     방금 연 창을 도로 닫아 버린다 — 아이폰에서 '눌러도 아무 일이 없던' 까닭이다.
+     한 박자 미뤄 한 번만 헤아리면 닫고 여는 한 쌍이 서로 상쇄된다. */
+  let tid=0;
+  function sync(){
    const n=opens().length;
    if(n>0&&!pushed){ pushed=true; history.pushState({bwOverlay:1},''); }
    else if(n===0&&pushed){ pushed=false; if(!byBack)history.back(); byBack=false; }
-  }).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
+  }
+  new MutationObserver(()=>{ clearTimeout(tid); tid=setTimeout(sync,0); })
+   .observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
   addEventListener('popstate',()=>{
    if(opens().length){ pushed=false; byBack=true; closeTop(); }
   });
@@ -2128,13 +2139,30 @@ function init(){
  const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
  const isiOS=/iPhone|iPad|iPod/i.test(UA);
  const isSamsung=/SamsungBrowser/i.test(UA);   /* 설치창을 안 띄우고 메뉴로만 만들 수 있다 */
+ /* 아이폰은 브라우저마다 되는지 안 되는지가 갈린다.
+    · 사파리      — 아래 가운데 공유 단추
+    · 크롬(CriOS) — 주소창 오른쪽 공유 단추 (되긴 된다)
+    · 카톡·네이버·인스타 같은 앱 속 창 — 아예 안 된다. 사파리로 열어야 한다. */
+ const isCriOS=/CriOS/i.test(UA);
+ const iosInApp=isiOS&&!isCriOS&&!/FxiOS|EdgiOS/i.test(UA)&&!/Safari/i.test(UA);
+ const iosAppName=/KAKAOTALK/i.test(UA)?'카카오톡':/NAVER/i.test(UA)?'네이버'
+   :/Instagram/i.test(UA)?'인스타그램':/Line/i.test(UA)?'라인'
+   :/DaumApps|Daum/i.test(UA)?'다음':'이 앱';
  function howToModal(){
   AV('사용안내');
   let m=document.getElementById('a2hs');
   if(!m){m=document.createElement('div');m.id='a2hs';m.className='modal';document.body.appendChild(m)}
   /* 브라우저마다 메뉴 위치·이름이 달라 그대로 알려 줘야 한다.
      특히 삼성 인터넷은 설치창을 띄우는 기능을 제공하지 않아 메뉴로만 만들 수 있다. */
-  const steps = isiOS
+  const steps = iosInApp
+   ? `<li><b>${E(iosAppName)} 안에서는 만들 수 없어요.</b> 먼저 사파리로 옮겨야 해요</li>
+      <li>화면 <b>오른쪽 아래 ⋯</b>(또는 <b>↗</b>)를 눌러 <b>다른 브라우저로 열기 · Safari로 열기</b>를 고르세요</li>
+      <li>사파리가 열리면 아래 가운데 <b>공유 <span class="a2-ic">⬆️</span></b> → <b>홈 화면에 추가</b></li>`
+   : isCriOS
+   ? `<li>주소창 오른쪽 <b>공유 <span class="a2-ic">⬆️</span></b> 단추를 누르세요</li>
+      <li>목록을 내려 <b>홈 화면에 추가</b>를 누르세요</li>
+      <li>오른쪽 위 <b>추가</b>를 누르면 끝!</li>`
+   : isiOS
    ? `<li>아래 가운데 <b>공유 <span class="a2-ic">⬆️</span></b> 단추를 누르세요</li>
       <li>목록을 내려 <b>홈 화면에 추가</b>를 누르세요</li>
       <li>오른쪽 위 <b>추가</b>를 누르면 끝!</li>`
@@ -2150,14 +2178,23 @@ function init(){
     <div class="note">한 번 만들어 두면 다음부터는 <b>바탕화면 아이콘</b>만 눌러 바로 들어올 수 있어요.
       ${isiOS?'':'<br><span style="color:var(--sub)">이미 만들어 두셨다면 바탕화면에서 아이콘을 찾아 주세요.</span>'}</div>
     <ol class="a2-steps">${steps}</ol>
-    ${isKakao?`<div class="note" style="color:var(--warn)">카카오톡 안에서는 만들 수 없어요. 아래 [기본 브라우저로 열기]를 누른 뒤 다시 해 주세요.</div>
+    ${isKakao&&!isiOS?`<div class="note" style="color:var(--warn)">카카오톡 안에서는 만들 수 없어요. 아래 [기본 브라우저로 열기]를 누른 뒤 다시 해 주세요.</div>
       <div style="padding:4px 18px 0"><button class="callbtn" id="a2Ext" style="width:100%">🌐 기본 브라우저로 열기</button></div>`:''}
+    ${iosInApp?`<div class="note">옮기는 메뉴를 못 찾으시면 주소를 복사해 사파리 주소창에 붙여 넣으셔도 됩니다.</div>
+      <div style="padding:4px 18px 0"><button class="callbtn" id="a2Copy" style="width:100%">🔗 주소 복사하기</button></div>`:''}
     <div class="mfoot"><span style="flex:1"></span><button id="a2Close">닫기</button></div>
   </div>`;
   m.classList.add('open');
   const close=()=>m.classList.remove('open');
   m.querySelector('#a2Close').onclick=close;
   m.onclick=e=>{if(e.target===m)close()};
+  const cp=m.querySelector('#a2Copy');
+  if(cp)cp.onclick=async()=>{
+   try{ await navigator.clipboard.writeText(location.href.split('#')[0]); }
+   catch(e){ const t=document.createElement('textarea'); t.value=location.href.split('#')[0];
+     document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+   AA('설치_주소복사',iosAppName); BWUI.toast('주소를 복사했어요. 사파리에 붙여 넣어 주세요');
+  };
   /* 설치 신호가 늦게 도착하면 안내를 접고 '한 번에 추가' 단추로 바꾼다 */
   if(!isiOS)window.__installWaiters.push(()=>{
    if(!m.classList.contains('open'))return;
