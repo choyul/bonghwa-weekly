@@ -411,6 +411,20 @@ else
 fi
 # (마) 출처·저작권 고지가 화면에 남아 있어야 한다
 must "$P" "기사의 저작권은 각 언론사에 있습니다" "저작권: 화면에 저작권 고지"
+# (바) 봉화군 기사가 아닌 것이 섞이지 않았는지.
+#     2026-09-10 뉴시스 "[김포소식]… 사우동 봉화로 일원 보도정비공사" 가 '봉화' 두 글자로 통과해 떴다.
+#     걸름망 시험 문장(SELF_TEST)과 실제 news.js 제목 전부를 fetch_news.py --check 로 다시 걸러 본다.
+#     하나라도 걸리면 배포를 멈춘다 — 규칙을 느슨하게 고쳐도, 엉뚱한 기사가 실려 있어도 여기서 잡힌다.
+must "$SRC/build/fetch_news.py" "def is_bonghwa"   "수집: 봉화군 기사 가려내기(다른 지자체·도로명 봉화 거름)"
+must "$SRC/build/fetch_news.py" "kept = \[r for r in kept if is_bonghwa" "수집: 지난 목록을 이어받을 때도 다시 거름"
+if [ -s "$DEPLOY/news.js" ]; then
+  if nw_out=$(python3 "$SRC/build/fetch_news.py" --check "$DEPLOY/news.js" 2>&1); then
+    ok "언론속봉화: 걸름망 시험 통과 · 실린 기사 모두 봉화군 기사"
+  else
+    no "언론속봉화: 봉화군 기사가 아닌 것이 섞였거나 걸름망 시험 실패 — 아래를 보고 fetch_news.py 를 고친 뒤 다시 수집할 것"
+    echo "$nw_out" | sed 's/^/     /'
+  fi
+fi
 
 echo "── 7) 개인정보가 섞여 들어가지 않았는지 ──"
 if grep -rlE "01[016789]-[0-9]{3,4}-[0-9]{4}" "$DEPLOY/data.js" "$DEPLOY/md" 2>/dev/null | grep -q .; then

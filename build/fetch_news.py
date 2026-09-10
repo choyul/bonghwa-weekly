@@ -3,6 +3,7 @@
 """
 fetch_news.py — 봉화 관련 뉴스 수집 → news.js 생성
   사용: python3 build/fetch_news.py [출력경로=news.js] [보관일수=30]
+        python3 build/fetch_news.py --check news.js   ← 걸름망 시험 + 실린 기사 재검사(배포 점검용)
 
 ═══ 수집원 두 갈래 — 열쇠가 없어도 돌아간다 ═══
   (가) 언론사 공식 RSS  … 열쇠·가입 **불필요**. 늘 켜져 있다.
@@ -72,8 +73,10 @@ else:
     HDR  = ("X-NCP-APIGW-API-KEY-ID", "X-NCP-APIGW-API-KEY")
     WHERE = "NAVER API HUB"
 
-out_path = sys.argv[1] if len(sys.argv) > 1 else "news.js"
-days     = int(sys.argv[2]) if len(sys.argv) > 2 else 30
+CHECK    = len(sys.argv) > 1 and sys.argv[1] == "--check"
+_args    = sys.argv[2:] if CHECK else sys.argv[1:]
+out_path = _args[0] if _args else "news.js"
+days     = int(_args[1]) if len(_args) > 1 else 30
 
 CID = os.environ.get("NAVER_CLIENT_ID", "").strip()
 CSE = os.environ.get("NAVER_CLIENT_SECRET", "").strip()
@@ -106,13 +109,93 @@ RSS_FEEDS = tuple(u for _, u in RSS_SOURCES)
 # 봉화를 가장 많이 다루는 곳은 경북신문(kbsm.net)이지만 RSS 를 열어 두지 않았다.
 # 긁는 것은 하지 않기로 했으므로(부정경쟁방지법) 빠져 있다 — 넣지 말 것.
 
-# 제목에 이 말이 있으면 봉화군 기사가 아니다 (봉홧불·다른 지역 봉화산 등)
+# ── 봉화군 기사인지 가려내기 ─────────────────────────────────────────────
+# '봉화'는 봉화군 말고도 여기저기 지명·도로명에 쓰인다(봉화산·봉화대·김포시 봉화로 …).
+# 제목 한 줄로 판단하므로 is_bonghwa() 가 아래 순서대로 본다.
+#   ① '봉화'가 없거나 NEG 에 걸리면            → 버림
+#   ② STRONG(봉화군·경북·읍면 이름)이 있으면   → 담음 (다른 시·군과 함께 나오는 협약 기사를 살린다)
+#   ③ [○○소식] 같은 다른 지자체 묶음기사 태그 → 버림
+#   ④ 먼 곳의 시·군 이름이 '봉화'보다 앞에 나옴 → 버림 (그 지역 기사에 봉화 지명이 섞인 것)
+#   ⑤ 나머지                                   → 담음
+# 2026-09-10 실제 사고: 뉴시스 "[김포소식]시, 사우동 봉화로 일원 보도정비공사 추진 등" 이
+#   '봉화' 두 글자로 통과해 언론속봉화에 떴다. ③④ 와 NEG 의 도로명 항목은 그때 넣었다.
+#   그때까지 실렸던 제목 110건 전부에 걸어 보니 버려지는 것은 김포 기사 1건뿐이었다.
+# **고치면 반드시 `--check` 로 시험할 것** — 아래 SELF_TEST 가 오탈락·새는 것을 함께 본다.
+#   '봉화로'를 통째로 막으면 "봉화로타리클럽"·"관광도시 봉화로 거듭" 같은 진짜 기사가 죽는다.
+
+# 제목에 이 말이 있으면 봉화군 기사가 아니다 (봉홧불·다른 지역 봉화산·도로명 봉화로 등)
 NEG = re.compile(
     r"봉화산|봉화대|봉홧불|봉화불|봉화를\s*(올|들)|봉화가\s*(올|타)|봉화\s*올리|"
-    r"봉화산역|남원\s*봉화|장수\s*봉화|서울\s*봉화"
+    r"봉화산역|남원\s*봉화|장수\s*봉화|서울\s*봉화|"
+    r"봉화로\s*(일원|일대|사거리|네거리|교차로|구간)"
 )
 # 제목이 이 조건을 못 넘으면 버린다 — 최소한 '봉화'라는 말은 있어야 한다
 POS = re.compile(r"봉화")
+# 이 말이 있으면 봉화군 기사로 확정 — ③④ 를 건너뛴다
+STRONG = re.compile(
+    r"봉화군|봉화읍|경북|경상북도|춘양|분천|석포|청량산|물야|명호|내성천|"
+    r"(봉성|법전|재산|상운|소천)면"
+)
+# 다른 지자체 묶음기사 머리표 — [김포소식] [남원시정] [부천브리핑] …
+OTHER_TAG = re.compile(r"\[\s*([가-힣]{2,4})\s*(소식|시정|군정|브리핑|단신|톡톡)")
+# '먼 곳' 시·군 이름. 경북 전체와 맞닿은 생활권(대구·태백·삼척·영월·정선·단양)은 **일부러 뺐다** —
+# "봉화·태백시의회 공동대응", "영주시·봉화 상생협약" 처럼 봉화와 함께 보도되는 일이 잦다.
+# 이름만 쓰면 '예산·고령·장수·영광·음성·진도' 같은 보통말과 겹치므로 반드시 시·군 꼬리를 붙여 본다.
+FAR_GOV_NAMES = (
+    "서울 부산 인천 광주 대전 울산 세종 제주 서귀포 "
+    "수원 성남 고양 용인 부천 안산 안양 남양주 화성 평택 의정부 시흥 파주 광명 김포 군포 "
+    "이천 양주 오산 구리 안성 포천 의왕 하남 여주 동두천 과천 양평 가평 연천 "
+    "춘천 원주 강릉 동해 속초 홍천 횡성 평창 철원 화천 양구 인제 고성 양양 "
+    "청주 충주 제천 보은 옥천 영동 증평 진천 괴산 음성 "
+    "천안 공주 보령 아산 서산 논산 계룡 당진 금산 부여 서천 청양 홍성 예산 태안 "
+    "전주 군산 익산 정읍 남원 김제 완주 진안 무주 장수 임실 순창 고창 부안 "
+    "목포 여수 순천 나주 광양 담양 곡성 구례 고흥 보성 화순 장흥 강진 해남 영암 무안 "
+    "함평 영광 장성 완도 진도 신안 "
+    "창원 진주 통영 사천 김해 밀양 거제 양산 의령 함안 창녕 남해 하동 산청 함양 거창 합천 "
+    "기장 강화 옹진 울주"
+).split()
+FAR_GOV = re.compile(
+    r"(?<![가-힣])(" + "|".join(FAR_GOV_NAMES) + r")(특별자치시|특별자치도|특별시|광역시|시|군)"
+)
+
+
+def is_bonghwa(title):
+    """제목만 보고 봉화군 기사인지 가린다. 순서는 위 ①~⑤ 주석 그대로."""
+    if not POS.search(title) or NEG.search(title):
+        return False
+    if STRONG.search(title):
+        return True
+    m = OTHER_TAG.search(title)
+    if m and "봉화" not in m.group(1):
+        return False
+    first = title.find("봉화")
+    for g in FAR_GOV.finditer(title):
+        if g.start() < first:
+            return False
+    return True
+
+
+# 걸름망 시험 문장 — (담아야 하면 True, 버려야 하면 False, 제목). '실제'는 news.js 에 실제 들어왔던 제목.
+# --check 가 이 표를 먼저 돌린다. 규칙을 느슨하게 하거나 너무 조이면 여기서 걸린다.
+SELF_TEST = (
+    (False, "[김포소식]시, 사우동 봉화로 일원 보도정비공사 추진 등"),        # 실제(2026-09-10 사고)
+    (False, "김포시, 봉화로 보행환경 개선 사업 착수"),
+    (False, "사우동 봉화로 일원 보도정비공사"),
+    (False, "[부천브리핑] 봉화대 공원 새단장"),
+    (False, "남원시, 봉화 축제 개최"),
+    (True,  "달림이 3천명 맞은 봉화로타리클럽, 마라톤대회 안전 숨은 주역"),  # 실제
+    (True,  "'스쳐가는 분천'서 '머무는 봉화'로… 폐교 살린 산타포레리조트 개관"),  # 실제
+    (True,  "'생활권 묶인 석포제련소발 위기'…봉화·태백시의회, 경제 연쇄 타격 차단 맞손"),  # 실제
+    (True,  "'희망영주 도약봉화, 하나되는 경북의 힘'… 2027년 제65회 경북도민체전 상징물 확정"),  # 실제
+    (True,  "'서울대·연세대 교정 거닐며 꿈 키워요'...봉화 청소년들, 수도권 명문대 탐방"),  # 실제
+    (True,  "영주시·봉화 상생협력 협약"),
+    (True,  "태백시, 봉화와 석포제련소 공동 대응"),
+    (True,  "서울시 청년들, 봉화군 농촌 체험"),
+    (True,  "추석 앞두고 동시 점검…봉화 전통시장"),
+    (True,  "해군 장병들, 봉화서 일손 돕기"),
+    (True,  "관광도시 봉화로 거듭난다"),
+    (True,  "고령 농업인 돕는 봉화 영농도우미"),
+)
 
 # 원문주소 도메인 → 언론사 이름. 없으면 도메인을 그대로 보여 준다.
 PRESS = {
@@ -230,7 +313,7 @@ class Bag:
             return False
         if dt < self.cutoff:
             return False
-        if not POS.search(title) or NEG.search(title):
+        if not is_bonghwa(title):
             self.dropped += 1
             return False
         nu, tk = norm_url(url), title_key(title)
@@ -421,12 +504,42 @@ def merge_previous(rows, path):
     cutoff = int((datetime.now(KST) - timedelta(days=days)).timestamp())
     seen = {r["id"] for r in rows}
     kept = [r for r in old if r.get("id") not in seen and r.get("ts", 0) >= cutoff]
+    # 지난 목록도 걸름망을 **다시** 통과시킨다. 이게 없으면 규칙을 고쳐도
+    # 이미 실린 엉뚱한 기사(예: 김포시 봉화로)가 보관기간 30일 내내 남는다.
+    bad = [r for r in kept if not is_bonghwa(r.get("t", ""))]
+    for r in bad:
+        sys.stderr.write(f"  지난 목록에서 봉화군 기사가 아니라 뺀 것: {r.get('t', '')[:40]}\n")
+    kept = [r for r in kept if is_bonghwa(r.get("t", ""))]
     if kept:
         sys.stderr.write(f"  지난 목록에서 이어받은 기사 {len(kept)}건\n")
     return sorted(rows + kept, key=lambda r: -r.get("ts", 0))
 
 
+def check(path):
+    """배포 점검용. ① 시험 문장이 기대대로 걸러지는지 ② 실제 news.js 제목이 모두 걸름망을 통과하는지."""
+    bad = 0
+    for want, t in SELF_TEST:
+        if is_bonghwa(t) != want:
+            bad += 1
+            print(f"  걸름망 시험 실패 — {'담아야' if want else '버려야'} 하는데 반대로 됨: {t}")
+    if os.path.exists(path):
+        try:
+            txt = open(path, encoding="utf-8").read()
+            items = json.loads(txt[txt.index("{"):txt.rindex("}") + 1]).get("items", [])
+        except Exception as e:
+            print(f"  {path} 를 읽지 못함: {e}")
+            return 1
+        for r in items:
+            if not is_bonghwa(r.get("t", "")):
+                bad += 1
+                print(f"  봉화군 기사가 아닌 것이 실려 있음: {r.get('t', '')} ({r.get('p', '')} {r.get('d', '')})")
+        print(f"  시험 문장 {len(SELF_TEST)}개 · 실린 기사 {len(items)}건 검사")
+    return 1 if bad else 0
+
+
 def main():
+    if CHECK:
+        return check(out_path)
     notice_keys()
     sys.stderr.write("봉화 뉴스 수집 중…\n")
     rows = collect()
