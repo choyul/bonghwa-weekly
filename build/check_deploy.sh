@@ -54,7 +54,11 @@ must "$P" "backClosesOverlay"  "군민용: 뒤로가기가 팝업만 닫고 앱�
 must "$P" "isSamsung"          "군민용: 삼성 인터넷 전용 설치 안내"
 
 echo "── 3) 새소식/행사 전환 ──"
-must "$P" "modetabs"    "군민용: 맨 위 [새소식/행사/언론속봉화] 전환 탭"
+# [2026-10] 위쪽 전환 탭은 뺐다 — 아래 탭바와 같은 것이 위아래로 둘 있었다. 되살아나면 안 된다.
+if grep -q "function buildModeTabs" "$P"; then no "군민용: 위쪽 [새소식/행사/언론속봉화] 탭이 되살아남 — 아래 탭바 하나만 둔다"
+else ok "군민용: 화면 전환은 아래 탭바 하나"; fi
+must "$P" 'data-t="cal"'  "군민용: 아래 탭바의 행사"
+must "$P" 'data-t="news"' "군민용: 아래 탭바의 언론속봉화"
 must "$P" "BW_EVENTS"   "군민용: 행사 데이터 읽기"
 must "$P" "events.js"   "군민용: 행사 데이터 로드"
 if [ -s "$DEPLOY/events.js" ]; then ok "events.js 존재($(wc -c < "$DEPLOY/events.js" | tr -d ' ')바이트)"
@@ -205,7 +209,7 @@ must "$P" "inPeriod(n.d)"       "군민용: 언론속봉화가 공통 기간을 
 must "$P" "nwCntOf"             "군민용: 달력 숫자가 화면별로 맞음"
 must "$P" "evLimit"             "군민용: 행사 목록 상한(전체 기간 1,200건이면 멎는다)"
 # 검색·기간·요약은 세 화면 공통이라 숨김 목록에 들어가면 안 된다
-for sel in ".psearch" "#wstrip" "#hero"; do
+for sel in ".psearch" "#wstrip"; do
   if grep -qE "body\.mode-(event|news) [^{]*\$sel" "$P"; then
     no "군민용: $sel 가 특정 화면에서 숨겨져 있습니다 — 셋이 함께 써야 합니다"
   else ok "군민용: $sel 가 세 화면 공통"; fi
@@ -213,17 +217,10 @@ done
 
 echo "── 3-8) 첫 화면 요약 문구 ──"
 # '93개 소식' 은 군청이 한 일의 개수라 군민에게 뜻이 없었다 — 되돌아가면 안 된다
-must "$P" "function heroNums"              "군민용: 신청 가능·마감 임박 세기"
-must "$P" "신청할 수 있는 일이"              "군민용: 첫 화면이 '할 수 있는 일'을 말함"
+# [2026-10] 요약 카드(hero)는 세 화면 모두에서 뺐다 — 자리만 차지한다는 지적. 되살아나면 안 된다.
+if grep -qE "function (buildHero|syncHero)" "$P"; then no "군민용: 요약 카드(hero)가 되살아났습니다 — 세 화면 모두 쓰지 않습니다"
+else ok "군민용: 요약 카드 없음(세 화면 모두)"; fi
 must "$P" "data-sc=\"today\""              "군민용: 기간 맨 앞의 [오늘]"
-# 첫 칸은 세 화면 모두 한 문장만 — 숫자 칸·부제를 다시 달면 '몇 건이 있다'로 되돌아간다
-if grep -q 'class="h-stat' "$P" || grep -q 'class="h-sub"' "$P"; then
-  no "군민용: 첫 칸에 숫자 칸이나 부제가 되살아났습니다"
-else ok "군민용: 첫 칸이 세 화면 모두 한 문장"; fi
-if grep -q "봉화에는 <b>\${nEv+nWork+nNt}개</b><br>소식이 있어요" "$P" \
-   && ! grep -q "N.open" "$P"; then
-  no "군민용: 첫 화면이 예전 '전체 개수' 문장으로 되돌아갔습니다"
-else ok "군민용: 예전 '전체 개수' 문장으로 되돌아가지 않음"; fi
 
 # 마감 표시는 'D-2' 같은 약어가 아니라 '2일 전' 으로 — 어르신에게 D-day 가 안 읽힌다
 if grep -q "마감 D-" "$P"; then no "군민용: 마감 표시가 'D-2' 로 되돌아갔습니다"
@@ -259,10 +256,11 @@ must "$DEPLOY/ui.js" "군청이 하는 일" "엔진: 접어 둔 군정 소식 �
 # 갈래 탭 — 목록을 [신청·참여|군정 소식|고시·공고] 세 갈래로, 한 번에 한 갈래만
 must "$P" "groupTabs:true"        "군민용: 갈래 탭 켜짐"
 must "$P" "noticeTab"             "군민용: 고시·공고 갈래 연결"
-must "$P" "axesLabel:'맞춤설정'"   "군민용: 목적·대상 고르는 칸 이름"
-# 접어 뒀더니 있는 줄 모른다는 지적 — 펼친 채로 시작하되 접을 수는 있어야 한다
-must "$P" "axesOpen:true"         "군민용: 맞춤설정이 펼친 채로 시작"
-must "$P" "axesFold:true"         "군민용: 맞춤설정을 접을 수 있음"
+must "$P" "axesLabel:'조건 고르기'" "군민용: 주제·대상·읍면 고르는 칸 이름"
+# [2026-10] 다시 접는다 — 펼쳐 두면 이 칸이 330px 를 먹어 첫 소식이 한 화면 반 아래로 밀린다.
+# '나'(대상·읍면)는 첫 화면 맨 위 한 줄이 맡는다.
+must "$P" "axesOpen:false"        "군민용: 조건 고르기는 접힌 채로 시작"
+must "$P" "axesFold:true"         "군민용: 조건 고르기를 펼칠 수 있음"
 must "$DEPLOY/ui.js" "CFG.axesFold === true" "엔진: 펼침 기본값과 접기 기능을 따로 다룸"
 must "$DEPLOY/ui.js" "펼치기 ▾"   "엔진: 접힌 맞춤설정 줄에 펼치기 표시"
 must "$DEPLOY/ui.js" "접기 ▴"     "엔진: 펼친 맞춤설정 줄에 접기 표시"
@@ -296,6 +294,43 @@ else ok "고시·공고 대상표도 캐릭터와 같은 이름"; fi
 if [ "$(grep -c "^  \['" <(sed -n '/const MERGED_AUD=/,/^ \];/p' "$P"))" = "7" ]; then
   ok "대상이 일곱 갈래(캐릭터와 같음)"
 else no "대상 갈래 수가 7이 아닙니다"; fi
+
+echo "── 3-8-2) 새소식 첫 화면(내 소식) ──"
+# 첫 화면에는 '나' 한 줄과 구획 둘만 둔다. 검색·기간·갈래·조건은 [전체 소식 보기] 안.
+# 예전에는 첫 소식이 1,097px 아래(한 화면 반)에 있었다 — 첫 화면에 칸이 다시 쌓이면 되돌아간다.
+must "$P" "function renderHome"   "군민용: 내 소식 화면"
+must "$P" "function homePool"     "군민용: 지금 신청·참여할 수 있는 일 모으기"
+must "$P" "곧 마감이에요"          "군민용: 구획 ① 곧 마감"
+must "$P" "지금 신청할 수 있어요"   "군민용: 구획 ② 지금 신청"
+must "$P" "전체 소식 보기"         "군민용: 전체 소식으로 가는 줄"
+must "$P" "내 소식으로"            "군민용: 전체 소식에서 돌아오는 줄"
+must "$P" "function whyOf"        "군민용: 왜 내 소식인지(이유 딱지)"
+must "$P" "function profForm"     "군민용: 대상·읍면 고르는 칸(설정 창과 첫 화면이 같이 씀)"
+must "$P" "둘까지 고를 수 있어요"   "군민용: 대상을 둘까지 고름"
+must "$P" "askSkip"               "군민용: 처음 온 사람에게 맨 위에서 묻고, 건너뛸 수 있음"
+must "$P" "bw-find"               "군민용: 헤더의 검색 단추(첫 화면엔 검색칸이 없다)"
+must "$P" "body.home #psearch"    "군민용: 첫 화면에서 검색·기간·갈래를 감춤"
+if grep -q "function audModal" "$P"; then no "군민용: 대상 고르는 창이 둘이 됨(audModal 부활) — '나'는 내 소식 칸 하나로"
+else ok "군민용: 대상은 내 소식 칸 한 곳에서만 고름"; fi
+# 하루짜리 행사는 '마감'이 아니라 '열려요' — 「주민설명회 내일 마감」은 틀린 말이었다
+must "$P" "내일 열려요"            "군민용: 하루짜리 행사는 열리는 날로 적음"
+
+echo "── 3-8-4) 행사 갈래 ──"
+# 행사는 '누가 여는가(군/읍면·기관)'가 아니라 '내가 갈 자리인가'로 가른다
+must "$P" "function evType"       "군민용: 행사를 가 볼 만한 행사/교육·모임/회의·내부로 가름"
+must "$P" "가 볼 만한 행사"        "군민용: 행사 갈래 이름"
+if grep -q 'data-k="군"' "$P"; then no "군민용: 행사 갈래가 예전 [군 행사|읍면·기관단체]로 되돌아갔습니다"
+else ok "군민용: 행사 갈래가 군민 기준"; fi
+
+echo "── 3-8-3) 분류 — 대상·갈래 ──"
+# 대상은 제목과 '대상:' 줄만 본다. 갈래는 신청·참여 / 군정 소식 / 군청 내부 셋.
+must "$DEPLOY/core.js" "TARGET_LABEL"      "엔진: 대상은 '대상:' 줄에서만 찾음"
+must "$DEPLOY/core.js" "function kindOf"   "엔진: 갈래 셋(apply·gov·internal)"
+must "$P" "kindOf:iss=>tag(iss).kind"      "군민용: 갈래 셋을 씀"
+must "$DEPLOY/ui.js" "CFG.kindOf"          "엔진: 군청 내부 갈래 렌더"
+must "$DEPLOY/ui.js" "군청 내부"            "엔진: 군청 내부 갈래 이름"
+if node "$SRC/build/test_classify.js" >/dev/null 2>&1; then ok "분류 시험 통과 (build/test_classify.js)"
+else no "분류 시험이 어긋났습니다 — node build/test_classify.js 로 확인하세요"; fi
 
 echo "── 3-9) 파일 짝이 어긋나지 않는지 ──"
 # 버전 표시가 없으면 '새 index.html + 옛 ui.js' 가 만들어져 고친 기능이 안 보인다
@@ -375,7 +410,7 @@ else ok "fetch_news.py 소스=배포본"; fi
 must "$P" "load('news.js"        "군민용: 뉴스 자료 로드"
 must "$P" "function buildNewsView" "군민용: 뉴스 화면"
 must "$P" "function renderNews"    "군민용: 뉴스 목록 그리기"
-must "$P" "data-m=\\\"news\\\""       "군민용: 뉴스 모드 탭"
+must "$P" 'data-t="news"'   "군민용: 아래 탭바에서 언론속봉화로 감"
 must "$P" "nwMissed"             "군민용: 놓친 뉴스 계산"
 # 하루만 걸면 기사가 한두 건뿐이라 화면이 빈다 — 그날 + 그 앞 1주일을 함께 보여야 한다
 must "$P" "function nwWindow"     "군민용: 뉴스 기간 예외(하루→앞 1주일, 1주→지난 7일)"
